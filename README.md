@@ -9,7 +9,7 @@ Project is under continuous development and may not compile.
 Latest Updates: Current version mines the data from stackexchange fitness data
 to retreive experts from the data for the given query.
 
-Usage: (Dependancy, y.jar is required for visualization, which can be added from BSCW of i5 chair)
+Usage: (Dependancy, y.jar is required for visualization, Get the latest version of y.jar from BSCW of i5 chair)
 
 1. Clone the project, run it in eclipse.
 2. Create a jar of the project and run as below
