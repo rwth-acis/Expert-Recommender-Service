@@ -18,6 +18,7 @@ java -jar YOUR_JAR_FILE_NAME "YOUR_QUERY_HERE"
 
 
 yFliles are used for visualization and in this current release output will be as shown below.
+
 ![Alt text](https://github.com/rwth-acis/Recommendation-Service/blob/master/src/res/network.jpg "Experts and their neighbors")
 
 Red nodes indicates identified experts, Green nodes indicate people related to experts.
