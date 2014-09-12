@@ -55,5 +55,8 @@ public class Main {
 			e.printStackTrace();
 		}
 
+		// TagMe tagme = new TagMe("123", Utils.TEST_STR);
+		// tagme.saveTags();
+
 	}
 }

@@ -22,3 +22,6 @@ yFliles are used for visualization and in this current release output will be as
 ![Alt text](https://github.com/rwth-acis/Recommendation-Service/blob/master/src/res/network.jpg "Experts and their neighbors")
 
 Red nodes indicates identified experts, Green nodes indicate people related to experts.
+Numbers in the node indicate the post-id.
+Replace the number(post-id) in this url to see the post, 
+http://fitness.stackexchange.com/questions/NUMBER
