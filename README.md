@@ -10,6 +10,7 @@ Latest Updates: Current version mines the data from stackexchange fitness data
 to retreive experts from the data for the given query.
 
 Usage: (Dependancy, y.jar is required for visualization, which can be added from BSCW of i5 chair)
+
 1. Clone the project, run it in eclipse.
 2. Create a jar of the project and run as below,
 java -jar YOUR_JAR_FILE_NAME "YOUR_QUERY_HERE"
