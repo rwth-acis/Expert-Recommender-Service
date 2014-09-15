@@ -1,9 +1,12 @@
 package com.sathvik.utils;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -14,9 +17,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.apache.commons.lang3.StringUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multiset;
 import com.sathvik.models.Resource;
+import com.sathvik.models.TagMePOJO;
 import com.sathvik.textprocessing.PorterStemmer;
 
 /**
@@ -34,7 +49,7 @@ public class Utils {
 	public static Multiset QUERY_WORDS;
 	public static int THRESHOLD_WORD_FREQ = 2;
 	public static double CONFIDENCE_THRESHOLD = 0.06;
-	
+
 	public static HashMultimap<String, Resource> TERM_FREQ_MAP = HashMultimap
 			.create();
 
@@ -92,6 +107,64 @@ public class Utils {
 		}
 		return result;
 	}
+
+	/*
+	public static void saveSemanticTags(Class cls, String postid, String tags,
+			ArrayList<TagMePOJO> tagmeObjs) {
+
+		try {
+			ClassLoader classLoader = cls.getClassLoader();
+
+			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory
+					.newInstance();
+			DocumentBuilder documentBuilder = documentBuilderFactory
+					.newDocumentBuilder();
+			Document document = documentBuilder.parse(classLoader
+					.getResourceAsStream("res/Posts_tags.xml"));
+			Element root = document.getDocumentElement();
+
+			// Root Element
+			Element rootElement = document.getDocumentElement();
+			Element row = document.createElement("row");
+			row.setAttribute("postId", postid);
+
+			if (tags != null) {
+				row.setAttribute("tagCollection", tags);
+			} else {
+				row.setAttribute("tagCollection", "");
+			}
+
+			rootElement.appendChild(row);
+
+			for (TagMePOJO obj : tagmeObjs) {
+				Element sTag = document.createElement("semanticTag");
+				sTag.setAttribute("title", obj.mTitle);
+
+				String categories = StringUtils.join(obj.mCategories, ",");
+
+				sTag.setAttribute("categories", categories);
+				sTag.setAttribute("rho", "" + obj.confidence);
+				row.appendChild(sTag);
+			}
+
+			root.appendChild(row);
+
+			DOMSource source = new DOMSource(document);
+
+			TransformerFactory transformerFactory = TransformerFactory
+					.newInstance();
+			Transformer transformer = transformerFactory.newTransformer();
+			URL path = classLoader.getResource("res/Posts_tags.xml");
+			StreamResult result = new StreamResult(new File(
+					"src/res/Posts_tags.xml"));
+			println("SAVING..... ::" + path);
+			transformer.transform(source, result);
+
+		} catch (Exception e) {
+			println("ERROR ::" + e);
+			e.printStackTrace();
+		}
+	}*/
 
 	public static String TEST_STR = "&lt;p&gt;I've been overweight most of my life and recently I've been slimming down (lost &gt; 50 lbs so far, shooting for 35-40 more) and I'm wanting to start running. I have no problems walking for miles and miles (walked 8 one day just to see how far I could go, never got tired), but when I start running my lungs are on fire after about 1/10th of a mile and I can't continue.&lt;/p&gt;&#xA;&#xA;&lt;p&gt;Is this something that will go away, is there something I can do to improve it, or should I be seeing a doctor about it?&lt;/p&gt;&#xA;&#xA;&lt;p&gt;Also might note I'm an ex-smoker of about 7 years, just quit about 5 months ago as part of my beginning a healthier lifestyle.&lt;/p&gt;&#xA;";
 }

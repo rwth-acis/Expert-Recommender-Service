@@ -1,10 +1,8 @@
 package com.sathvik.textprocessing;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,6 +24,11 @@ import com.sathvik.utils.Utils;
 public class SAXHandler extends DefaultHandler {
 
 	private int totalNoOfPost = 0;
+	TagCreator tagCreator;
+	SAXHandler() {
+		tagCreator = new TagCreator();
+	}
+	
 
 	@Override
 	public void startElement(String uri, String localName, String qName,
@@ -35,9 +38,18 @@ public class SAXHandler extends DefaultHandler {
 		if (qName.equalsIgnoreCase("row")) {
 			totalNoOfPost++;
 			String id = attributes.getValue("Id");
+			String tags = attributes.getValue("Tags");
 			String bodyText = attributes.getValue("Body");
 			String parentId = attributes.getValue("ParentId");
+			
+			//Generate new file with semantic tags.
+			//This is not required every time.
+			//Only when new data is parsed.
+			
+			TagMe tagme = new TagMe(id, bodyText);
+			tagCreator.saveTagsToFile(id, tags, tagme.getTags());
 
+			/*
 			// Temp, may not be required in future.
 			if (parentId != null && parentId.length() > 0) {
 				Utils.id2parentid.put(new Integer(id), new Integer(parentId));
@@ -66,7 +78,7 @@ public class SAXHandler extends DefaultHandler {
 
 			// Utils.println(id);
 			// Utils.println(bodyText);
-			// Utils.println("COUNT: "+count);
+			// Utils.println("COUNT: "+count);*/
 
 			// Maybe Create resource Obj.
 		}
@@ -88,6 +100,7 @@ public class SAXHandler extends DefaultHandler {
 	}
 
 	public void endDocument() throws SAXException {
+		/*
 		//Utils.println("Document reached its end");
 		HashMap<String, Integer> idfmap = new HashMap<String, Integer>();
 
@@ -169,7 +182,7 @@ public class SAXHandler extends DefaultHandler {
 		} catch (ParserConfigurationException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
-
+	*/
 	}
 
 }

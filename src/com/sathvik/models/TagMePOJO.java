@@ -1,7 +1,5 @@
 package com.sathvik.models;
 
-import java.util.ArrayList;
-
 import com.google.gson.annotations.SerializedName;
 
 public class TagMePOJO {

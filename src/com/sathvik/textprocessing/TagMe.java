@@ -28,23 +28,20 @@ public class TagMe {
 	private String postId;
 	ArrayList<String> tags;
 
-	TagMe(String id, String text) {
+	public TagMe(String id, String text) {
 		postId = id;
 		mText = text;
 	}
 
-	public ArrayList<String> getTags() {
-
-		return null;
-	}
-	
 	public void setTags(String tagstr) {
 		tags = new ArrayList<String>(Arrays.asList(tagstr.split(",")));
 	}
 
-	public void saveTags() {
+	public ArrayList<TagMePOJO> getTags() {
+		ArrayList<TagMePOJO> tagmeObjs = new ArrayList<TagMePOJO>();
+
 		if (mText != null && mText.length() > 0) {
-			
+
 			CloseableHttpClient httpclient = HttpClients.createDefault();
 			HttpPost httpPost = new HttpPost(Utils.TAGME_URL);
 			List<NameValuePair> nvps = new ArrayList<NameValuePair>();
@@ -57,22 +54,24 @@ public class TagMe {
 				httpPost.setEntity(new UrlEncodedFormEntity(nvps));
 				response = httpclient.execute(httpPost);
 				System.out.println(response.getStatusLine());
-				
+
 				HttpEntity entity = response.getEntity();
 				String responseString = EntityUtils.toString(entity, "UTF-8");
-				System.out.println(responseString);
-				
-				Gson gson = new GsonBuilder().registerTypeAdapter(TagMePOJO.class, new TagMeAdapter()).create();
-                
-				TagMePOJOContainer tagMe = gson
-                .fromJson(responseString,TagMePOJOContainer.class);
-				
-				for( TagMePOJO tagpojo: tagMe.getAnnotations()) {
-					if(tagpojo != null) {
-						Utils.println("TAG OBJ ::"+ new Gson().toJson(tagpojo));
+				//System.out.println(responseString);
+
+				Gson gson = new GsonBuilder().registerTypeAdapter(
+						TagMePOJO.class, new TagMeAdapter()).create();
+
+				TagMePOJOContainer tagMe = gson.fromJson(responseString,
+						TagMePOJOContainer.class);
+
+				for (TagMePOJO tagpojo : tagMe.getAnnotations()) {
+					if (tagpojo != null) {
+						tagmeObjs.add(tagpojo);
+						//Utils.println("TAG OBJ ::" + new Gson().toJson(tagpojo));
 					}
 				}
-				
+
 				// Release all the underlying resource.
 				EntityUtils.consume(entity);
 
@@ -86,9 +85,10 @@ public class TagMe {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+
 			}
-			
 		}
+		return tagmeObjs;
 	}
 
 }

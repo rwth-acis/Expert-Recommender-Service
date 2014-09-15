@@ -29,6 +29,8 @@ public class Main {
 		if (args.length > 0) {
 			query = args[0];
 		}
+		
+		
 		StopWord stopword = new StopWord("res/webconfs_stopwords.txt");
 		// URL url =
 		// Main.class.getClassLoader().getResource("src/res/webconfs_stopwords.txt");
@@ -48,15 +50,15 @@ public class Main {
 			SAXParser saxParser = saxParserFactory.newSAXParser();
 			SAXHandler handler = new SAXHandler();
 
-			saxParser.parse(classLoader.getResourceAsStream("res/Posts.xml"),
+			saxParser.parse(classLoader.getResourceAsStream("res/missing.xml"),
 					handler);
 
 		} catch (ParserConfigurationException | SAXException | IOException e) {
 			e.printStackTrace();
 		}
 
-		// TagMe tagme = new TagMe("123", Utils.TEST_STR);
-		// tagme.saveTags();
+		
+		
 
 	}
 }
