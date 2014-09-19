@@ -25,7 +25,7 @@ public class SAXHandler extends DefaultHandler {
 
 	private int totalNoOfPost = 0;
 	TagCreator tagCreator;
-	SAXHandler() {
+	public SAXHandler() {
 		tagCreator = new TagCreator();
 	}
 	
@@ -46,10 +46,10 @@ public class SAXHandler extends DefaultHandler {
 			//This is not required every time.
 			//Only when new data is parsed.
 			
-			TagMe tagme = new TagMe(id, bodyText);
-			tagCreator.saveTagsToFile(id, tags, tagme.getTags());
+			//TagMe tagme = new TagMe(id, bodyText);
+			//tagCreator.saveTagsToFile(id, tags, tagme.getTags());
 
-			/*
+			
 			// Temp, may not be required in future.
 			if (parentId != null && parentId.length() > 0) {
 				Utils.id2parentid.put(new Integer(id), new Integer(parentId));
@@ -78,7 +78,7 @@ public class SAXHandler extends DefaultHandler {
 
 			// Utils.println(id);
 			// Utils.println(bodyText);
-			// Utils.println("COUNT: "+count);*/
+			// Utils.println("COUNT: "+count);
 
 			// Maybe Create resource Obj.
 		}
@@ -100,7 +100,7 @@ public class SAXHandler extends DefaultHandler {
 	}
 
 	public void endDocument() throws SAXException {
-		/*
+		
 		//Utils.println("Document reached its end");
 		HashMap<String, Integer> idfmap = new HashMap<String, Integer>();
 
@@ -108,7 +108,7 @@ public class SAXHandler extends DefaultHandler {
 		for (Object term : Utils.TERM_FREQ_MAP.keys()) {
 			Collection<Resource> collections = Utils.TERM_FREQ_MAP
 					.get((String) term);
-			float irfweight = (float) Math.log(totalNoOfPost
+			double irfweight = Math.log(totalNoOfPost
 					/ collections.size());
 			// int irfweight = (int) Math.pow((int)
 			// (totalNoOfPost/collections.size()),2);
@@ -120,7 +120,7 @@ public class SAXHandler extends DefaultHandler {
 			for (Resource r : collections) {
 				// With irf weight
 				Utils.TERM_FREQ_MAP1.put(r.getPostId(),
-						new Float(r.getTermFreq()) * (int) irfweight);
+						r.getTermFreq() * irfweight);
 
 				// Without irf weight.
 				// Utils.TERM_FREQ_MAP1.put(r.getPostId(), r.getTermFreq());
@@ -128,61 +128,61 @@ public class SAXHandler extends DefaultHandler {
 
 		}
 
-		Map<Integer, Float> termfreq_map = new HashMap<Integer, Float>();
+		//Calculating final weight(normalized term weights) for each resource.
+		//Map<Integer, Float> termfreq_map = new HashMap<Integer, Float>();
 		for (Integer postid : Utils.TERM_FREQ_MAP1.keys()) {
-			Collection<Float> term_freq = Utils.TERM_FREQ_MAP1.get(postid);
+			Collection<Double> term_freq = Utils.TERM_FREQ_MAP1.get(postid);
 			
 			//Normalizing by sum of all term count.
-			float sum_freq = 0;
-			for (float i : term_freq)
+			double sum_freq = 0;
+			for (double i : term_freq)
 				sum_freq += i;
 
-			float sum = 0;
-			for (Float freq : term_freq) {
-				if (freq != sum_freq) {
-					//Utils.print("FREQ: " + freq + "::");
-					//Utils.println("MAX FREQ: " + sum_freq);
-				}
-				sum = sum + (freq / sum_freq);
-				// sum = sum + freq;
+			double sum = 0;
+			for (Double freq : term_freq) {
+				//sum = sum + (freq / sum_freq);
+				sum = sum + freq;
 			}
-			termfreq_map.put(postid, sum);
-			// Utils.println("Sum of Term Freq of postId: "+postid+": "+sum);
+			Utils.postId2termsWeight.put(postid, sum);
+			//Utils.println("Sum of Term Freq of postId: "+postid+": "+sum);
 		}
+		
+		//Utils.println("Finished parsing Posts...");
 
-		Map<Integer, Float> sorted_termfreq_map = Utils.sortMapByValue(
-				termfreq_map, true);
-		ArrayList<Integer> parentIds = new ArrayList<Integer>();
-		Utils.expert_post_ids = sorted_termfreq_map.keySet();
-		Utils.println("No of candidate experts found: "+Utils.expert_post_ids.size());
-		int i = 0;
-		for (Integer postid : Utils.expert_post_ids) {
-			if (i < Utils.NO_OF_NODES) {
-				// Utils.println("Sum of Term Freq of postId: "+postid+": "+termfreq_map.get(postid));
-				if (Utils.id2parentid.containsKey(postid)) {
-					int parentid = Utils.id2parentid.get(postid);
-					if (parentid != 0) {
-						parentIds.add(new Integer(parentid));
-					}
-				}
-			}
-			i++;
-		}
-
-		Utils.println("Visualizing few experts and related candidates... ");
-		// RelationCreator rCreator = new RelationCreator(parentIds);
-
-		SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
-		ClassLoader classLoader = getClass().getClassLoader();
-		try {
-			SAXParser saxParser = saxParserFactory.newSAXParser();
-			RelationCreator handler = new RelationCreator(parentIds);
-			saxParser.parse(classLoader.getResourceAsStream("res/Posts.xml"), handler);
-
-		} catch (ParserConfigurationException | SAXException | IOException e) {
-			e.printStackTrace();
-		}
-	*/
+		
+//		Map<Integer, Float> sorted_termfreq_map = Utils.sortMapByValue(
+//				Utils.postId2termsWeight, true);
+//		ArrayList<Integer> parentIds = new ArrayList<Integer>();
+//		Utils.expert_post_ids = sorted_termfreq_map.keySet();
+//		Utils.println("No of candidate experts found: "+Utils.expert_post_ids.size());
+//		int i = 0;
+//		for (Integer postid : Utils.expert_post_ids) {
+//			if (i < Utils.NO_OF_NODES) {
+//				// Utils.println("Sum of Term Freq of postId: "+postid+": "+termfreq_map.get(postid));
+//				if (Utils.id2parentid.containsKey(postid)) {
+//					int parentid = Utils.id2parentid.get(postid);
+//					if (parentid != 0) {
+//						parentIds.add(new Integer(parentid));
+//					}
+//				}
+//			}
+//			i++;
+//		}
+//
+//		Utils.println("Visualizing few experts and related candidates... ");
+//		// RelationCreator rCreator = new RelationCreator(parentIds);
+//
+//		SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+//		ClassLoader classLoader = getClass().getClassLoader();
+//		try {
+//			SAXParser saxParser = saxParserFactory.newSAXParser();
+//			RelationCreator handler = new RelationCreator(parentIds);
+//			saxParser.parse(classLoader.getResourceAsStream("res/Posts.xml"), handler);
+//
+//		} catch (ParserConfigurationException | SAXException | IOException e) {
+//			e.printStackTrace();
+//		}
+	
 	}
 
 }

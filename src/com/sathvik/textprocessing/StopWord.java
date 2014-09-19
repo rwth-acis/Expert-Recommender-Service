@@ -20,7 +20,7 @@ public class StopWord {
 	private String filepath;
 	private Pattern stopWordsPattern;
 
-	StopWord(String path) {
+	public StopWord(String path) {
 		filepath = path;
 	}
 
@@ -32,9 +32,10 @@ public class StopWord {
 		String stripped_sentence = matcher.replaceAll("");
 
 		// Stem the word.
-		String stemmed_sentence = Utils.stem(stripped_sentence);
+		//String stemmed_sentence = Utils.stem(stripped_sentence);
 
-		return stemmed_sentence;
+		//return stemmed_sentence;
+		return stripped_sentence;
 
 	}
 

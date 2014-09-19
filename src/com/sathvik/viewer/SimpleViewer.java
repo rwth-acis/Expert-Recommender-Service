@@ -52,7 +52,7 @@ public class SimpleViewer {
 		return view;
 	}
 
-	/** Creates a JFrame that will show the demo graph. */
+	/** Creates a JFrame that will show the graph. */
 	private JFrame createApplicationFrame(Dimension size, String title,
 			JComponent view) {
 		JPanel panel = new JPanel(new BorderLayout());
@@ -80,16 +80,16 @@ public class SimpleViewer {
 		graph.clear();
 		//Utils.print("NODEMAP SIZE::" + nodemap.keySet().size());
 
+		NodeRealizer parentNodeRealizer = graph.getDefaultNodeRealizer();
+		NodeRealizer childNodeRealizer = graph.getDefaultNodeRealizer();
 		for (int parentId : nodemap.keySet()) {
-
-			NodeRealizer parentNodeRealizer = graph.getDefaultNodeRealizer();
 			parentNodeRealizer.setWidth(50);
-			parentNodeRealizer.setLabelText("" + parentId);
+			parentNodeRealizer.setLabelText(""+parentId);
+			//parentNodeRealizer.setFillColor(Color.RED); //check if this is relevant in future.
+			
 			Node parent = graph.createNode();
-
 			Collection<Resource> collections = nodemap.get(parentId);
 			for (Resource r : collections) {
-				NodeRealizer childNodeRealizer = graph.getDefaultNodeRealizer();
 				if (Utils.expert_post_ids.contains(r.getPostId())) {
 					childNodeRealizer.setFillColor(Color.RED);
 				} else {

@@ -76,7 +76,7 @@ public class TagCreator {
 			//URL path = TagCreator.class.getClassLoader().getResource(
 			//		"res/Posts_xad_tags.xml");
 			StreamResult result = new StreamResult(new File(
-					"src/res/Posts_missing_tags.xml"));
+					"src/res/Posts_tags.xml"));
 			//Utils.println("SAVING..... ::" + path);
 			transformer.transform(source, result);
 
