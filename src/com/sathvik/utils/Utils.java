@@ -56,7 +56,7 @@ public final class Utils {
 	 * */
 	
 	public static final int NO_OF_NODES = 5;
-	public static final String TAG_ME_KEY = "174baff695d027d98674a1ebcf84d50c";
+	public static final String TAG_ME_KEY = "XXXXX"; //Replace with the tagme API key.
 	public static final String TAGME_URL = "http://tagme.di.unipi.it/tag";
 
 	public static Multiset QUERY_WORDS;
