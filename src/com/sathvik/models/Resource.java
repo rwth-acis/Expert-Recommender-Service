@@ -5,6 +5,8 @@ public class Resource {
 	String text;
 	int term_count;
 	String term;
+	int parentId;
+	int userId;
 	
 	public Resource(int id, String text) {
 		this.postid = id;
@@ -33,5 +35,21 @@ public class Resource {
 	
 	public String getTerm() {
 		return term;
+	}
+	
+	public void setParentId(int id) {
+		this.parentId = id;
+	}
+	
+	public int getParentId() {
+		return parentId;
+	}
+	
+	public void setUserId(int userId) {
+		this.userId = userId;
+	}
+	
+	public int getUserId() {
+		return userId;
 	}
 }

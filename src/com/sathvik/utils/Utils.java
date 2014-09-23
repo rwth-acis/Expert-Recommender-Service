@@ -26,15 +26,11 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
-import com.sathvik.models.EntityResource;
+import com.sathvik.ers.Main;
+import com.sathvik.ers.PorterStemmer;
+import com.sathvik.ers.SAXHandler;
+import com.sathvik.ers.StopWord;
 import com.sathvik.models.Resource;
-import com.sathvik.models.TagMePOJO;
-import com.sathvik.textprocessing.Main;
-import com.sathvik.textprocessing.PorterStemmer;
-import com.sathvik.textprocessing.SAXHandler;
-import com.sathvik.textprocessing.SemanticTagParser;
-import com.sathvik.textprocessing.StopWord;
-import com.sathvik.textprocessing.TagMe;
 
 /**
  * @author sathvik, sathvikmail@gmail.com
@@ -56,7 +52,7 @@ public final class Utils {
 	 * */
 	
 	public static final int NO_OF_NODES = 5;
-	public static final String TAG_ME_KEY = "XXXXX"; //Replace with the tagme API key.
+	public static final String TAG_ME_KEY = "174baff695d027d98674a1ebcf84d50c"; //Replace with the API key.
 	public static final String TAGME_URL = "http://tagme.di.unipi.it/tag";
 
 	public static Multiset QUERY_WORDS;
@@ -64,7 +60,10 @@ public final class Utils {
 	public static int THRESHOLD_TERM_FREQ = 0;
 	public static double CONFIDENCE_THRESHOLD = 0.06;
 	
-	public static ArrayList<TagMePOJO> QUERY_TAG_OBJS;
+	public static int SHOW_ALL = -1;
+	public static int SHOW_USER = -1; //Change the value to userId whose relationship you want to inspect.
+
+	
 	public static ArrayList<String> QUERY_TAG_TITLES = new ArrayList<String>();
 
 	public static HashMultimap<String, Resource> TERM_FREQ_MAP = HashMultimap
@@ -74,20 +73,17 @@ public final class Utils {
 			.create();
 	
 	
-	public static HashMultimap<String, EntityResource> ENTITY2FREQ = HashMultimap
-			.create();
-	
 	public static HashMultimap<Integer, Double> POSTID2WEIGHT = HashMultimap
 			.create();
 	
+	public static HashMap<Integer, Resource> postid2resObj = new HashMap<Integer, Resource>();
+	
 	public static Map<Integer, Double> postId2termsWeight = new HashMap<Integer,Double>();
-	public static Map<Integer, Double> postId2entitiesWeight = new HashMap<Integer,Double>();
-	public static Map<Integer, Double> postId2finalWeight = new LinkedHashMap<Integer,Double>();
 	
 	public static Map<Integer, Double> tester = new LinkedHashMap<Integer,Double>();
-			
+	
 
-	public static String query = "Who is the expert to know proteins?";
+	public static String query = "Who is the expert to know protein?";
 
 	// This is temp, may not require in future.
 	public static HashMap<Integer, Integer> id2parentid = new HashMap<Integer, Integer>();
@@ -172,101 +168,6 @@ public final class Utils {
 
 	}
 
-	public static void createEntityWeightMap() {
-		// Create entityfreq map
-
-		// Get Tags for the query.
-		TagMe tagme = new TagMe("", query);
-		Utils.QUERY_TAG_OBJS = tagme.getTags();
-
-		for (TagMePOJO tags : Utils.QUERY_TAG_OBJS) {
-			Utils.QUERY_TAG_TITLES.add(tags.mTitle);
-			println("titles:"+tags.mTitle);
-		}
-
-		try {
-			SAXParser saxParser = saxParserFactory.newSAXParser();
-			SemanticTagParser handler = new SemanticTagParser();
-
-			saxParser.parse(classLoader.getResourceAsStream("res/joined.xml"),
-					handler);
-
-		} catch (ParserConfigurationException | SAXException | IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-
-	
-	 
-	// public static void saveSemanticTags(Class cls, String postid, String
-	// tags,
-	// ArrayList<TagMePOJO> tagmeObjs) {
-	//
-	// try {
-	// ClassLoader classLoader = cls.getClassLoader();
-	//
-	// DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory
-	// .newInstance();
-	// DocumentBuilder documentBuilder = documentBuilderFactory
-	// .newDocumentBuilder();
-	// Document document = documentBuilder.parse(classLoader
-	// .getResourceAsStream("res/Posts_tags.xml"));
-	// Element root = document.getDocumentElement();
-	//
-	// // Root Element
-	// Element rootElement = document.getDocumentElement();
-	// Element row = document.createElement("row");
-	// row.setAttribute("postId", postid);
-	//
-	// if (tags != null) {
-	// row.setAttribute("tagCollection", tags);
-	// } else {
-	// row.setAttribute("tagCollection", "");
-	// }
-	//
-	// rootElement.appendChild(row);
-	//
-	// for (TagMePOJO obj : tagmeObjs) {
-	// Element sTag = document.createElement("semanticTag");
-	// sTag.setAttribute("title", obj.mTitle);
-	//
-	// String categories = StringUtils.join(obj.mCategories, ",");
-	//
-	// sTag.setAttribute("categories", categories);
-	// sTag.setAttribute("rho", "" + obj.confidence);
-	// row.appendChild(sTag);
-	// }
-	//
-	// root.appendChild(row);
-	//
-	// DOMSource source = new DOMSource(document);
-	//
-	// TransformerFactory transformerFactory = TransformerFactory
-	// .newInstance();
-	// Transformer transformer = transformerFactory.newTransformer();
-	// URL path = classLoader.getResource("res/Posts_tags.xml");
-	// StreamResult result = new StreamResult(new File(
-	// "src/res/Posts_tags.xml"));
-	// println("SAVING..... ::" + path);
-	// transformer.transform(source, result);
-	//
-	// } catch (Exception e) {
-	// println("ERROR ::" + e);
-	// e.printStackTrace();
-	// }
-	// }
-	
-	
-//	public static void createEntityFreq(Set<String> queryEntities, Multiset<String> resEntities) {
-//		for(String s: queryEntities) {
-//			ENTITY2FREQ.put(s, resEntities.count(s));
-//		}
-//		
-//		
-//	}
-	
-	
 	 public static Map<Integer,Double> addValues(Map<Integer,Double> a, Map<Integer,Double> b) {
 		    Map<Integer,Double> ret = new HashMap<Integer,Double>(a);
 		    for (Integer s : b.keySet()) {
