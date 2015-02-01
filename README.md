@@ -1,7 +1,7 @@
 Recommendation-Service
 ======================
 
-In this repository person to person recommender algorithms and services is implemented 
+In this repository person to person recommender algorithms and services are implemented 
 
 This is ongoing prototype implementation for Expert Recommendation Serivce.
 Project is under continuous development and may not compile.
