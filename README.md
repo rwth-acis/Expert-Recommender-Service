@@ -4,7 +4,7 @@ LAS2peer-Template-Project
 
 An Expert Recommender framework -- UNDER CONSTRUCTION.
 
-![](https://github.com/github/123.png)
+![](https://github.com/rwth-acis/Recommendation-Service/blob/master/res/under_construction.png)
 
 
 Requirements:
