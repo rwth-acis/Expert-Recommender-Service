@@ -1,0 +1,39 @@
+Testsuite: i5.las2peer.services.servicePackage.ServiceTest
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 25.244 sec
+------------- Standard Output ---------------
+Service i5.las2peer.services.servicePackage.ExpertRecommenderService has been started!
+Class: WebConnector using: enableCrossOriginResourceSharing -> TRUE
+Class: WebConnector using: oidcProvider -> https://api.learning-layers.eu/o/oauth2
+Class: WebConnector using: sslKeystore -> etc/example.jks
+Class: WebConnector using: httpsPort -> 8090
+Class: WebConnector using: startHttps -> FALSE
+Class: WebConnector using: sslKeyPassword -> secretpassword
+Class: WebConnector using: socketTimeout -> 60000
+Class: WebConnector using: preferLocalServices -> TRUE
+Class: WebConnector using: defaultLoginPassword -> anonymous
+Class: WebConnector using: httpPort -> 8080
+Class: WebConnector using: xmlPath -> 
+Class: WebConnector using: crossOriginResourceDomain -> *
+Class: WebConnector using: defaultLoginUser -> anonymous
+Class: WebConnector using: startHttp -> TRUE
+Class: WebConnector using: crossOriginResourceMaxAge -> 60
+Starting HTTP-Server on port 8080
+waiting..
+===> CPU Load: 0.0
+Result of 'testExampleMethod': Who is the expert in compil catty?
+checking for expired messages
+waiting for 0 agents 
+Server at port 8080 has been stopped!
+Service i5.las2peer.services.servicePackage.ExpertRecommenderService has been stopped!
+checking for expired messages
+waiting for 0 agents 
+Connector-Log:
+--------------
+Feb 20, 2015 8:55:01 PM	Web-Connector in HTTP mode running on port 8080
+Feb 20, 2015 8:55:22 PM	Web-Connector in HTTP mode has been stopped
+
+------------- ---------------- ---------------
+
+Testcase: testDebugMapping took 0.096 sec
+Testcase: testExampleMethod took 0.002 sec
+Testcase: testStemmerMethod took 0.032 sec

@@ -1,0 +1,10 @@
+i5.las2peer.services.servicePackage
+i5.las2peer.services.servicePackage.database
+i5.las2peer.services.servicePackage.evaluation
+i5.las2peer.services.servicePackage.main
+i5.las2peer.services.servicePackage.models
+i5.las2peer.services.servicePackage.scoring
+i5.las2peer.services.servicePackage.semanticTagger
+i5.las2peer.services.servicePackage.textProcessor
+i5.las2peer.services.servicePackage.utils
+i5.las2peer.services.servicePackage.xmlparsers
