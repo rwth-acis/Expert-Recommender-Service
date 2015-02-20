@@ -1,0 +1,87 @@
+.qbox {
+	width:600px;
+	height: 30px;
+	float:left;
+}
+
+.header {
+	position:absolute;
+	left:44%;
+	top:33%;
+}
+
+.qform {
+	position:absolute;
+	left:30%; 
+	top:40%;
+	width:800px;
+	height:60px;
+	margin:0 auto;
+	font-size: 40px;	
+}
+
+.searchbtn {
+	margin-top: 10px;
+	margin-left: 230px;
+	width:200px;
+	height:55px;
+	float:left;
+	clear:left;
+}
+
+input { font-size: 18px; }
+
+.list_item {
+	width:1324px;
+	height: 100px;
+	background-color: #C0C0C0;
+	margin: 5px;
+}
+
+.profile_pic {
+	width: 90px;
+	height:90px;
+	margin: 5px;
+	float:left;
+	background-color: #8B6969;
+}
+
+.user_details {
+	width:290px;
+	height:90px;
+	float:left;
+	margin: 5px;
+	background-color: #A8A8A8;
+}
+
+.name {
+	width:200px;
+	height:20px;
+	float:left;
+	margin: 5px;
+}
+
+.email {
+	width:200px;
+	height:20px;
+	margin: 5px;
+	float:left;
+	clear:both;
+}
+
+.related_post {
+	width:580px;
+	height:90px;
+	margin:5px;
+	float:left;
+	overflow: auto;
+	background-color: #A8A8A8;
+}
+
+.related_topics {
+	width:250px;
+	height:90px;
+	margin:5px;
+	float:left;
+	background-color: #C0C0C0;
+}

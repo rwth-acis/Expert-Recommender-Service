@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<service consumes="*" name="i5.las2peer.services.servicePackage.ExpertRecommenderService" path="recommender_framework" produces="text/plain" version="0.1">
+  <methods>
+    <method httpMethod="post" name="removeStopWords" path="stopword_remover" type="i5.las2peer.restMapper.HttpResponse">
+      <parameters>
+        <parameter annotation="content" index="0" name="" type="java.lang.String"/>
+      </parameters>
+    </method>
+    <method httpMethod="post" name="stemWords" path="stemmer" type="i5.las2peer.restMapper.HttpResponse">
+      <parameters>
+        <parameter annotation="content" index="0" name="" type="java.lang.String"/>
+      </parameters>
+    </method>
+    <method httpMethod="post" name="modelExperts" path="modeling" type="i5.las2peer.restMapper.HttpResponse">
+      <parameters>
+        <parameter annotation="content" index="0" name="" type="java.lang.String"/>
+      </parameters>
+    </method>
+    <method httpMethod="post" name="applyPageRank" path="pagerank" type="i5.las2peer.restMapper.HttpResponse">
+      <parameters>
+        <parameter annotation="content" index="0" name="" type="java.lang.String"/>
+      </parameters>
+    </method>
+    <method httpMethod="post" name="applyHITS" path="hits" type="i5.las2peer.restMapper.HttpResponse">
+      <parameters>
+        <parameter annotation="content" index="0" name="" type="java.lang.String"/>
+      </parameters>
+    </method>
+    <method httpMethod="post" name="prepareDefaultData" path="recommender/DbPreparer" type="i5.las2peer.restMapper.HttpResponse">
+      <parameters/>
+    </method>
+  </methods>
+</service>
