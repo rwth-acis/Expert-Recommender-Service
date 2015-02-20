@@ -8,4 +8,5 @@ An Expert Recommender framework -- UNDER CONSTRUCTION.
 
 
 Requirements:
-MySql database, rest will be included from ant configuration.
+MySql - For storing data.
+Ant - For build system.
