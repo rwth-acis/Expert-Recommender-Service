@@ -47,6 +47,10 @@ public class UserEntity {
 	@DatabaseField(columnName = "no_of_posts", dataType = DataType.LONG)
 	private long noOfPosts;
 
+	// Inserted after calculation by the evaluation module.
+	@DatabaseField(columnName = "probable_expert", dataType = DataType.BOOLEAN)
+	private boolean probableExpert = false; // Used for evaluation.
+
 	// This is calculated by algorithm.
 	private double score;
 
@@ -102,6 +106,10 @@ public class UserEntity {
 		return noOfPosts;
 	}
 
+	public boolean isProbableExpert() {
+		return probableExpert;
+	}
+
 	public void setUserAccId(long id) {
 		this.accountId = id;
 	}
@@ -153,4 +161,5 @@ public class UserEntity {
 	public void setNoOfPosts(long noOfPosts) {
 		this.noOfPosts = noOfPosts;
 	}
+
 }

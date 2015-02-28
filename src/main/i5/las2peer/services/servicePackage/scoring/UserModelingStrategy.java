@@ -18,7 +18,7 @@ public class UserModelingStrategy implements ScoreStrategy {
 							// research paper.
 
 	@Override
-	public String executeAlgorithm() {
+	public void executeAlgorithm() {
 
 		// Step1: Add All the values in postid 2 Resource Map.
 		// Step2: Iterate all post id, get userid.
@@ -68,10 +68,10 @@ public class UserModelingStrategy implements ScoreStrategy {
 		// }
 		//
 		// }
-		return getExpertsList();
+
 	}
 
-	private String getExpertsList() {
+	public String getExperts() {
 		LinkedHashMap<String, Double> experts = Global
 				.sortByValue(userId2Score);
 
@@ -95,6 +95,18 @@ public class UserModelingStrategy implements ScoreStrategy {
 		// }
 
 		return jsonArray.toJSONString();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * i5.las2peer.services.servicePackage.scoring.ScoreStrategy#getExpertMap()
+	 */
+	@Override
+	public LinkedHashMap<String, Double> getExpertMap() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

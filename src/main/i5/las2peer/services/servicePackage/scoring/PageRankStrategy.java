@@ -22,35 +22,34 @@ public class PageRankStrategy implements ScoreStrategy {
 	private int maxIterations = 30;
 	private double tolerance = 0.0000001d;
 	private double alpha = 0.15d;
-	Graph<String, RelationshipEdge> graph;
+	private Graph<String, RelationshipEdge> graph;
+	private LinkedHashMap<String, Double> expert2score;
 
 	public PageRankStrategy(Graph<String, RelationshipEdge> graph) {
 		this.graph = graph;
 	}
 
 	@Override
-	public String executeAlgorithm() {
+	public void executeAlgorithm() {
 		PageRank ranker = new PageRank(this.graph, this.alpha);
 		ranker.setTolerance(this.tolerance);
 		ranker.setMaxIterations(this.maxIterations);
 		ranker.evaluate();
 
-
 		for (String v : graph.getVertices()) {
 			node2pagescore.put(v, (Double) ranker.getVertexScore(v));
 		}
 
-		return getExpertsList();
 	}
 
-	private String getExpertsList() {
-		LinkedHashMap<String, Double> experts = Global
-				.sortByValue(node2pagescore);
+	@Override
+	public String getExperts() {
+		expert2score = Global.sortByValue(node2pagescore);
 
 		int i = 0;
 		JSONArray jsonArray = new JSONArray();
 
-		for (String userid : experts.keySet()) {
+		for (String userid : expert2score.keySet()) {
 			i++;
 			// Restrict result to 10 items for now.
 			if (i < 10) {
@@ -70,6 +69,10 @@ public class PageRankStrategy implements ScoreStrategy {
 		// + mrr.getReciprocalRank(experts));
 
 		return jsonArray.toJSONString();
+	}
+
+	public LinkedHashMap<String, Double> getExpertMap() {
+		return expert2score;
 	}
 
 }

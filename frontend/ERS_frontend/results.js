@@ -17,6 +17,11 @@ $(function(){
 	else {
 		console.log("Made request for PageRank...");
 		url = basepath+"pagerank";
+
+		//console.log("Made request for Community Aware Rank...");
+		//url = basepath+"community_aware_rank";
+		//url = basepath+"DbPreparer";
+		
 	}
 
 	 $.post( url, query)

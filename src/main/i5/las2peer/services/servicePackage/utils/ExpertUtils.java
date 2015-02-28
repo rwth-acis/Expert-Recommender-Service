@@ -1,12 +1,7 @@
 package i5.las2peer.services.servicePackage.utils;
 
-import i5.las2peer.services.servicePackage.graph.JUNGGraphCreator;
 import i5.las2peer.services.servicePackage.graph.RelationshipEdge;
 import i5.las2peer.services.servicePackage.models.Resource;
-import i5.las2peer.services.servicePackage.scoring.HITSStrategy;
-import i5.las2peer.services.servicePackage.scoring.PageRankStrategy;
-import i5.las2peer.services.servicePackage.scoring.ScoringContext;
-import i5.las2peer.services.servicePackage.scoring.UserModelingStrategy;
 
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
@@ -57,7 +52,7 @@ public class ExpertUtils {
 	public int THRESHOLD_WORD_FREQ = 0;
 
 	public HashMap<String, Set<String>> q2a = new HashMap<String, Set<String>>();
-	public JUNGGraphCreator jcreator;
+
 
 	public double totalNoOfResources = 0;
 
@@ -151,24 +146,6 @@ public class ExpertUtils {
 		return result;
 	}
 
-	public String applyPageRank() {
-		System.out.println("PageRank started");
-
-		ScoringContext scontext = new ScoringContext(new PageRankStrategy(
-				jcreator.getGraph()));
-		return scontext.executeStrategy();
-	}
-
-	public String applyHITS() {
-		ScoringContext scontext = new ScoringContext(new HITSStrategy(
-				jcreator.getGraph()));
-		return scontext.executeStrategy();
-	}
-
-	public String applyUserModelingStrategy() {
-		ScoringContext scontext = new ScoringContext(new UserModelingStrategy());
-		return scontext.executeStrategy();
-	}
 
 	// public void createJUNGGraph(MySqlConnector connector) {
 	// jcreator = new JUNGGraphCreator();

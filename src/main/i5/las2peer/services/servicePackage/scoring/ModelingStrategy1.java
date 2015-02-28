@@ -14,8 +14,10 @@ import net.minidev.json.JSONArray;
 
 public class ModelingStrategy1 implements ScoreStrategy {
 	double alpha = 0.5;
+	LinkedHashMap<Long, Double> expert2score;
+
 	@Override
-	public String executeAlgorithm() {
+	public void executeAlgorithm() {
 		System.out.println("Ranking the res..");
 		try {
 			for (Map.Entry entry : Global.postid2Resource1.entries()) {
@@ -61,18 +63,17 @@ public class ModelingStrategy1 implements ScoreStrategy {
 			e.printStackTrace();
 		}
 		System.out.println("Ranking the res completed..");
-		return getExpertsList();
 	}
 
-	private String getExpertsList() {
+	public String getExperts() {
 		JSONArray jsonArray = new JSONArray();
 		try {
-			LinkedHashMap<Long, Double> experts = Global
+			expert2score = Global
 					.sortByValue(Global.userid2score);
 
 			int i = 0;
 
-			for (long userid : experts.keySet()) {
+			for (long userid : expert2score.keySet()) {
 
 				// Restrict result to 10 items for now.
 				if (i < 10) {
@@ -91,5 +92,16 @@ public class ModelingStrategy1 implements ScoreStrategy {
 		}
 
 		return jsonArray.toJSONString();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * i5.las2peer.services.servicePackage.scoring.ScoreStrategy#getExpertMap()
+	 */
+	@Override
+	public LinkedHashMap<String, Double> getExpertMap() {
+		return null;
 	}
 }

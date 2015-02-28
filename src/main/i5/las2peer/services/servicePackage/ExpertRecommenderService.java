@@ -11,12 +11,18 @@ import i5.las2peer.restMapper.tools.ValidationResult;
 import i5.las2peer.restMapper.tools.XMLCheck;
 import i5.las2peer.services.servicePackage.database.Data;
 import i5.las2peer.services.servicePackage.database.MySqlHelper;
-import i5.las2peer.services.servicePackage.database.SemanticTagEntity;
 import i5.las2peer.services.servicePackage.database.UserEntity;
+import i5.las2peer.services.servicePackage.evaluation.Precision;
+import i5.las2peer.services.servicePackage.graph.GraphWriter;
+import i5.las2peer.services.servicePackage.graph.JUNGGraphCreator;
+import i5.las2peer.services.servicePackage.scoring.HITSStrategy;
+import i5.las2peer.services.servicePackage.scoring.PageRankStrategy;
+import i5.las2peer.services.servicePackage.scoring.ScoringContext;
 import i5.las2peer.services.servicePackage.semanticTagger.SemanticTagger;
 import i5.las2peer.services.servicePackage.textProcessor.PorterStemmer;
 import i5.las2peer.services.servicePackage.textProcessor.StopWordRemover;
 import i5.las2peer.services.servicePackage.utils.Global;
+import i5.las2peer.services.servicePackage.visualization.GraphMl2GEXFConverter;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,13 +48,11 @@ import com.j256.ormlite.table.TableUtils;
 @Version("0.1")
 public class ExpertRecommenderService extends Service {
 
-
 	public ExpertRecommenderService() {
 		// read and set properties values
 		// IF THE SERVICE CLASS NAME IS CHANGED, THE PROPERTIES FILE NAME NEED
 		// TO BE CHANGED TOO!
 		setFieldValues();
-
 
 	}
 
@@ -98,7 +102,6 @@ public class ExpertRecommenderService extends Service {
 		return res;
 
 	}
-
 
 	@POST
 	@Path("modeling")
@@ -158,15 +161,25 @@ public class ExpertRecommenderService extends Service {
 	public HttpResponse applyPageRank(@ContentParam String text) {
 
 		String query = text;
-
-		Stopwatch timer = Stopwatch.createStarted();
-		// TODO: Semantic analysis of the text.
-		StopWordRemover remover = new StopWordRemover(query);
-		String cleanstr = remover.getPlainText();
-
-		Global.QUERY_WORDS = HashMultiset.create(Splitter
-				.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(cleanstr));
+		StopWordRemover remover = null;
+		String cleanstr = null;
 		String expert_posts = "{}";
+		Stopwatch timer = null;
+		try {
+			// timer = Stopwatch.createStarted();
+			// TODO: Semantic analysis of the text.
+			remover = new StopWordRemover(query);
+			cleanstr = remover.getPlainText();
+
+			Global.QUERY_WORDS = HashMultiset.create(Splitter
+					.on(CharMatcher.WHITESPACE).omitEmptyStrings()
+					.split(cleanstr));
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		System.out.println("TRYING TO CONNECT TO DB");
 
 		try {
 			ConnectionSource connSrc = MySqlHelper
@@ -184,10 +197,30 @@ public class ExpertRecommenderService extends Service {
 		}
 
 		Global.createFilteredQnAMap();
-		Global.createJUNGGraph();
-		expert_posts = Global.applyPageRank();
 
-		System.out.println("Total time " + timer.stop());
+		JUNGGraphCreator jcreator = new JUNGGraphCreator();
+		jcreator.createGraph(Global.q2a1, Global.postId2userId1);
+
+		System.out.println("Applying Pagerank...");
+
+		PageRankStrategy strategy = new PageRankStrategy(jcreator.getGraph());
+		ScoringContext scontext = new ScoringContext(strategy);
+		scontext.executeStrategy();
+
+		expert_posts = scontext.getExperts();
+
+		System.out.println("Calculating Precision....");
+		try {
+			Precision precision = new Precision(scontext.getExpertMap(), 10);
+			System.out.println("PRECISION ::" + precision.getValue());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		GraphWriter writer = new GraphWriter(jcreator);
+		writer.saveToGraphMl("fitness_graph_jung.graphml");
+
+		// System.out.println("Total time " + timer.stop());
 		HttpResponse res = new HttpResponse(expert_posts);
 		res.setStatus(200);
 		return res;
@@ -224,8 +257,18 @@ public class ExpertRecommenderService extends Service {
 		}
 
 		Global.createFilteredQnAMap();
-		Global.createJUNGGraph();
-		expert_posts = Global.applyHITS();
+
+		JUNGGraphCreator jcreator = new JUNGGraphCreator();
+		jcreator.createGraph(Global.q2a1, Global.postId2userId1);
+
+		System.out.println("Applying HITS...");
+
+		HITSStrategy strategy = new HITSStrategy(jcreator.getGraph());
+
+		ScoringContext scontext = new ScoringContext(strategy);
+		scontext.executeStrategy();
+
+		expert_posts = scontext.getExperts();
 
 		System.out.println("Total time " + timer.stop());
 		HttpResponse res = new HttpResponse(expert_posts);
@@ -234,7 +277,75 @@ public class ExpertRecommenderService extends Service {
 	}
 
 	@POST
-	@Path("recommender/DbPreparer")
+	@Path("community_aware_rank")
+	public HttpResponse applyCommunityAwareRank(@ContentParam String text) {
+
+		String query = text;
+
+		Stopwatch timer = Stopwatch.createStarted();
+		// TODO: Semantic analysis of the text.
+		StopWordRemover remover = new StopWordRemover(query);
+		String cleanstr = remover.getPlainText();
+
+		Global.QUERY_WORDS = HashMultiset.create(Splitter
+				.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(cleanstr));
+		String expert_posts = "{}";
+
+		try {
+			ConnectionSource connSrc = MySqlHelper
+					.createConnectionSource("healthcare");
+			MySqlHelper.createUserMap(connSrc);
+			MySqlHelper.createTermFreqMap(connSrc);
+		} catch (SQLException e) {
+
+			e.printStackTrace();
+			HttpResponse res = new HttpResponse(
+					"Some error occured on the server, Please contact the developer..."
+							+ e);
+			res.setStatus(404);
+			return res;
+		}
+
+		Global.createFilteredQnAMap();
+
+		JUNGGraphCreator jcreator = new JUNGGraphCreator();
+		jcreator.createGraph(Global.q2a1, Global.postId2userId1);
+
+		GraphWriter writer = new GraphWriter(jcreator);
+		writer.saveToGraphMl("fitness_graph_jung.graphml");
+
+		System.out.println("Created Graph ans saved it... ");
+
+		System.out.println("Total time " + timer.stop());
+		HttpResponse res = new HttpResponse(expert_posts);
+		res.setStatus(200);
+		return res;
+	}
+
+	@POST
+	@Path("visulaizer")
+	public HttpResponse visualize(@ContentParam String text) {
+
+		System.out.println("Visualizing...");
+
+		// Converting graphml format to gexf format.
+		GraphMl2GEXFConverter converter = new GraphMl2GEXFConverter();
+		try {
+			converter.convert("fitness_graph_jung.graphml");
+			converter.applyLayout();
+			converter.export("fitness_graph_jung");
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		HttpResponse res = new HttpResponse("Everything went good...");
+		res.setStatus(200);
+		return res;
+	}
+
+	@POST
+	@Path("DbPreparer")
 	public HttpResponse prepareDefaultData() {
 
 		try {
@@ -273,26 +384,25 @@ public class ExpertRecommenderService extends Service {
 
 			System.out.println("Inserting into User table...");
 			TableUtils.createTableIfNotExists(connectionSrc, UserEntity.class);
-			MySqlHelper.createAndInsertUserDAO(user_list,
-					connectionSrc);
+			MySqlHelper.createAndInsertUserDAO(user_list, connectionSrc);
+
+			MySqlHelper.markExpertsForEvaluation(connectionSrc);
 
 			// Create Semantics table and insert data.
-			TableUtils.createTableIfNotExists(connectionSrc,
-					SemanticTagEntity.class);
-			MySqlHelper.createAndInsertSemanticTags(connectionSrc);
+			// TableUtils.createTableIfNotExists(connectionSrc,
+			// SemanticTagEntity.class);
+			// MySqlHelper.createAndInsertSemanticTags(connectionSrc);
 
 			connectionSrc.close();
 
 			System.out.println("Inserting into user table completed...");
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.out.println("Preparing Db...");
 			HttpResponse res = new HttpResponse("Something went wrong..");
 			res.setStatus(200);
 			return res;
 		}
 
-		System.out.println("Preparing Db...");
 		HttpResponse res = new HttpResponse("Everything went good...");
 		res.setStatus(200);
 		return res;

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <service consumes="*" name="i5.las2peer.services.servicePackage.ExpertRecommenderService" path="recommender_framework" produces="text/plain" version="0.1">
   <methods>
     <method httpMethod="post" name="removeStopWords" path="stopword_remover" type="i5.las2peer.restMapper.HttpResponse">
@@ -26,7 +26,17 @@
         <parameter annotation="content" index="0" name="" type="java.lang.String"/>
       </parameters>
     </method>
-    <method httpMethod="post" name="prepareDefaultData" path="recommender/DbPreparer" type="i5.las2peer.restMapper.HttpResponse">
+    <method httpMethod="post" name="applyCommunityAwareRank" path="community_aware_rank" type="i5.las2peer.restMapper.HttpResponse">
+      <parameters>
+        <parameter annotation="content" index="0" name="" type="java.lang.String"/>
+      </parameters>
+    </method>
+    <method httpMethod="post" name="visualize" path="visulaizer" type="i5.las2peer.restMapper.HttpResponse">
+      <parameters>
+        <parameter annotation="content" index="0" name="" type="java.lang.String"/>
+      </parameters>
+    </method>
+    <method httpMethod="post" name="prepareDefaultData" path="DbPreparer" type="i5.las2peer.restMapper.HttpResponse">
       <parameters/>
     </method>
   </methods>
