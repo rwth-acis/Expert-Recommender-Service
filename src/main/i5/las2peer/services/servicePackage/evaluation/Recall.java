@@ -15,7 +15,8 @@ import java.util.LinkedHashMap;
  */
 public class Recall {
 	private LinkedHashMap<String, Double> userId2score;
-	private int count; // To calculate P@count
+	private int count; // To calculate R@count
+	private static final int collectionSize = 50;
 
 	public Recall(LinkedHashMap<String, Double> userId2score, int count) {
 		if (count == -1) {
@@ -25,6 +26,24 @@ public class Recall {
 		}
 
 		this.userId2score = userId2score;
+	}
+
+	private int getTotalRelevantExpertInCollection() {
+		int total_relevant_experts_in_collection = 0;
+		int i = 0;
+
+		Iterator<String> iterator = this.userId2score.keySet().iterator();
+		while (iterator.hasNext() && i < collectionSize) {
+			String setElement = iterator.next();
+			UserEntity user_entity = Global.userId2userObj1.get(Long
+					.valueOf(setElement));
+			if (user_entity.isProbableExpert()) {
+				total_relevant_experts_in_collection++;
+			}
+			i++;
+		}
+
+		return total_relevant_experts_in_collection;
 	}
 
 	public double getValue() {
@@ -46,17 +65,16 @@ public class Recall {
 		}
 		System.out.println("No of relevant expert:: " + no_of_relevant_experts);
 
-		// We are returning all the possible results for the query, hence recall
-		// is always 100%.
-		// TODO: Check if this can be modified to be more accurate.
-		// Possible missing experts are deliberately removed, for eg. anonymous
-		// users may be relevant but ignored for Expert recommenders.
-		recall_score = (double) no_of_relevant_experts / no_of_relevant_experts;
+		// TODO: Check this again.
+		int total_relevant_expert = getTotalRelevantExpertInCollection();
+		total_relevant_expert = total_relevant_expert == 0 ? 1
+				: total_relevant_expert;
+
+		recall_score = (double) no_of_relevant_experts / total_relevant_expert;
 
 		return recall_score * 100;
 	}
 
-	// Precision@count.
 	public int getCount() {
 		return this.count;
 	}
