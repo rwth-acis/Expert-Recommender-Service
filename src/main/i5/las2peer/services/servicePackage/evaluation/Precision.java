@@ -6,6 +6,10 @@ package i5.las2peer.services.servicePackage.evaluation;
 import i5.las2peer.services.servicePackage.database.UserEntity;
 import i5.las2peer.services.servicePackage.utils.Global;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
@@ -16,6 +20,9 @@ import java.util.LinkedHashMap;
 public class Precision {
 	private LinkedHashMap<String, Double> userId2score;
 	private int count; // To calculate P@count
+	double precision_scores[];
+	double averagePrecision = 0;
+
 	public Precision(LinkedHashMap<String, Double> userId2score, int count) {
 		if (count == -1) {
 			this.count = Integer.MAX_VALUE;
@@ -46,6 +53,67 @@ public class Precision {
 		precision_score = (double) no_of_relevant_experts / this.count;
 
 		return precision_score * 100;
+	}
+
+	public double getAveragePrecision() {
+		precision_scores = new double[this.userId2score.size()];
+		precision_scores = getAllPrecisionValues();
+		for (int j = 0; j < precision_scores.length; j++) {
+			averagePrecision = averagePrecision + precision_scores[j];
+		}
+
+		return averagePrecision;
+	}
+
+	public double[] getRoundedValues() {
+		double[] rounded_precision_values = new double[precision_scores.length];
+
+		for (int i = 0; i < precision_scores.length; i++) {
+			rounded_precision_values[i] = Global.round(precision_scores[i], 2);
+		}
+		return rounded_precision_values;
+	}
+
+	public double[] getAllPrecisionValues() {
+		Iterator<String> iterator = this.userId2score.keySet().iterator();
+		int no_of_relevant_experts = 0;
+		int i = 0;
+
+		while (iterator.hasNext() && i < this.count) {
+			String setElement = iterator.next();
+			UserEntity user_entity = Global.userId2userObj1.get(Long
+					.valueOf(setElement));
+			if (user_entity.isProbableExpert()) {
+				no_of_relevant_experts++;
+			}
+
+			precision_scores[i] = (double) no_of_relevant_experts / (i + 1);
+			i++;
+		}
+		return precision_scores;
+	}
+
+	public void saveAvgPrecisionToFile() {
+		try (PrintWriter out = new PrintWriter(new BufferedWriter(
+				new FileWriter("average_precision_list.txt", true)))) {
+			out.println(averagePrecision);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void savePrecisionValuesToFile() {
+		try (PrintWriter out = new PrintWriter(new BufferedWriter(
+				new FileWriter("precision_list.txt", false)))) {
+			for (int i = 0; i < precision_scores.length; i++) {
+				// System.out.println("ROUNDED:: "
+				// + Global.round(precision_scores[i], 1));
+				out.println(Global.round(precision_scores[i], 2));
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	// Precision@count.

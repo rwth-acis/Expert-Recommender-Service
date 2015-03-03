@@ -6,6 +6,10 @@ package i5.las2peer.services.servicePackage.evaluation;
 import i5.las2peer.services.servicePackage.database.UserEntity;
 import i5.las2peer.services.servicePackage.utils.Global;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
@@ -16,6 +20,7 @@ import java.util.LinkedHashMap;
 public class Recall {
 	private LinkedHashMap<String, Double> userId2score;
 	private int count; // To calculate R@count
+	private double[] recall_values;
 	private static final int collectionSize = 50;
 
 	public Recall(LinkedHashMap<String, Double> userId2score, int count) {
@@ -26,6 +31,7 @@ public class Recall {
 		}
 
 		this.userId2score = userId2score;
+		recall_values = new double[collectionSize];
 	}
 
 	private int getTotalRelevantExpertInCollection() {
@@ -73,6 +79,62 @@ public class Recall {
 		recall_score = (double) no_of_relevant_experts / total_relevant_expert;
 
 		return recall_score * 100;
+	}
+
+	public void calculateValuesAtEveryPosition() {
+
+		Iterator<String> iterator = this.userId2score.keySet().iterator();
+		int no_of_relevant_experts = 0;
+		int i = 0;
+
+		// TODO: Check this again.
+		int total_relevant_expert = getTotalRelevantExpertInCollection();
+		System.out.println("Total Relevant Expert:: " + total_relevant_expert);
+		total_relevant_expert = total_relevant_expert == 0 ? 1
+				: total_relevant_expert;
+
+		while (iterator.hasNext() && i < this.count) {
+			String setElement = iterator.next();
+			UserEntity user_entity = Global.userId2userObj1.get(Long
+					.valueOf(setElement));
+			// System.out.println("Is relevant expert:: "
+			// + user_entity.isProbableExpert());
+			if (user_entity.isProbableExpert()) {
+				no_of_relevant_experts++;
+			}
+
+			recall_values[i] = (double) no_of_relevant_experts
+					/ total_relevant_expert;
+
+			i++;
+		}
+		System.out.println("No of relevant expert:: " + no_of_relevant_experts);
+	}
+
+	public double[] getValues() {
+		return recall_values;
+	}
+
+	public double[] getRoundedValues() {
+		double[] rounded_recall_values = new double[recall_values.length];
+
+		for (int i = 0; i < recall_values.length; i++) {
+			rounded_recall_values[i] = Global.round(recall_values[i], 2);
+		}
+		return rounded_recall_values;
+	}
+
+	public void saveRecallValuesToFile() {
+		try (PrintWriter out = new PrintWriter(new BufferedWriter(
+				new FileWriter("recall_list.txt", false)))) {
+			for (int i = 0; i < recall_values.length; i++) {
+				// System.out.println("Recall Values:: " + recall_values[i]);
+				out.println(Global.round(recall_values[i], 2));
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	public int getCount() {
