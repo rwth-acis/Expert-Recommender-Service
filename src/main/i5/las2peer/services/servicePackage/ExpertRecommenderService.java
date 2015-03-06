@@ -37,6 +37,8 @@ import java.util.List;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 import com.google.common.base.Stopwatch;
@@ -230,6 +232,9 @@ public class ExpertRecommenderService extends Service {
 			PrecisionRecall precision_recall = new PrecisionRecall(
 					precision.getRoundedValues(), recall.getRoundedValues());
 			precision_recall.savePrecisionRecallCSV1();
+			System.out.println("Insert Recall points");
+			precision_recall.insertStandardRecallPoints();
+			System.out.println("End Recall points");
 
 			System.out.println("AVG PRECISION ::" + value);
 			MeanAveragePrecision MAP = new MeanAveragePrecision();
@@ -238,6 +243,12 @@ public class ExpertRecommenderService extends Service {
 			ElevenPointInterpolatedAveragePrecision epap = new ElevenPointInterpolatedAveragePrecision();
 			epap.calculateInterPrecisionValues(recall.getRoundedValues(),
 					precision.getRoundedValues());
+
+			epap.calculateInterPrecisionValues(ArrayUtils
+					.toPrimitive(precision_recall.getRecallValues()),
+					ArrayUtils.toPrimitive(precision_recall
+							.getPrecisionValues()));
+
 			epap.save();
 
 		} catch (Exception e) {
