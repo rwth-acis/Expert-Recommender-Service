@@ -6,6 +6,8 @@ import static org.junit.Assert.fail;
 import i5.las2peer.p2p.LocalNode;
 import i5.las2peer.security.ServiceAgent;
 import i5.las2peer.security.UserAgent;
+import i5.las2peer.services.servicePackage.evaluation.NormalizedDiscountedCumulativeGain;
+import i5.las2peer.services.servicePackage.utils.Global;
 import i5.las2peer.testing.MockAgentFactory;
 import i5.las2peer.webConnector.WebConnector;
 import i5.las2peer.webConnector.client.ClientResponse;
@@ -170,6 +172,20 @@ public class ServiceTest {
 		
     }
 	
+	@Test
+	public void testNDCG() {
+		int[] relevance_mock_val = { 2, 1, 2, 0 };
+		NormalizedDiscountedCumulativeGain ndcg = new NormalizedDiscountedCumulativeGain(
+				relevance_mock_val);
+		float dcg = ndcg.getDCG();
+		assertEquals(4.26, Global.round(dcg, 2), 1e-15);
+
+		float idealNdcgVal = ndcg.getIdealDCG();
+		assertEquals(4.63, Global.round(idealNdcgVal, 2), 1e-15);
+
+		assertEquals(0.92, Global.round(ndcg.getValue(), 2), 1e-15);
+
+	}
 
 	/**
 	 * Test the ServiceClass for valid rest mapping.
