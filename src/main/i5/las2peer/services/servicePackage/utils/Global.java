@@ -210,8 +210,6 @@ public class Global {
 	// // save2JungGraphML("fitness_graph_jung.graphml");
 	// }
 
-
-
 	public static double round(double value, int places) {
 		if (places < 0)
 			throw new IllegalArgumentException();
@@ -339,9 +337,11 @@ public class Global {
 						if (Global.totalEntityFreq.containsKey(entityRes
 								.getEntity())) {
 							irfweight = round(
-								(double) Math.log(totalNoOfResources
-										/ Global.totalEntityFreq.get(entityRes
-												.getEntity())), 2);
+									(double) Math
+											.log(totalNoOfResources
+													/ Global.totalEntityFreq.get(entityRes
+															.getEntity())),
+									2);
 						}
 						// Each Entity is associated with confidence Value.
 						sum_efirf = sum_efirf
@@ -359,6 +359,40 @@ public class Global {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public static void reset() {
+
+		userId2userObj1.clear();
+
+		THRESHOLD_WORD_FREQ1 = 0;
+		word2freq.clear();
+		postid2Resource1.clear();
+		q2a1.clear();
+		postid2tfirf.clear();
+		totalEntityFreq.clear();
+		ENTITY_FREQ_MAP.clear();
+		IEF_FREQ_MAP.clear();
+		EFIRF_MAP.clear();
+		userid2score.clear();
+		postid2Resource.clear();
+		postId2userId1.clear();
+		parentId2postId1.clear();
+
+		totalNoOfResources = 0;
+
+		if (QUERY_WORDS != null)
+			QUERY_WORDS.clear();
+
+		if (jcreator != null)
+			jcreator = null;
+
+		if (QUERY_ENTITIES != null)
+			QUERY_ENTITIES.clear();
+
+		if (entities != null)
+			entities.clear();
+
 	}
 
 }

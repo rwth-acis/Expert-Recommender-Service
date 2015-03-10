@@ -17,6 +17,7 @@ import i5.las2peer.services.servicePackage.evaluation.MeanAveragePrecision;
 import i5.las2peer.services.servicePackage.evaluation.Precision;
 import i5.las2peer.services.servicePackage.evaluation.PrecisionRecall;
 import i5.las2peer.services.servicePackage.evaluation.Recall;
+import i5.las2peer.services.servicePackage.evaluation.ReciprocalRank;
 import i5.las2peer.services.servicePackage.graph.GraphWriter;
 import i5.las2peer.services.servicePackage.graph.JUNGGraphCreator;
 import i5.las2peer.services.servicePackage.scoring.HITSStrategy;
@@ -28,7 +29,10 @@ import i5.las2peer.services.servicePackage.textProcessor.StopWordRemover;
 import i5.las2peer.services.servicePackage.utils.Global;
 import i5.las2peer.services.servicePackage.visualization.GraphMl2GEXFConverter;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -378,6 +382,128 @@ public class ExpertRecommenderService extends Service {
 		}
 
 		HttpResponse res = new HttpResponse("Everything went good...");
+		res.setStatus(200);
+		return res;
+	}
+
+	@POST
+	@Path("querysetEvaluator")
+	public HttpResponse evaluateQuerySet() {
+		ConnectionSource connSrc = null;
+		try {
+			connSrc = MySqlHelper.createConnectionSource("healthcare");
+		} catch (SQLException e1) {
+			e1.printStackTrace();
+		}
+
+		ArrayList<String> queries = new ArrayList<String>();
+
+		try (BufferedReader br = new BufferedReader(new FileReader(
+				"fitness_queries_small.txt"))) {
+			for (String line; (line = br.readLine()) != null;) {
+				queries.add(line);
+			}
+		} catch (FileNotFoundException e1) {
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+
+		System.out.println("Queries populated:: " + queries.size());
+		// Read the file and populate queries;
+		for (String query : queries) {
+			System.out.println("Query:: " + query);
+			Global.reset();
+			System.out.println("Reset complete:: ");
+
+			StopWordRemover remover = null;
+			String cleanstr = null;
+			// Stopwatch timer = null;
+			try {
+				// timer = Stopwatch.createStarted();
+				// TODO: Semantic analysis of the text.
+				System.out.println("Stop word remover..");
+				remover = new StopWordRemover(query);
+				cleanstr = remover.getPlainText();
+
+				System.out.println("Getting tokens...");
+				Global.QUERY_WORDS = HashMultiset.create(Splitter
+						.on(CharMatcher.WHITESPACE).omitEmptyStrings()
+						.split(cleanstr));
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			System.out.println("Creating user and term freq map");
+			try {
+				MySqlHelper.createUserMap(connSrc);
+				MySqlHelper.createTermFreqMap(connSrc);
+			} catch (SQLException e) {
+				e.printStackTrace();
+				HttpResponse res = new HttpResponse(
+						"Some error occured on the server, Please contact the developer..."
+								+ e);
+				res.setStatus(404);
+				return res;
+			}
+
+			Global.createFilteredQnAMap();
+
+			JUNGGraphCreator jcreator = new JUNGGraphCreator();
+			jcreator.createGraph(Global.q2a1, Global.postId2userId1);
+
+			System.out.println("Applying Pagerank...");
+
+			PageRankStrategy strategy = new PageRankStrategy(
+					jcreator.getGraph());
+			ScoringContext scontext = new ScoringContext(strategy);
+			scontext.executeStrategy();
+			scontext.getExperts();
+
+			try {
+				System.out.println("PRECISION ::" + scontext.getExpertMap());
+				Precision precision = new Precision(scontext.getExpertMap(), 40);
+				precision.getAveragePrecision();
+				precision.saveAvgPrecisionToFile();
+				precision.savePrecisionValuesToFile();
+
+				Recall recall = new Recall(scontext.getExpertMap(), 40);
+				recall.calculateValuesAtEveryPosition();
+				recall.saveRecallValuesToFile();
+
+				System.out.println("PRECISION - RECALL ::");
+				PrecisionRecall precision_recall = new PrecisionRecall(
+						precision.getRoundedValues(), recall.getRoundedValues());
+				precision_recall.savePrecisionRecallCSV1();
+				precision_recall.insertStandardRecallPoints();
+
+				// System.out.println("MEAN AVG PRECISION ::");
+				// MeanAveragePrecision MAP = new MeanAveragePrecision();
+
+				System.out.println("11 pt Interpolated precision ::");
+				ElevenPointInterpolatedAveragePrecision epap = new ElevenPointInterpolatedAveragePrecision();
+				epap.calculateInterPrecisionValues(recall.getRoundedValues(),
+						precision.getRoundedValues());
+
+				epap.calculateInterPrecisionValues(ArrayUtils
+						.toPrimitive(precision_recall.getRecallValues()),
+						ArrayUtils.toPrimitive(precision_recall
+								.getPrecisionValues()));
+
+				epap.save();
+
+				System.out.println("MRR ::");
+				ReciprocalRank rr = new ReciprocalRank();
+				rr.computeReciprocalRank(scontext.getExpertMap());
+				rr.save();
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		HttpResponse res = new HttpResponse("All tests finished successfully");
 		res.setStatus(200);
 		return res;
 	}
