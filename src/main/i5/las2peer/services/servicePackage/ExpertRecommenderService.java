@@ -13,7 +13,7 @@ import i5.las2peer.services.servicePackage.database.Data;
 import i5.las2peer.services.servicePackage.database.MySqlHelper;
 import i5.las2peer.services.servicePackage.database.UserEntity;
 import i5.las2peer.services.servicePackage.evaluation.ElevenPointInterpolatedAveragePrecision;
-import i5.las2peer.services.servicePackage.evaluation.MeanAveragePrecision;
+import i5.las2peer.services.servicePackage.evaluation.EvaluationMeasure;
 import i5.las2peer.services.servicePackage.evaluation.Precision;
 import i5.las2peer.services.servicePackage.evaluation.PrecisionRecall;
 import i5.las2peer.services.servicePackage.evaluation.Recall;
@@ -219,43 +219,15 @@ public class ExpertRecommenderService extends Service {
 
 		expert_posts = scontext.getExperts();
 
-		System.out.println("Calculating Precision....");
+		EvaluationMeasure eMeasure = new EvaluationMeasure(
+				scontext.getExpertMap());
+
+		// Compute Evaluation Measures.
 		try {
-			Precision precision = new Precision(scontext.getExpertMap(), 40);
-			System.out.println("PRECISION ::" + precision.getValue());
-
-			double value = precision.getAveragePrecision();
-			precision.saveAvgPrecisionToFile();
-
-			precision.savePrecisionValuesToFile();
-
-			Recall recall = new Recall(scontext.getExpertMap(), 40);
-			recall.calculateValuesAtEveryPosition();
-			recall.saveRecallValuesToFile();
-
-			PrecisionRecall precision_recall = new PrecisionRecall(
-					precision.getRoundedValues(), recall.getRoundedValues());
-			precision_recall.savePrecisionRecallCSV1();
-			System.out.println("Insert Recall points");
-			precision_recall.insertStandardRecallPoints();
-			System.out.println("End Recall points");
-
-			System.out.println("AVG PRECISION ::" + value);
-			MeanAveragePrecision MAP = new MeanAveragePrecision();
-			System.out.println("MEAN AVG PRECISION ::" + MAP.getValue());
-
-			ElevenPointInterpolatedAveragePrecision epap = new ElevenPointInterpolatedAveragePrecision();
-			epap.calculateInterPrecisionValues(recall.getRoundedValues(),
-					precision.getRoundedValues());
-
-			epap.calculateInterPrecisionValues(ArrayUtils
-					.toPrimitive(precision_recall.getRecallValues()),
-					ArrayUtils.toPrimitive(precision_recall
-							.getPrecisionValues()));
-
-			epap.save();
-
-		} catch (Exception e) {
+			eMeasure.computeAll();
+			// Retrieve the id from the database.
+			eMeasure.save(Integer.toString(query.hashCode()));
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 

@@ -10,8 +10,11 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+
+import org.apache.commons.lang3.ArrayUtils;
 
 /**
  * @author sathvik
@@ -43,7 +46,7 @@ public class Recall {
 			String setElement = iterator.next();
 			UserEntity user_entity = Global.userId2userObj1.get(Long
 					.valueOf(setElement));
-			if (user_entity.isProbableExpert()) {
+			if (user_entity != null && user_entity.isProbableExpert()) {
 				total_relevant_experts_in_collection++;
 			}
 			i++;
@@ -64,7 +67,7 @@ public class Recall {
 					.valueOf(setElement));
 			// System.out.println("Is relevant expert:: "
 			// + user_entity.isProbableExpert());
-			if (user_entity.isProbableExpert()) {
+			if (user_entity != null && user_entity.isProbableExpert()) {
 				no_of_relevant_experts++;
 			}
 			i++;
@@ -99,7 +102,7 @@ public class Recall {
 					.valueOf(setElement));
 			// System.out.println("Is relevant expert:: "
 			// + user_entity.isProbableExpert());
-			if (user_entity.isProbableExpert()) {
+			if (user_entity != null && user_entity.isProbableExpert()) {
 				no_of_relevant_experts++;
 			}
 
@@ -116,12 +119,17 @@ public class Recall {
 	}
 
 	public double[] getRoundedValues() {
-		double[] rounded_recall_values = new double[recall_values.length];
 
-		for (int i = 0; i < recall_values.length; i++) {
-			rounded_recall_values[i] = Global.round(recall_values[i], 2);
+		ArrayList<Double> rounded_recall_values = new ArrayList<Double>();
+
+		for (int i = 0; i < recall_values.length && i < count; i++) {
+			rounded_recall_values.add(Global.round(recall_values[i], 2));
 		}
-		return rounded_recall_values;
+
+		Double[] values = rounded_recall_values
+				.toArray(new Double[rounded_recall_values.size()]);
+		return ArrayUtils.toPrimitive(values);
+
 	}
 
 	public void saveRecallValuesToFile() {

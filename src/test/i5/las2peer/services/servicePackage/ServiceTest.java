@@ -6,6 +6,7 @@ import static org.junit.Assert.fail;
 import i5.las2peer.p2p.LocalNode;
 import i5.las2peer.security.ServiceAgent;
 import i5.las2peer.security.UserAgent;
+import i5.las2peer.services.servicePackage.evaluation.EvaluationMeasure;
 import i5.las2peer.services.servicePackage.evaluation.NormalizedDiscountedCumulativeGain;
 import i5.las2peer.services.servicePackage.utils.Global;
 import i5.las2peer.testing.MockAgentFactory;
@@ -14,7 +15,10 @@ import i5.las2peer.webConnector.client.ClientResponse;
 import i5.las2peer.webConnector.client.MiniClient;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.util.LinkedHashMap;
+import java.util.Random;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -184,6 +188,27 @@ public class ServiceTest {
 		assertEquals(4.63, Global.round(idealNdcgVal, 2), 1e-15);
 
 		assertEquals(0.92, Global.round(ndcg.getValue(), 2), 1e-15);
+
+	}
+
+	@Test
+	public void testEvaluationMetrics() throws IOException {
+		LinkedHashMap<String, Double> userId2Score = new LinkedHashMap<String, Double>();
+		double start = 0;
+		double end = 40000;
+		Random random = new Random();
+		for (int i = 0; i < 50; i++) {
+			double randomWeight = random.nextDouble();
+			double randomValue = start + (randomWeight * (end - start));
+
+			userId2Score.put("123" + i, randomValue);
+		}
+
+		// TODO:Precision and recall values have to be computed before doing
+		// this.
+		EvaluationMeasure measure = new EvaluationMeasure(userId2Score);
+		measure.computeAll();
+		measure.save("123");
 
 	}
 

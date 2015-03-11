@@ -7,8 +7,12 @@ import i5.las2peer.services.servicePackage.models.Resource;
 import i5.las2peer.services.servicePackage.scoring.ModelingStrategy1;
 import i5.las2peer.services.servicePackage.scoring.ScoringContext;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -44,7 +48,7 @@ public class Global {
 	public static HashMap<Long, Set<Long>> q2a1 = new HashMap<Long, Set<Long>>();
 	public static Map<Long, Double> postid2tfirf = new HashMap<Long, Double>();
 
-	public static JUNGGraphCreator jcreator;
+	public static JUNGGraphCreator jcreator; // TODO:Remove from Global.
 
 	public static HashMap<String, Integer> totalEntityFreq = new HashMap<String, Integer>();
 	public static HashMultiset<String> QUERY_ENTITIES;
@@ -359,6 +363,12 @@ public class Global {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public static String readFile(String path, Charset encoding)
+			throws IOException {
+		byte[] encoded = Files.readAllBytes(Paths.get(path));
+		return new String(encoded, encoding);
 	}
 
 	public static void reset() {

@@ -10,8 +10,11 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+
+import org.apache.commons.lang3.ArrayUtils;
 
 /**
  * @author sathvik
@@ -66,12 +69,15 @@ public class Precision {
 	}
 
 	public double[] getRoundedValues() {
-		double[] rounded_precision_values = new double[precision_scores.length];
+		ArrayList<Double> rounded_precision_values = new ArrayList<Double>();
 
-		for (int i = 0; i < precision_scores.length; i++) {
-			rounded_precision_values[i] = Global.round(precision_scores[i], 2);
+		for (int i = 0; i < precision_scores.length && i < count; i++) {
+			rounded_precision_values.add(Global.round(precision_scores[i], 2));
 		}
-		return rounded_precision_values;
+
+		Double[] values = rounded_precision_values
+				.toArray(new Double[rounded_precision_values.size()]);
+		return ArrayUtils.toPrimitive(values);
 	}
 
 	public double[] getAllPrecisionValues() {
@@ -83,7 +89,7 @@ public class Precision {
 			String setElement = iterator.next();
 			UserEntity user_entity = Global.userId2userObj1.get(Long
 					.valueOf(setElement));
-			if (user_entity.isProbableExpert()) {
+			if (user_entity != null && user_entity.isProbableExpert()) {
 				no_of_relevant_experts++;
 			}
 

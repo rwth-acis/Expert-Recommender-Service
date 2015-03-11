@@ -51,8 +51,11 @@ public class ReciprocalRank {
 	}
 
 	public double getPositionOfHighestReputaiton() {
-		double max = Collections.max(reputations);
-		return 1.0 / (reputations.indexOf(max) + 1);
+		if (reputations != null && reputations.size() > 0) {
+			double max = Collections.max(reputations);
+			return 1.0 / (reputations.indexOf(max) + 1);
+		}
+		return -1;
 	}
 
 	public void save() {
