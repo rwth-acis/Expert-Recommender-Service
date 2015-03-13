@@ -89,6 +89,21 @@ public class MySqlHelper {
 	}
 
 	public static void createAndInsertResourceDAO(
+			ConnectionSource connectionSrc, ArrayList<Data> data_list)
+			throws SQLException {
+		Dao<Data, Long> DataDao = DaoManager.createDao(connectionSrc,
+				Data.class);
+		StopWordRemover remover = null;
+		for (Data data : data_list) {
+			if (data.getBody() != null) {
+				remover = new StopWordRemover(data.getBody());
+				data.setCleanText(remover.getPlainText());
+			}
+			DataDao.createIfNotExists(data);
+		}
+	}
+
+	public static void createAndInsertResourceDAO(
 			List<i5.las2peer.services.servicePackage.xmlparsers.Resource> resources,
 			ConnectionSource connectionSrc) throws SQLException {
 

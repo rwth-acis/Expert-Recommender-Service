@@ -29,7 +29,7 @@ public class Data {
 	@DatabaseField(columnName = "view_count", dataType = DataType.LONG)
 	long viewCount;
 
-	@DatabaseField(columnName = "body", dataType = DataType.LONG_STRING)
+	@DatabaseField(columnName = "body", dataType = DataType.STRING_BYTES, format = "ISO-8859-13")
 	String body;
 
 	@DatabaseField(columnName = "owner_user_id", dataType = DataType.LONG)
@@ -44,7 +44,7 @@ public class Data {
 	@DatabaseField(columnName = "last_activity_date", dataType = DataType.LONG_STRING)
 	String lastActivityDate;
 
-	@DatabaseField(columnName = "title", dataType = DataType.LONG_STRING)
+	@DatabaseField(columnName = "title", dataType = DataType.STRING_BYTES, format = "ISO-8859-13")
 	String title;
 
 	@DatabaseField(columnName = "tags", dataType = DataType.LONG_STRING)
@@ -62,7 +62,7 @@ public class Data {
 	@DatabaseField(columnName = "parent_id", dataType = DataType.LONG)
 	long parentId;
 	
-	@DatabaseField(columnName = "clean_text", dataType = DataType.LONG_STRING)
+	@DatabaseField(columnName = "clean_text", dataType = DataType.STRING_BYTES, format = "ISO-8859-13")
 	String cleanText;
 
 	// @DatabaseField(generatedId = true)

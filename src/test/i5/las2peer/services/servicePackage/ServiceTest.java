@@ -8,6 +8,7 @@ import i5.las2peer.security.ServiceAgent;
 import i5.las2peer.security.UserAgent;
 import i5.las2peer.services.servicePackage.evaluation.EvaluationMeasure;
 import i5.las2peer.services.servicePackage.evaluation.NormalizedDiscountedCumulativeGain;
+import i5.las2peer.services.servicePackage.parsers.CSVParser;
 import i5.las2peer.services.servicePackage.utils.Global;
 import i5.las2peer.testing.MockAgentFactory;
 import i5.las2peer.webConnector.WebConnector;
@@ -17,6 +18,7 @@ import i5.las2peer.webConnector.client.MiniClient;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.Random;
 
@@ -210,6 +212,13 @@ public class ServiceTest {
 		measure.computeAll();
 		measure.save("123");
 
+	}
+
+	@Test
+	public void testCSVReader() throws IOException, SQLException {
+		CSVParser converter = new CSVParser("ehitusfoorumi.csv");
+		converter.parse();
+		converter.saveRecordsToDb();
 	}
 
 	/**
