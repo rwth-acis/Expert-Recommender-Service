@@ -208,7 +208,7 @@ public class ServiceTest {
 
 		// TODO:Precision and recall values have to be computed before doing
 		// this.
-		EvaluationMeasure measure = new EvaluationMeasure(userId2Score);
+		EvaluationMeasure measure = new EvaluationMeasure(userId2Score, "test");
 		measure.computeAll();
 		measure.save("123");
 

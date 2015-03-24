@@ -70,6 +70,7 @@ public class Global {
 			.create();
 
 	public static double totalNoOfResources = 0;
+	public static String algoName = "";
 
 	public static <K, V extends Comparable<? super V>> LinkedHashMap<K, V> sortByValue(
 			Map<K, V> map) {

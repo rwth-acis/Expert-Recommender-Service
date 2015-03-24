@@ -33,9 +33,11 @@ public class EvaluationMeasure {
 	private PrecisionRecall precision_recall;
 	private ElevenPointInterpolatedAveragePrecision epap;
 	private ReciprocalRank rr;
+	private String algoName;
 
-	public EvaluationMeasure(LinkedHashMap<String, Double> id2Score) {
+	public EvaluationMeasure(LinkedHashMap<String, Double> id2Score, String name) {
 		userId2Score = id2Score;
+		algoName = name;
 	}
 
 	public void computeAll() throws IOException {
@@ -147,6 +149,7 @@ public class EvaluationMeasure {
 
 		JsonObject jObj = new JsonObject();
 		jObj.addProperty("id", id);
+		jObj.addProperty("algo", algoName);
 		jObj.addProperty("timestamp", System.currentTimeMillis());
 		jObj.add("metrics", metricsArray);
 

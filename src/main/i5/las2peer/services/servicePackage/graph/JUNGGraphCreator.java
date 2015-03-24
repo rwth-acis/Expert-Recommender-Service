@@ -26,7 +26,8 @@ public class JUNGGraphCreator {
 	}
 	
 	public void createEdge(String v1, String v2, String label) {
-		g.addEdge(new RelationshipEdge<String>(v1, v2, label),v1, v2,EdgeType.DIRECTED);
+		g.addEdge(new RelationshipEdge(v1, v2, label), v1, v2,
+				EdgeType.DIRECTED);
 		
 	}
 	

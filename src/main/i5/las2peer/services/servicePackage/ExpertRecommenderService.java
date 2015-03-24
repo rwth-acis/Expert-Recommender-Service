@@ -21,6 +21,7 @@ import i5.las2peer.services.servicePackage.evaluation.ReciprocalRank;
 import i5.las2peer.services.servicePackage.graph.GraphWriter;
 import i5.las2peer.services.servicePackage.graph.JUNGGraphCreator;
 import i5.las2peer.services.servicePackage.scoring.HITSStrategy;
+import i5.las2peer.services.servicePackage.scoring.ModelingStrategy1;
 import i5.las2peer.services.servicePackage.scoring.PageRankStrategy;
 import i5.las2peer.services.servicePackage.scoring.ScoringContext;
 import i5.las2peer.services.servicePackage.semanticTagger.SemanticTagger;
@@ -116,10 +117,12 @@ public class ExpertRecommenderService extends Service {
 	@POST
 	@Path("modeling")
 	public HttpResponse modelExperts(@ContentParam String text) {
+
+		Global.algoName = "modeling1";
 		// ExpertUtils utils = new ExpertUtils();
 		String query = text;
 
-		Stopwatch timer = Stopwatch.createStarted();
+		// Stopwatch timer = Stopwatch.createStarted();
 		// TODO: Semantic analysis of the text.
 		StopWordRemover remover = new StopWordRemover(query);
 		String cleanstr = remover.getPlainText();
@@ -149,7 +152,6 @@ public class ExpertRecommenderService extends Service {
 			Global.createInverseResFreqMap();
 			Global.createIEFMap();
 
-			expert_posts = Global.rankTheResources(0.5);
 		} catch (SQLException e) {
 
 			e.printStackTrace();
@@ -160,8 +162,24 @@ public class ExpertRecommenderService extends Service {
 			return res;
 		}
 
-		System.out.println("Total time " + timer.stop());
-		HttpResponse res = new HttpResponse(expert_posts);
+		ScoringContext scontext = new ScoringContext(new ModelingStrategy1());
+		scontext.executeStrategy();
+		scontext.getExperts();
+
+		System.out.println("Evaluating modeling technique");
+		EvaluationMeasure eMeasure = new EvaluationMeasure(
+				scontext.getExpertMap(), "Modeling1");
+		// Compute Evaluation Measures.
+		try {
+			eMeasure.computeAll();
+			// Retrieve the id from the database.
+			eMeasure.save(Integer.toString(query.hashCode()));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		// System.out.println("Total time " + timer.stop());
+		HttpResponse res = new HttpResponse(scontext.getExperts());
 		res.setStatus(200);
 		return res;
 	}
@@ -170,6 +188,7 @@ public class ExpertRecommenderService extends Service {
 	@Path("pagerank")
 	public HttpResponse applyPageRank(@ContentParam String text) {
 
+		Global.algoName = "pagerank";
 		String query = text;
 		StopWordRemover remover = null;
 		String cleanstr = null;
@@ -220,7 +239,7 @@ public class ExpertRecommenderService extends Service {
 		expert_posts = scontext.getExperts();
 
 		EvaluationMeasure eMeasure = new EvaluationMeasure(
-				scontext.getExpertMap());
+				scontext.getExpertMap(), "pagerank");
 
 		// Compute Evaluation Measures.
 		try {
@@ -246,7 +265,7 @@ public class ExpertRecommenderService extends Service {
 
 		String query = text;
 
-		Stopwatch timer = Stopwatch.createStarted();
+		// Stopwatch timer = Stopwatch.createStarted();
 		// TODO: Semantic analysis of the text.
 		StopWordRemover remover = new StopWordRemover(query);
 		String cleanstr = remover.getPlainText();
@@ -254,7 +273,7 @@ public class ExpertRecommenderService extends Service {
 		Global.QUERY_WORDS = HashMultiset.create(Splitter
 				.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(cleanstr));
 		String expert_posts = "{}";
-
+		System.out.println("TRYING TO CONNECT TO DB");
 		try {
 			ConnectionSource connSrc = MySqlHelper
 					.createConnectionSource("healthcare");
@@ -284,7 +303,22 @@ public class ExpertRecommenderService extends Service {
 
 		expert_posts = scontext.getExperts();
 
-		System.out.println("Total time " + timer.stop());
+		EvaluationMeasure eMeasure = new EvaluationMeasure(
+				scontext.getExpertMap(), "hits");
+
+		// Compute Evaluation Measures.
+		try {
+			eMeasure.computeAll();
+			// Retrieve the id from the database.
+			eMeasure.save(Integer.toString(query.hashCode()));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		GraphWriter writer = new GraphWriter(jcreator);
+		writer.saveToGraphMl("fitness_graph_jung.graphml");
+
+		// System.out.println("Total time " + timer.stop());
 		HttpResponse res = new HttpResponse(expert_posts);
 		res.setStatus(200);
 		return res;

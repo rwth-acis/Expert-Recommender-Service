@@ -102,6 +102,12 @@ public class ModelingStrategy1 implements ScoreStrategy {
 	 */
 	@Override
 	public LinkedHashMap<String, Double> getExpertMap() {
-		return null;
+		// Avoid this, try to change in the exper2score map itself.
+		LinkedHashMap<String, Double> expertMap = new LinkedHashMap<String, Double>();
+		for (Map.Entry<Long, Double> entry : expert2score.entrySet()) {
+			expertMap.put(String.valueOf(entry.getKey()), entry.getValue());
+			
+		}
+		return expertMap;
 	}
 }
