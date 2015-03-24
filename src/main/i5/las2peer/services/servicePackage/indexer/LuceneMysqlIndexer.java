@@ -1,9 +1,9 @@
 /**
  * 
  */
-package i5.las2peer.services.servicePackage.indexing;
+package i5.las2peer.services.servicePackage.indexer;
 
-import i5.las2peer.services.servicePackage.database.Data;
+import i5.las2peer.services.servicePackage.datamodel.Data;
 import i5.las2peer.services.servicePackage.utils.Global;
 
 import java.io.File;

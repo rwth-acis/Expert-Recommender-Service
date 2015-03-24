@@ -3,8 +3,8 @@
  */
 package i5.las2peer.services.servicePackage.parsers;
 
-import i5.las2peer.services.servicePackage.database.Data;
-import i5.las2peer.services.servicePackage.database.MySqlHelper;
+import i5.las2peer.services.servicePackage.datamodel.Data;
+import i5.las2peer.services.servicePackage.datamodel.MySqlHelper;
 
 import java.io.FileReader;
 import java.io.IOException;

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package i5.las2peer.services.servicePackage.indexing;
+package i5.las2peer.services.servicePackage.indexer;
 
 import java.io.File;
 import java.io.IOException;

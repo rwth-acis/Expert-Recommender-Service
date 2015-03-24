@@ -3,7 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.evaluation;
 
-import i5.las2peer.services.servicePackage.database.UserEntity;
+import i5.las2peer.services.servicePackage.datamodel.UserEntity;
 import i5.las2peer.services.servicePackage.utils.Global;
 
 import java.io.BufferedWriter;

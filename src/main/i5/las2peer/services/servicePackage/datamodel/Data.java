@@ -1,4 +1,4 @@
-package i5.las2peer.services.servicePackage.database;
+package i5.las2peer.services.servicePackage.datamodel;
 
 import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;

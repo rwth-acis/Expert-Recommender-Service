@@ -1,4 +1,4 @@
-package i5.las2peer.services.servicePackage.database;
+package i5.las2peer.services.servicePackage.datamodel;
 
 import i5.las2peer.services.servicePackage.semanticTagger.SemanticTagger;
 import i5.las2peer.services.servicePackage.statistics.Stats;
