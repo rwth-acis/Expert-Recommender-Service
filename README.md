@@ -2,8 +2,6 @@
 ## An Expert Recommender framework.
 ### UNDER CONSTRUCTION.
 
-![ERS](https://github.com/rwth-acis/Recommendation-Service/blob/master/res/under_construction.png)
-
 
 Requirements:
 
