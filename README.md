@@ -1,6 +1,6 @@
 =======================
 ## An Expert Recommender framework.
-### UNDER CONSTRUCTION.
+### UNDER DEVELOPMENT.
 
 
 Requirements:
