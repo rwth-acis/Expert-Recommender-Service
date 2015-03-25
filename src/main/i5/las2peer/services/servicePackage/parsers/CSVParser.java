@@ -3,7 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.parsers;
 
-import i5.las2peer.services.servicePackage.datamodel.Data;
+import i5.las2peer.services.servicePackage.datamodel.DataEntity;
 import i5.las2peer.services.servicePackage.datamodel.MySqlHelper;
 
 import java.io.FileReader;
@@ -24,7 +24,7 @@ import com.j256.ormlite.table.TableUtils;
  */
 public class CSVParser {
 	String filepath;
-	ArrayList<Data> dataList;
+	ArrayList<DataEntity> dataList;
 
 	public CSVParser(String path) {
 		// post_id;topic_id;forum_id;poster_id;post_time;post_username;post_subject;post_text
@@ -37,8 +37,8 @@ public class CSVParser {
 				.withIgnoreEmptyLines().withRecordSeparator('\n')
 				.withHeader().parse(in);
 
-		Data data = null;
-		dataList = new ArrayList<Data>();
+		DataEntity data = null;
+		dataList = new ArrayList<DataEntity>();
 
 		for (CSVRecord record : records) {
 
@@ -51,7 +51,7 @@ public class CSVParser {
 			String body = record.get("post_text");
 			String owner_user_id = record.get("poster_id");
 
-			data = new Data();
+			data = new DataEntity();
 			data.setPostId(Long.parseLong(postId));
 			data.setParentId(Long.parseLong(parentId));
 			data.setTitle(title);
@@ -73,9 +73,10 @@ public class CSVParser {
 				.createConnectionSource("consruction");
 
 		// Create Data table.
-		TableUtils.createTableIfNotExists(connectionSrc, Data.class);
-		if (dataList != null && dataList.size() > 0)
-		MySqlHelper.createAndInsertResourceDAO(connectionSrc, dataList);
+		TableUtils.createTableIfNotExists(connectionSrc, DataEntity.class);
+		// TODO: Apply refactored class MySqlOpenHelper.
+		// if (dataList != null && dataList.size() > 0)
+		//MySqlHelper.createAndInsertResourceDAO(connectionSrc, dataList);
 
 	}
 }

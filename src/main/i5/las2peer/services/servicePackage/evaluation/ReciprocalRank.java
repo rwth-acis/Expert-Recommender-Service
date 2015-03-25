@@ -1,7 +1,6 @@
 package i5.las2peer.services.servicePackage.evaluation;
 
 import i5.las2peer.services.servicePackage.datamodel.UserEntity;
-import i5.las2peer.services.servicePackage.utils.Global;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -21,9 +20,10 @@ public class ReciprocalRank {
 	List<Long> reputations = new ArrayList<Long>();
 	public static final String mrrFilePath = "mrr.txt";
 	double rr = 0;
+	private Map<Long, UserEntity> userId2userObj;
 
-	public ReciprocalRank() {
-
+	public ReciprocalRank(Map<Long, UserEntity> userId2userObj) {
+		this.userId2userObj = userId2userObj;
 	}
 
 	public double getValue() {
@@ -36,7 +36,7 @@ public class ReciprocalRank {
 		for (String userid : expertkeys) {
 
 			if (i < 10) {
-				UserEntity user = Global.userId2userObj1.get(userid);
+				UserEntity user = userId2userObj.get(userid);
 				if (user != null) {
 					reputations.add(user.getReputation());
 				}

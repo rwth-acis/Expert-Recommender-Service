@@ -4,7 +4,7 @@
 package i5.las2peer.services.servicePackage.evaluation;
 
 import i5.las2peer.services.servicePackage.datamodel.UserEntity;
-import i5.las2peer.services.servicePackage.utils.Global;
+import i5.las2peer.services.servicePackage.utils.Application;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -13,6 +13,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -25,14 +26,17 @@ public class Precision {
 	private int count; // To calculate P@count
 	double precision_scores[];
 	double averagePrecision = 0;
+	private Map<Long, UserEntity> userId2userObj;
 
-	public Precision(LinkedHashMap<String, Double> userId2score, int count) {
+	public Precision(LinkedHashMap<String, Double> userId2score,
+			Map<Long, UserEntity> userId2userObj, int count) {
 		if (count == -1) {
 			this.count = Integer.MAX_VALUE;
 		} else {
 			this.count = count;
 		}
 		this.userId2score = userId2score;
+		this.userId2userObj = userId2userObj;
 	}
 
 	public double getValue() {
@@ -43,7 +47,7 @@ public class Precision {
 
 		while (iterator.hasNext() && i < this.count) {
 			String setElement = iterator.next();
-			UserEntity user_entity = Global.userId2userObj1.get(Long
+			UserEntity user_entity = userId2userObj.get(Long
 					.valueOf(setElement));
 			System.out.println("Is relevant expert:: "
 					+ user_entity.isProbableExpert());
@@ -72,7 +76,8 @@ public class Precision {
 		ArrayList<Double> rounded_precision_values = new ArrayList<Double>();
 
 		for (int i = 0; i < precision_scores.length && i < count; i++) {
-			rounded_precision_values.add(Global.round(precision_scores[i], 2));
+			rounded_precision_values.add(Application.round(precision_scores[i],
+					2));
 		}
 
 		Double[] values = rounded_precision_values
@@ -87,7 +92,7 @@ public class Precision {
 
 		while (iterator.hasNext() && i < this.count) {
 			String setElement = iterator.next();
-			UserEntity user_entity = Global.userId2userObj1.get(Long
+			UserEntity user_entity = userId2userObj.get(Long
 					.valueOf(setElement));
 			if (user_entity != null && user_entity.isProbableExpert()) {
 				no_of_relevant_experts++;
@@ -113,8 +118,8 @@ public class Precision {
 				new FileWriter("precision_list.txt", false)))) {
 			for (int i = 0; i < precision_scores.length; i++) {
 				// System.out.println("ROUNDED:: "
-				// + Global.round(precision_scores[i], 1));
-				out.println(Global.round(precision_scores[i], 2));
+				// + Application.round(precision_scores[i], 1));
+				out.println(Application.round(precision_scores[i], 2));
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

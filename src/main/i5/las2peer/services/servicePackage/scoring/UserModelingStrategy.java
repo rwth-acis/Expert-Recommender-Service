@@ -1,6 +1,6 @@
 package i5.las2peer.services.servicePackage.scoring;
 
-import i5.las2peer.services.servicePackage.utils.Global;
+import i5.las2peer.services.servicePackage.utils.Application;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -27,10 +27,10 @@ public class UserModelingStrategy implements ScoreStrategy {
 		// Sort the map by value.
 
 		// double sum_of_res_score = 0;
-		// Set<String> postids = Global.postid2Resource.keySet();
+		// Set<String> postids = Application.postid2Resource.keySet();
 		// long age = 0;
 		// for (String postid : postids) {
-		// Resource res = Global.postid2Resource.get(postid);
+		// Resource res = Application.postid2Resource.get(postid);
 		// age = currentdate - res.getLastEditDate();
 		// if(age < 0 ) {
 		// System.out.println("Age ..." + age);
@@ -46,8 +46,8 @@ public class UserModelingStrategy implements ScoreStrategy {
 		//
 		// double score = sum_of_res_score;
 		// for (String postid : postids) {
-		// String userid = Global.postId2userId1.get(postid);
-		// User user = Global.userId2userObj.get(userid);
+		// String userid = Application.postId2userId1.get(postid);
+		// User user = Application.userId2userObj.get(userid);
 		//
 		// double idf_of_p = 1;
 		// if (user != null) {
@@ -57,7 +57,7 @@ public class UserModelingStrategy implements ScoreStrategy {
 		// .getResFreq());
 		// if (user_association_weight > 0) {
 		// idf_of_p = Math
-		// .log((Global.totalNoOfResources / user_association_weight));
+		// .log((Application.totalNoOfResources / user_association_weight));
 		// }
 		//
 		// score = idf_of_p * sum_of_res_score;
@@ -72,7 +72,7 @@ public class UserModelingStrategy implements ScoreStrategy {
 	}
 
 	public String getExperts() {
-		LinkedHashMap<String, Double> experts = Global
+		LinkedHashMap<String, Double> experts = Application
 				.sortByValue(userId2Score);
 
 		int i = 0;
@@ -82,7 +82,7 @@ public class UserModelingStrategy implements ScoreStrategy {
 		// i++;
 		// // Restrict result to 10 items for now.
 		// if (i < 10) {
-		// User user = Global.userId2userObj.get(userid);
+		// User user = Application.userId2userObj.get(userid);
 		//
 		// // TODO: Change to setScore.
 		// user.setRank(String.valueOf(userId2Score.get(userid)));

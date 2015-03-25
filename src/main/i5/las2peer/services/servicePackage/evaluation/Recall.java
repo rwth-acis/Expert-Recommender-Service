@@ -4,7 +4,7 @@
 package i5.las2peer.services.servicePackage.evaluation;
 
 import i5.las2peer.services.servicePackage.datamodel.UserEntity;
-import i5.las2peer.services.servicePackage.utils.Global;
+import i5.las2peer.services.servicePackage.utils.Application;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -13,6 +13,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -25,8 +26,10 @@ public class Recall {
 	private int count; // To calculate R@count
 	private double[] recall_values;
 	private static final int collectionSize = 50;
+	private Map<Long, UserEntity> userId2userObj;
 
-	public Recall(LinkedHashMap<String, Double> userId2score, int count) {
+	public Recall(LinkedHashMap<String, Double> userId2score,
+			Map<Long, UserEntity> userId2userObj, int count) {
 		if (count == -1) {
 			this.count = Integer.MAX_VALUE;
 		} else {
@@ -34,6 +37,7 @@ public class Recall {
 		}
 
 		this.userId2score = userId2score;
+		this.userId2userObj =  userId2userObj;
 		recall_values = new double[collectionSize];
 	}
 
@@ -44,7 +48,7 @@ public class Recall {
 		Iterator<String> iterator = this.userId2score.keySet().iterator();
 		while (iterator.hasNext() && i < collectionSize) {
 			String setElement = iterator.next();
-			UserEntity user_entity = Global.userId2userObj1.get(Long
+			UserEntity user_entity = userId2userObj.get(Long
 					.valueOf(setElement));
 			if (user_entity != null && user_entity.isProbableExpert()) {
 				total_relevant_experts_in_collection++;
@@ -63,7 +67,7 @@ public class Recall {
 
 		while (iterator.hasNext() && i < this.count) {
 			String setElement = iterator.next();
-			UserEntity user_entity = Global.userId2userObj1.get(Long
+			UserEntity user_entity = userId2userObj.get(Long
 					.valueOf(setElement));
 			// System.out.println("Is relevant expert:: "
 			// + user_entity.isProbableExpert());
@@ -98,7 +102,7 @@ public class Recall {
 
 		while (iterator.hasNext() && i < this.count) {
 			String setElement = iterator.next();
-			UserEntity user_entity = Global.userId2userObj1.get(Long
+			UserEntity user_entity = userId2userObj.get(Long
 					.valueOf(setElement));
 			// System.out.println("Is relevant expert:: "
 			// + user_entity.isProbableExpert());
@@ -123,7 +127,7 @@ public class Recall {
 		ArrayList<Double> rounded_recall_values = new ArrayList<Double>();
 
 		for (int i = 0; i < recall_values.length && i < count; i++) {
-			rounded_recall_values.add(Global.round(recall_values[i], 2));
+			rounded_recall_values.add(Application.round(recall_values[i], 2));
 		}
 
 		Double[] values = rounded_recall_values
@@ -137,7 +141,7 @@ public class Recall {
 				new FileWriter("recall_list.txt", false)))) {
 			for (int i = 0; i < recall_values.length; i++) {
 				// System.out.println("Recall Values:: " + recall_values[i]);
-				out.println(Global.round(recall_values[i], 2));
+				out.println(Application.round(recall_values[i], 2));
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -1,9 +1,8 @@
 package i5.las2peer.services.servicePackage.graph;
 
-import i5.las2peer.services.servicePackage.datamodel.UserEntity;
-import i5.las2peer.services.servicePackage.utils.Global;
-
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
@@ -35,7 +34,8 @@ public class JUNGGraphCreator {
 		return g;
 	}
 
-	public void createGraph(HashMap<Long, Set<Long>> qus2ans,
+	// TODO: May have to pass entire indexer or userId2userObj
+	public void createGraph(Map<Long, Collection<Long>> qus2ans,
 			HashMap<Long, Long> postId2userId) {
 		// Logger log = LoggerFactory.getLogger(ExpertUtils.class);
 		// log.info("Creating JUNG graph...");
@@ -49,7 +49,8 @@ public class JUNGGraphCreator {
 				// System.out.println("Key::" + key);
 				if (postId2userId.containsKey(key)) {
 					long q_user_id = postId2userId.get(key);
-					UserEntity user = Global.userId2userObj1.get(q_user_id);
+					// UserEntity user =
+					// Application.userId2userObj.get(q_user_id);
 					// if (q_user_id > 0 && user != null) {
 					// // user.setRelatedPost(key);
 					// Set termObjs = postid2Resource1.get(key);
@@ -65,13 +66,15 @@ public class JUNGGraphCreator {
 						// System.out.println("post " + key + " userid " +
 						// q_user_id);
 						g.addVertex(String.valueOf(q_user_id));
-						Set<Long> values = qus2ans.get(key);
+						Set<Long> values = (Set<Long>) qus2ans.get(key);
 
 						for (Long value : values) {
 							Long a_user_id = postId2userId.get(value);
-							user = Global.userId2userObj1.get(a_user_id);
+							// user = Application.userId2userObj.get(a_user_id);
 							if (a_user_id != null) {
-								// if (Global.userId2userObj1.get(a_user_id) !=
+								// if
+								// (Application.userId2userObj1.get(a_user_id)
+								// !=
 								// null) {
 								// user.setRelatedPost(value);
 								//

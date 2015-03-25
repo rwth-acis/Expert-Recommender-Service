@@ -3,13 +3,15 @@
  */
 package i5.las2peer.services.servicePackage.evaluation;
 
-import i5.las2peer.services.servicePackage.utils.Global;
+import i5.las2peer.services.servicePackage.datamodel.UserEntity;
+import i5.las2peer.services.servicePackage.utils.Application;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -34,10 +36,13 @@ public class EvaluationMeasure {
 	private ElevenPointInterpolatedAveragePrecision epap;
 	private ReciprocalRank rr;
 	private String algoName;
+	private Map<Long, UserEntity> userId2userObj;
 
-	public EvaluationMeasure(LinkedHashMap<String, Double> id2Score, String name) {
+	public EvaluationMeasure(LinkedHashMap<String, Double> id2Score,
+			Map<Long, UserEntity> userId2userObj, String name) {
 		userId2Score = id2Score;
 		algoName = name;
+		this.userId2userObj = userId2userObj;
 	}
 
 	public void computeAll() throws IOException {
@@ -49,14 +54,14 @@ public class EvaluationMeasure {
 	}
 
 	public void computePrecision() {
-		precision = new Precision(userId2Score, 40);
+		precision = new Precision(userId2Score, this.userId2userObj, 40);
 		precision.getAveragePrecision();
 		precision.saveAvgPrecisionToFile();
 		precision.savePrecisionValuesToFile();
 	}
 
 	public void computeRecall() {
-		recall = new Recall(userId2Score, 40);
+		recall = new Recall(userId2Score, userId2userObj, 40);
 		recall.calculateValuesAtEveryPosition();
 		recall.saveRecallValuesToFile();
 	}
@@ -100,7 +105,7 @@ public class EvaluationMeasure {
 
 	public void computeMRR() {
 		System.out.println("MRR ::");
-		rr = new ReciprocalRank();
+		rr = new ReciprocalRank(userId2userObj);
 		rr.computeReciprocalRank(userId2Score);
 		rr.save();
 	}
@@ -114,7 +119,7 @@ public class EvaluationMeasure {
 			metricsFile.createNewFile();
 		}
 
-		String jsonStr = Global.readFile(metricsFile.getPath(),
+		String jsonStr = Application.readFile(metricsFile.getPath(),
 				StandardCharsets.UTF_8);
 		JsonArray jContainer = new JsonArray();
 

@@ -9,25 +9,21 @@ import i5.las2peer.restMapper.annotations.Path;
 import i5.las2peer.restMapper.annotations.Version;
 import i5.las2peer.restMapper.tools.ValidationResult;
 import i5.las2peer.restMapper.tools.XMLCheck;
-import i5.las2peer.services.servicePackage.datamodel.Data;
+import i5.las2peer.services.servicePackage.datamodel.DataEntity;
+import i5.las2peer.services.servicePackage.datamodel.DatabaseHandler;
 import i5.las2peer.services.servicePackage.datamodel.MySqlHelper;
 import i5.las2peer.services.servicePackage.datamodel.UserEntity;
-import i5.las2peer.services.servicePackage.evaluation.ElevenPointInterpolatedAveragePrecision;
 import i5.las2peer.services.servicePackage.evaluation.EvaluationMeasure;
-import i5.las2peer.services.servicePackage.evaluation.Precision;
-import i5.las2peer.services.servicePackage.evaluation.PrecisionRecall;
-import i5.las2peer.services.servicePackage.evaluation.Recall;
-import i5.las2peer.services.servicePackage.evaluation.ReciprocalRank;
 import i5.las2peer.services.servicePackage.graph.GraphWriter;
 import i5.las2peer.services.servicePackage.graph.JUNGGraphCreator;
+import i5.las2peer.services.servicePackage.indexer.DbIndexer;
 import i5.las2peer.services.servicePackage.scoring.HITSStrategy;
-import i5.las2peer.services.servicePackage.scoring.ModelingStrategy1;
 import i5.las2peer.services.servicePackage.scoring.PageRankStrategy;
 import i5.las2peer.services.servicePackage.scoring.ScoringContext;
 import i5.las2peer.services.servicePackage.semanticTagger.SemanticTagger;
 import i5.las2peer.services.servicePackage.textProcessor.PorterStemmer;
 import i5.las2peer.services.servicePackage.textProcessor.StopWordRemover;
-import i5.las2peer.services.servicePackage.utils.Global;
+import i5.las2peer.services.servicePackage.utils.Application;
 import i5.las2peer.services.servicePackage.visualization.GraphMl2GEXFConverter;
 
 import java.io.BufferedReader;
@@ -42,9 +38,6 @@ import java.util.List;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
-import org.apache.commons.lang3.ArrayUtils;
-
-import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultiset;
@@ -55,7 +48,7 @@ import com.j256.ormlite.table.TableUtils;
  * @author sathvik
  */
 
-@Path("recommender_framework")
+@Path("ers")
 @Version("0.1")
 public class ExpertRecommenderService extends Service {
 
@@ -118,7 +111,7 @@ public class ExpertRecommenderService extends Service {
 	@Path("modeling")
 	public HttpResponse modelExperts(@ContentParam String text) {
 
-		Global.algoName = "modeling1";
+		Application.algoName = "modeling1";
 		// ExpertUtils utils = new ExpertUtils();
 		String query = text;
 
@@ -127,8 +120,7 @@ public class ExpertRecommenderService extends Service {
 		StopWordRemover remover = new StopWordRemover(query);
 		String cleanstr = remover.getPlainText();
 
-		Global.QUERY_WORDS = HashMultiset.create(Splitter
-				.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(cleanstr));
+
 
 		// utils.setQuery(HashMultiset.create(Splitter.on(CharMatcher.WHITESPACE)
 		// .omitEmptyStrings().split(cleanstr)));
@@ -136,7 +128,7 @@ public class ExpertRecommenderService extends Service {
 		SemanticTagger tagger = new SemanticTagger(text);
 
 		// TODO:Handle this better, Splitting can be avoided here.
-		Global.QUERY_ENTITIES = HashMultiset.create(Splitter.on(",")
+		Application.QUERY_ENTITIES = HashMultiset.create(Splitter.on(",")
 				.omitEmptyStrings().split(tagger.getTags().getTags()));
 
 		String expert_posts = "{}";
@@ -144,13 +136,13 @@ public class ExpertRecommenderService extends Service {
 		try {
 			ConnectionSource connSrc = MySqlHelper
 					.createConnectionSource("healthcare");
-			MySqlHelper.createUserMap(connSrc);
-
-			MySqlHelper.createTermFreqMap(connSrc);
-			MySqlHelper.createSemanticTagFreqMap(connSrc);
-
-			Global.createInverseResFreqMap();
-			Global.createIEFMap();
+			// MySqlHelper.createUserMap(connSrc);
+			//
+			// MySqlHelper.createTermFreqMap(connSrc);
+			// MySqlHelper.createSemanticTagFreqMap(connSrc);
+			//
+			// Application.createInverseResFreqMap();
+			// Application.createIEFMap();
 
 		} catch (SQLException e) {
 
@@ -162,24 +154,26 @@ public class ExpertRecommenderService extends Service {
 			return res;
 		}
 
-		ScoringContext scontext = new ScoringContext(new ModelingStrategy1());
-		scontext.executeStrategy();
-		scontext.getExperts();
-
-		System.out.println("Evaluating modeling technique");
-		EvaluationMeasure eMeasure = new EvaluationMeasure(
-				scontext.getExpertMap(), "Modeling1");
+		// ScoringContext scontext = new ScoringContext(new
+		// ModelingStrategy1());
+		// scontext.executeStrategy();
+		// scontext.getExperts();
+		//
+		// System.out.println("Evaluating modeling technique");
+		// EvaluationMeasure eMeasure = new EvaluationMeasure(
+		// scontext.getExpertMap(), "Modeling1");
 		// Compute Evaluation Measures.
-		try {
-			eMeasure.computeAll();
-			// Retrieve the id from the database.
-			eMeasure.save(Integer.toString(query.hashCode()));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		// try {
+		// eMeasure.computeAll();
+		// // Retrieve the id from the database.
+		// eMeasure.save(Integer.toString(query.hashCode()));
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// }
 
 		// System.out.println("Total time " + timer.stop());
-		HttpResponse res = new HttpResponse(scontext.getExperts());
+		// HttpResponse res = new HttpResponse(scontext.getExperts());
+		HttpResponse res = new HttpResponse(null);
 		res.setStatus(200);
 		return res;
 	}
@@ -188,7 +182,7 @@ public class ExpertRecommenderService extends Service {
 	@Path("pagerank")
 	public HttpResponse applyPageRank(@ContentParam String text) {
 
-		Global.algoName = "pagerank";
+		Application.algoName = "pagerank";
 		String query = text;
 		StopWordRemover remover = null;
 		String cleanstr = null;
@@ -200,46 +194,62 @@ public class ExpertRecommenderService extends Service {
 			remover = new StopWordRemover(query);
 			cleanstr = remover.getPlainText();
 
-			Global.QUERY_WORDS = HashMultiset.create(Splitter
-					.on(CharMatcher.WHITESPACE).omitEmptyStrings()
-					.split(cleanstr));
+			// Application.QUERY_WORDS = HashMultiset.create(Splitter
+			// .on(CharMatcher.WHITESPACE).omitEmptyStrings()
+			// .split(cleanstr));
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 		System.out.println("TRYING TO CONNECT TO DB");
-
+		JUNGGraphCreator jcreator = null;
+		DbIndexer dbIndexer = null;
+		
 		try {
-			ConnectionSource connSrc = MySqlHelper
-					.createConnectionSource("healthcare");
-			MySqlHelper.createUserMap(connSrc);
-			MySqlHelper.createTermFreqMap(connSrc);
-		} catch (SQLException e) {
+			// ConnectionSource connSrc = MySqlHelper
+			// .createConnectionSource("healthcare");
+			// MySqlHelper.createUserMap(connSrc);
+			// MySqlHelper.createTermFreqMap(connSrc);
 
+			DatabaseHandler dbHandler = new DatabaseHandler("healthcare",
+					"root", "");
+
+			System.out.println("DB connected");
+
+			dbIndexer = new DbIndexer(dbHandler.getConnectionSource());
+			dbIndexer.buildIndex(cleanstr);
+
+			System.out.println("Index created");
+
+			jcreator = new JUNGGraphCreator();
+			jcreator.createGraph(dbIndexer.getQnAMap(),
+					dbIndexer.getPostId2UserIdMap());
+			System.out.println("Graph created");
+
+		} catch (Exception e) {
 			e.printStackTrace();
-			HttpResponse res = new HttpResponse(
-					"Some error occured on the server, Please contact the developer..."
-							+ e);
-			res.setStatus(404);
-			return res;
+			System.out.println(e);
+			HttpResponse res = new HttpResponse("Cannot connect to Db");
+			res.setStatus(200);
+
 		}
 
-		Global.createFilteredQnAMap();
+		// Application.createFilteredQnAMap();
 
-		JUNGGraphCreator jcreator = new JUNGGraphCreator();
-		jcreator.createGraph(Global.q2a1, Global.postId2userId1);
 
 		System.out.println("Applying Pagerank...");
 
-		PageRankStrategy strategy = new PageRankStrategy(jcreator.getGraph());
+		PageRankStrategy strategy = new PageRankStrategy(jcreator.getGraph(),
+				dbIndexer.getUserMap());
 		ScoringContext scontext = new ScoringContext(strategy);
 		scontext.executeStrategy();
 
 		expert_posts = scontext.getExperts();
 
 		EvaluationMeasure eMeasure = new EvaluationMeasure(
-				scontext.getExpertMap(), "pagerank");
+				scontext.getExpertMap(), dbIndexer.getUserMap(),
+				"pagerank");
 
 		// Compute Evaluation Measures.
 		try {
@@ -266,37 +276,45 @@ public class ExpertRecommenderService extends Service {
 		String query = text;
 
 		// Stopwatch timer = Stopwatch.createStarted();
-		// TODO: Semantic analysis of the text.
 		StopWordRemover remover = new StopWordRemover(query);
 		String cleanstr = remover.getPlainText();
 
-		Global.QUERY_WORDS = HashMultiset.create(Splitter
-				.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(cleanstr));
+
 		String expert_posts = "{}";
+
 		System.out.println("TRYING TO CONNECT TO DB");
+		JUNGGraphCreator jcreator = null;
+		DbIndexer dbIndexer = null;
+
 		try {
-			ConnectionSource connSrc = MySqlHelper
-					.createConnectionSource("healthcare");
-			MySqlHelper.createUserMap(connSrc);
-			MySqlHelper.createTermFreqMap(connSrc);
-		} catch (SQLException e) {
 
+			DatabaseHandler dbHandler = new DatabaseHandler("healthcare",
+					"root", "");
+
+			System.out.println("DB connected");
+
+			dbIndexer = new DbIndexer(dbHandler.getConnectionSource());
+			dbIndexer.buildIndex(cleanstr);
+
+			System.out.println("Index created");
+
+			jcreator = new JUNGGraphCreator();
+			jcreator.createGraph(dbIndexer.getQnAMap(),
+					dbIndexer.getPostId2UserIdMap());
+			System.out.println("Graph created");
+
+		} catch (Exception e) {
 			e.printStackTrace();
-			HttpResponse res = new HttpResponse(
-					"Some error occured on the server, Please contact the developer..."
-							+ e);
-			res.setStatus(404);
-			return res;
+			System.out.println(e);
+			HttpResponse res = new HttpResponse("Cannot connect to Db");
+			res.setStatus(200);
+
 		}
-
-		Global.createFilteredQnAMap();
-
-		JUNGGraphCreator jcreator = new JUNGGraphCreator();
-		jcreator.createGraph(Global.q2a1, Global.postId2userId1);
 
 		System.out.println("Applying HITS...");
 
-		HITSStrategy strategy = new HITSStrategy(jcreator.getGraph());
+		HITSStrategy strategy = new HITSStrategy(jcreator.getGraph(),
+				dbIndexer.getUserMap());
 
 		ScoringContext scontext = new ScoringContext(strategy);
 		scontext.executeStrategy();
@@ -304,7 +322,7 @@ public class ExpertRecommenderService extends Service {
 		expert_posts = scontext.getExperts();
 
 		EvaluationMeasure eMeasure = new EvaluationMeasure(
-				scontext.getExpertMap(), "hits");
+				scontext.getExpertMap(), dbIndexer.getUserMap(), "hits");
 
 		// Compute Evaluation Measures.
 		try {
@@ -335,15 +353,14 @@ public class ExpertRecommenderService extends Service {
 		StopWordRemover remover = new StopWordRemover(query);
 		String cleanstr = remover.getPlainText();
 
-		Global.QUERY_WORDS = HashMultiset.create(Splitter
-				.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(cleanstr));
+
 		String expert_posts = "{}";
 
 		try {
 			ConnectionSource connSrc = MySqlHelper
 					.createConnectionSource("healthcare");
-			MySqlHelper.createUserMap(connSrc);
-			MySqlHelper.createTermFreqMap(connSrc);
+			// MySqlHelper.createUserMap(connSrc);
+			// MySqlHelper.createTermFreqMap(connSrc);
 		} catch (SQLException e) {
 
 			e.printStackTrace();
@@ -354,10 +371,10 @@ public class ExpertRecommenderService extends Service {
 			return res;
 		}
 
-		Global.createFilteredQnAMap();
+		// Application.createFilteredQnAMap();
 
 		JUNGGraphCreator jcreator = new JUNGGraphCreator();
-		jcreator.createGraph(Global.q2a1, Global.postId2userId1);
+		// jcreator.createGraph(Application.q2a1, Application.postId2userId1);
 
 		GraphWriter writer = new GraphWriter(jcreator);
 		writer.saveToGraphMl("fitness_graph_jung.graphml");
@@ -419,7 +436,7 @@ public class ExpertRecommenderService extends Service {
 		// Read the file and populate queries;
 		for (String query : queries) {
 			System.out.println("Query:: " + query);
-			Global.reset();
+			Application.reset();
 			System.out.println("Reset complete:: ");
 
 			StopWordRemover remover = null;
@@ -433,80 +450,70 @@ public class ExpertRecommenderService extends Service {
 				cleanstr = remover.getPlainText();
 
 				System.out.println("Getting tokens...");
-				Global.QUERY_WORDS = HashMultiset.create(Splitter
-						.on(CharMatcher.WHITESPACE).omitEmptyStrings()
-						.split(cleanstr));
+
 
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 
 			System.out.println("Creating user and term freq map");
-			try {
-				MySqlHelper.createUserMap(connSrc);
-				MySqlHelper.createTermFreqMap(connSrc);
-			} catch (SQLException e) {
-				e.printStackTrace();
-				HttpResponse res = new HttpResponse(
-						"Some error occured on the server, Please contact the developer..."
-								+ e);
-				res.setStatus(404);
-				return res;
-			}
 
-			Global.createFilteredQnAMap();
+
+			// Application.createFilteredQnAMap();
 
 			JUNGGraphCreator jcreator = new JUNGGraphCreator();
-			jcreator.createGraph(Global.q2a1, Global.postId2userId1);
+			// jcreator.createGraph(Application.q2a1,
+			// Application.postId2userId1);
 
 			System.out.println("Applying Pagerank...");
 
-			PageRankStrategy strategy = new PageRankStrategy(
-					jcreator.getGraph());
-			ScoringContext scontext = new ScoringContext(strategy);
-			scontext.executeStrategy();
-			scontext.getExperts();
-
-			try {
-				System.out.println("PRECISION ::" + scontext.getExpertMap());
-				Precision precision = new Precision(scontext.getExpertMap(), 40);
-				precision.getAveragePrecision();
-				precision.saveAvgPrecisionToFile();
-				precision.savePrecisionValuesToFile();
-
-				Recall recall = new Recall(scontext.getExpertMap(), 40);
-				recall.calculateValuesAtEveryPosition();
-				recall.saveRecallValuesToFile();
-
-				System.out.println("PRECISION - RECALL ::");
-				PrecisionRecall precision_recall = new PrecisionRecall(
-						precision.getRoundedValues(), recall.getRoundedValues());
-				precision_recall.savePrecisionRecallCSV1();
-				precision_recall.insertStandardRecallPoints();
-
-				// System.out.println("MEAN AVG PRECISION ::");
-				// MeanAveragePrecision MAP = new MeanAveragePrecision();
-
-				System.out.println("11 pt Interpolated precision ::");
-				ElevenPointInterpolatedAveragePrecision epap = new ElevenPointInterpolatedAveragePrecision();
-				epap.calculateInterPrecisionValues(recall.getRoundedValues(),
-						precision.getRoundedValues());
-
-				epap.calculateInterPrecisionValues(ArrayUtils
-						.toPrimitive(precision_recall.getRecallValues()),
-						ArrayUtils.toPrimitive(precision_recall
-								.getPrecisionValues()));
-
-				epap.save();
-
-				System.out.println("MRR ::");
-				ReciprocalRank rr = new ReciprocalRank();
-				rr.computeReciprocalRank(scontext.getExpertMap());
-				rr.save();
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			// PageRankStrategy strategy = new PageRankStrategy(
+			// jcreator.getGraph());
+			// ScoringContext scontext = new ScoringContext(strategy);
+			// scontext.executeStrategy();
+			// scontext.getExperts();
+			//
+			// try {
+			// System.out.println("PRECISION ::" + scontext.getExpertMap());
+			// Precision precision = new Precision(scontext.getExpertMap(), 40);
+			// precision.getAveragePrecision();
+			// precision.saveAvgPrecisionToFile();
+			// precision.savePrecisionValuesToFile();
+			//
+			// Recall recall = new Recall(scontext.getExpertMap(), 40);
+			// recall.calculateValuesAtEveryPosition();
+			// recall.saveRecallValuesToFile();
+			//
+			// System.out.println("PRECISION - RECALL ::");
+			// PrecisionRecall precision_recall = new PrecisionRecall(
+			// precision.getRoundedValues(), recall.getRoundedValues());
+			// precision_recall.savePrecisionRecallCSV1();
+			// precision_recall.insertStandardRecallPoints();
+			//
+			// // System.out.println("MEAN AVG PRECISION ::");
+			// // MeanAveragePrecision MAP = new MeanAveragePrecision();
+			//
+			// System.out.println("11 pt Interpolated precision ::");
+			// ElevenPointInterpolatedAveragePrecision epap = new
+			// ElevenPointInterpolatedAveragePrecision();
+			// epap.calculateInterPrecisionValues(recall.getRoundedValues(),
+			// precision.getRoundedValues());
+			//
+			// epap.calculateInterPrecisionValues(ArrayUtils
+			// .toPrimitive(precision_recall.getRecallValues()),
+			// ArrayUtils.toPrimitive(precision_recall
+			// .getPrecisionValues()));
+			//
+			// epap.save();
+			//
+			// System.out.println("MRR ::");
+			// ReciprocalRank rr = new ReciprocalRank();
+			// rr.computeReciprocalRank(scontext.getExpertMap());
+			// rr.save();
+			//
+			// } catch (Exception e) {
+			// e.printStackTrace();
+			// }
 		}
 
 		HttpResponse res = new HttpResponse("All tests finished successfully");
@@ -536,9 +543,9 @@ public class ExpertRecommenderService extends Service {
 					.createConnectionSource("healthcare");
 
 			// Create Data table.
-			TableUtils.createTableIfNotExists(connectionSrc, Data.class);
-			MySqlHelper.createAndInsertResourceDAO(resources_list,
-					connectionSrc);
+			TableUtils.createTableIfNotExists(connectionSrc, DataEntity.class);
+			// MySqlHelper.createAndInsertResourceDAO(resources_list,
+			// connectionSrc);
 
 			// Create User table.
 			context = JAXBContext
@@ -554,7 +561,7 @@ public class ExpertRecommenderService extends Service {
 
 			System.out.println("Inserting into User table...");
 			TableUtils.createTableIfNotExists(connectionSrc, UserEntity.class);
-			MySqlHelper.createAndInsertUserDAO(user_list, connectionSrc);
+			// MySqlHelper.createAndInsertUserDAO(user_list, connectionSrc);
 
 			MySqlHelper.markExpertsForEvaluation(connectionSrc);
 

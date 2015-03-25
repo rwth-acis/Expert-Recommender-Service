@@ -3,8 +3,8 @@
  */
 package i5.las2peer.services.servicePackage.indexer;
 
-import i5.las2peer.services.servicePackage.datamodel.Data;
-import i5.las2peer.services.servicePackage.utils.Global;
+import i5.las2peer.services.servicePackage.datamodel.DataEntity;
+import i5.las2peer.services.servicePackage.utils.Application;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,12 +45,13 @@ public class LuceneMysqlIndexer {
 	public void buildIndex() throws SQLException, IOException {
 		Document doc;
 
-		Dao<Data, Long> postsDao = DaoManager.createDao(connSrc, Data.class);
-		List<Data> data_entites = postsDao.queryForAll();
-		Global.totalNoOfResources = data_entites.size();
+		Dao<DataEntity, Long> postsDao = DaoManager.createDao(connSrc,
+				DataEntity.class);
+		List<DataEntity> data_entites = postsDao.queryForAll();
+		Application.totalNoOfResources = data_entites.size();
 		StringBuffer fullSearchableText;
 
-		for (Data entity : data_entites) {
+		for (DataEntity entity : data_entites) {
 			doc = new Document();
 			double postId = entity.getPostId();
 			String title = entity.getTitle();

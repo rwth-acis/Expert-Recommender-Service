@@ -3,7 +3,7 @@ $(function(){
 	var query = localStorage.getItem("query");
 	var searchtype = localStorage.getItem("searchtype");
 	var url = "";
-	var basepath = "http://localhost:8080/recommender_framework/";
+	var basepath = "http://localhost:8080/ers/";
 	if(searchtype == "hits") {
 		console.log("Made request for HITS...");
 		url = basepath+"hits";
@@ -15,7 +15,8 @@ $(function(){
 		url = basepath+"usermodeling";
 	}
 	else {
-		console.log("Made request for PageRank...");
+		console.log("Made request for pagerank evaluation...");
+		//url = basepath+"querysetEvaluator";
 		url = basepath+"pagerank";
 
 		//console.log("Made request for Community Aware Rank...");

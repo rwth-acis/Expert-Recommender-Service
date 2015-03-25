@@ -2,7 +2,7 @@ package i5.las2peer.services.servicePackage.scoring;
 
 import i5.las2peer.services.servicePackage.datamodel.UserEntity;
 import i5.las2peer.services.servicePackage.graph.RelationshipEdge;
-import i5.las2peer.services.servicePackage.utils.Global;
+import i5.las2peer.services.servicePackage.utils.Application;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -24,9 +24,12 @@ public class CommunityAwareStrategy implements ScoreStrategy {
 	private double alpha = 0d;
 	private Graph<String, RelationshipEdge> graph;
 	private LinkedHashMap<String, Double> expert2score;
+	private Map<Long, UserEntity> userId2userObj;
 
-	public CommunityAwareStrategy(Graph<String, RelationshipEdge> graph) {
+	public CommunityAwareStrategy(Graph<String, RelationshipEdge> graph,
+			Map<Long, UserEntity> userId2userObj) {
 		this.graph = graph;
+		this.userId2userObj = userId2userObj;
 	}
 
 	@Override
@@ -47,7 +50,7 @@ public class CommunityAwareStrategy implements ScoreStrategy {
 
 	@Override
 	public String getExperts() {
-		expert2score = Global.sortByValue(node2hitsscore);
+		expert2score = Application.sortByValue(node2hitsscore);
 
 		int i = 0;
 		JSONArray jsonArray = new JSONArray();
@@ -56,7 +59,7 @@ public class CommunityAwareStrategy implements ScoreStrategy {
 			i++;
 			// Restrict result to 10 items for now.
 			if (i < 10) {
-				UserEntity user = Global.userId2userObj1.get(Long
+				UserEntity user = userId2userObj.get(Long
 						.parseLong(userid));
 				user.setScore(node2hitsscore.get(userid));
 				if (user != null) {
