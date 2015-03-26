@@ -4,7 +4,6 @@
 package i5.las2peer.services.servicePackage.parsers;
 
 import i5.las2peer.services.servicePackage.datamodel.DataEntity;
-import i5.las2peer.services.servicePackage.datamodel.MySqlHelper;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -14,9 +13,6 @@ import java.util.ArrayList;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-
-import com.j256.ormlite.support.ConnectionSource;
-import com.j256.ormlite.table.TableUtils;
 
 /**
  * @author sathvik
@@ -68,12 +64,12 @@ public class CSVParser {
 	}
 
 	public void saveRecordsToDb() throws SQLException {
-		MySqlHelper.createDatabase("consruction");
-		ConnectionSource connectionSrc = MySqlHelper
-				.createConnectionSource("consruction");
+		// MySqlHelper.createDatabase("consruction");
+		// ConnectionSource connectionSrc = MySqlHelper
+		// .createConnectionSource("consruction");
 
 		// Create Data table.
-		TableUtils.createTableIfNotExists(connectionSrc, DataEntity.class);
+		// TableUtils.createTableIfNotExists(connectionSrc, DataEntity.class);
 		// TODO: Apply refactored class MySqlOpenHelper.
 		// if (dataList != null && dataList.size() > 0)
 		//MySqlHelper.createAndInsertResourceDAO(connectionSrc, dataList);

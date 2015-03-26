@@ -3,10 +3,11 @@
  */
 package i5.las2peer.services.servicePackage.datamodel;
 
+import i5.las2peer.services.servicePackage.parsers.Resource;
+import i5.las2peer.services.servicePackage.parsers.User;
 import i5.las2peer.services.servicePackage.semanticTagger.SemanticTagger;
+import i5.las2peer.services.servicePackage.statistics.Stats;
 import i5.las2peer.services.servicePackage.textProcessor.StopWordRemover;
-import i5.las2peer.services.servicePackage.xmlparsers.Resource;
-import i5.las2peer.services.servicePackage.xmlparsers.User;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.stmt.UpdateBuilder;
 import com.j256.ormlite.support.ConnectionSource;
 
 /**
@@ -172,9 +174,9 @@ public class DatabaseHandler extends MySqlOpenHelper {
 		SemanticTagger tagger = null;
 		for (DataEntity entity : data_entites) {
 			tagger = new SemanticTagger(entity.getBody());
-			if (tagger != null && tagger.getTags() != null) {
-				String tags = tagger.getTags().getTags();
-				String annotations = tagger.getTags().getAnnotation();
+			if (tagger != null && tagger.getSemanticData() != null) {
+				String tags = tagger.getSemanticData().getTags();
+				String annotations = tagger.getSemanticData().getAnnotation();
 
 				tagEntity = new SemanticTagEntity();
 				tagEntity.setPostId(entity.getPostId());
@@ -194,22 +196,38 @@ public class DatabaseHandler extends MySqlOpenHelper {
 		return userDao.queryForAll();
 	}
 
-	// public void createUserMap() throws SQLException {
-	// Dao<UserEntity, Long> userDao = DaoManager.createDao(
-	// super.getConnectionSource(),
-	// UserEntity.class);
-	// List<UserEntity> user_entites = userDao.queryForAll();
-	// for (UserEntity entity : user_entites) {
-	// Application.userId2userObj.put(entity.getUserId(), entity);
-	// }
-	// }
+	public void markExpertsForEvaluation(ConnectionSource connectionSrc)
+			throws SQLException {
+		List<Long> reputations = new ArrayList<Long>();
 
-	// public void createDataMap() throws SQLException {
-	// Dao<DataEntity, Long> dataDao = DaoManager.createDao(
-	// super.getConnectionSource(), DataEntity.class);
-	// List<DataEntity> data_entites = dataDao.queryForAll();
-	// for (DataEntity entity : data_entites) {
-	// Application.postId2postObj.put(entity.getPostId(), entity);
-	// }
-	// }
+		Dao<UserEntity, Long> userDao = DaoManager.createDao(connectionSrc,
+				UserEntity.class);
+		List<UserEntity> user_entites = userDao.queryForAll();
+		for (UserEntity entity : user_entites) {
+			long reputation = entity.getReputation();
+			reputations.add(reputation);
+		}
+
+		Stats stats = new Stats(reputations);
+
+		// System.out.println("MAX::" + stats.getMax());
+		// System.out.println("MIN::" + stats.getMin());
+		// System.out.println("MEDIAN::" + stats.getMedian());
+		// System.out.println("UPPER QUARTILE::" + stats.getUpperQuartile());
+		// System.out.println("LOWER QUARTILE::" + stats.getLowerQuartile());
+		// System.out.println("GET ABOVE PERCENTILE::"
+		// + stats.getPercentileAbove(98));
+
+		UpdateBuilder updateBuilder = userDao.updateBuilder();
+		for (UserEntity entity : user_entites) {
+			long reputation = entity.getReputation();
+			if (reputation >= stats.getPercentileAbove(98)) {
+				updateBuilder.where().eq("userId", entity.getUserId());
+				updateBuilder.updateColumnValue("probable_expert", true);
+				updateBuilder.update();
+			}
+		}
+
+	}
+
 }

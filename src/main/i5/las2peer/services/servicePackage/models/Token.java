@@ -16,7 +16,7 @@ public class Token {
 		mText = text;
 	}
 	
-	public void setText(String text) {
+	public void setName(String text) {
 		mText = text;
 	}
 	
@@ -32,11 +32,11 @@ public class Token {
 		return mId;
 	}
 	
-	public String getText() {
+	public String getName() {
 		return mText;
 	}
 	
-	public int getTermFreq() {
+	public int getFreq() {
 		return mCount;
 	}
 	

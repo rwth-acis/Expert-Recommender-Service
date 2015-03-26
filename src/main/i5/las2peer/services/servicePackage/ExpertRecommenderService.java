@@ -9,18 +9,16 @@ import i5.las2peer.restMapper.annotations.Path;
 import i5.las2peer.restMapper.annotations.Version;
 import i5.las2peer.restMapper.tools.ValidationResult;
 import i5.las2peer.restMapper.tools.XMLCheck;
-import i5.las2peer.services.servicePackage.datamodel.DataEntity;
 import i5.las2peer.services.servicePackage.datamodel.DatabaseHandler;
-import i5.las2peer.services.servicePackage.datamodel.MySqlHelper;
-import i5.las2peer.services.servicePackage.datamodel.UserEntity;
-import i5.las2peer.services.servicePackage.evaluation.EvaluationMeasure;
+import i5.las2peer.services.servicePackage.evaluator.EvaluationMeasure;
 import i5.las2peer.services.servicePackage.graph.GraphWriter;
 import i5.las2peer.services.servicePackage.graph.JUNGGraphCreator;
-import i5.las2peer.services.servicePackage.indexer.DbIndexer;
+import i5.las2peer.services.servicePackage.indexer.DbSematicsIndexer;
+import i5.las2peer.services.servicePackage.indexer.DbTextIndexer;
 import i5.las2peer.services.servicePackage.scoring.HITSStrategy;
+import i5.las2peer.services.servicePackage.scoring.ModelingStrategy1;
 import i5.las2peer.services.servicePackage.scoring.PageRankStrategy;
 import i5.las2peer.services.servicePackage.scoring.ScoringContext;
-import i5.las2peer.services.servicePackage.semanticTagger.SemanticTagger;
 import i5.las2peer.services.servicePackage.textProcessor.PorterStemmer;
 import i5.las2peer.services.servicePackage.textProcessor.StopWordRemover;
 import i5.las2peer.services.servicePackage.utils.Application;
@@ -38,11 +36,10 @@ import java.util.List;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
-import com.google.common.base.Splitter;
+import org.apache.lucene.queryparser.classic.ParseException;
+
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.HashMultiset;
 import com.j256.ormlite.support.ConnectionSource;
-import com.j256.ormlite.table.TableUtils;
 
 /**
  * @author sathvik
@@ -112,7 +109,6 @@ public class ExpertRecommenderService extends Service {
 	public HttpResponse modelExperts(@ContentParam String text) {
 
 		Application.algoName = "modeling1";
-		// ExpertUtils utils = new ExpertUtils();
 		String query = text;
 
 		// Stopwatch timer = Stopwatch.createStarted();
@@ -120,29 +116,43 @@ public class ExpertRecommenderService extends Service {
 		StopWordRemover remover = new StopWordRemover(query);
 		String cleanstr = remover.getPlainText();
 
-
-
-		// utils.setQuery(HashMultiset.create(Splitter.on(CharMatcher.WHITESPACE)
-		// .omitEmptyStrings().split(cleanstr)));
-
-		SemanticTagger tagger = new SemanticTagger(text);
-
-		// TODO:Handle this better, Splitting can be avoided here.
-		Application.QUERY_ENTITIES = HashMultiset.create(Splitter.on(",")
-				.omitEmptyStrings().split(tagger.getTags().getTags()));
-
 		String expert_posts = "{}";
 
+		DbTextIndexer dbTextIndexer = null;
+		DbSematicsIndexer dbSemanticsIndexer = null;
+
 		try {
-			ConnectionSource connSrc = MySqlHelper
-					.createConnectionSource("healthcare");
-			// MySqlHelper.createUserMap(connSrc);
-			//
-			// MySqlHelper.createTermFreqMap(connSrc);
-			// MySqlHelper.createSemanticTagFreqMap(connSrc);
-			//
-			// Application.createInverseResFreqMap();
-			// Application.createIEFMap();
+			DatabaseHandler dbHandler = new DatabaseHandler("healthcare",
+					"root", "");
+
+			System.out.println("DB connected");
+
+			dbTextIndexer = new DbTextIndexer(dbHandler.getConnectionSource());
+			dbTextIndexer.buildIndex(cleanstr);
+
+			dbSemanticsIndexer = new DbSematicsIndexer(
+					dbHandler.getConnectionSource());
+			dbSemanticsIndexer.buildIndex(cleanstr);
+
+			ScoringContext scontext = new ScoringContext(new ModelingStrategy1(
+					dbTextIndexer, dbSemanticsIndexer));
+			scontext.executeStrategy();
+			expert_posts = scontext.getExperts();
+
+			System.out.println("Evaluating modeling technique");
+
+			EvaluationMeasure eMeasure = new EvaluationMeasure(
+					scontext.getExpertMap(), dbTextIndexer.getUserMap(),
+					"Modeling1");
+
+			// Compute Evaluation Measures.
+			try {
+				eMeasure.computeAll();
+				// Retrieve the id from the database.
+				eMeasure.save(Integer.toString(query.hashCode()));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 
 		} catch (SQLException e) {
 
@@ -152,28 +162,13 @@ public class ExpertRecommenderService extends Service {
 							+ e);
 			res.setStatus(404);
 			return res;
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
 		}
 
-		// ScoringContext scontext = new ScoringContext(new
-		// ModelingStrategy1());
-		// scontext.executeStrategy();
-		// scontext.getExperts();
-		//
-		// System.out.println("Evaluating modeling technique");
-		// EvaluationMeasure eMeasure = new EvaluationMeasure(
-		// scontext.getExpertMap(), "Modeling1");
-		// Compute Evaluation Measures.
-		// try {
-		// eMeasure.computeAll();
-		// // Retrieve the id from the database.
-		// eMeasure.save(Integer.toString(query.hashCode()));
-		// } catch (IOException e) {
-		// e.printStackTrace();
-		// }
-
-		// System.out.println("Total time " + timer.stop());
-		// HttpResponse res = new HttpResponse(scontext.getExperts());
-		HttpResponse res = new HttpResponse(null);
+		HttpResponse res = new HttpResponse(expert_posts);
 		res.setStatus(200);
 		return res;
 	}
@@ -194,18 +189,14 @@ public class ExpertRecommenderService extends Service {
 			remover = new StopWordRemover(query);
 			cleanstr = remover.getPlainText();
 
-			// Application.QUERY_WORDS = HashMultiset.create(Splitter
-			// .on(CharMatcher.WHITESPACE).omitEmptyStrings()
-			// .split(cleanstr));
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 		System.out.println("TRYING TO CONNECT TO DB");
 		JUNGGraphCreator jcreator = null;
-		DbIndexer dbIndexer = null;
-		
+		DbTextIndexer dbIndexer = null;
+
 		try {
 			// ConnectionSource connSrc = MySqlHelper
 			// .createConnectionSource("healthcare");
@@ -217,7 +208,7 @@ public class ExpertRecommenderService extends Service {
 
 			System.out.println("DB connected");
 
-			dbIndexer = new DbIndexer(dbHandler.getConnectionSource());
+			dbIndexer = new DbTextIndexer(dbHandler.getConnectionSource());
 			dbIndexer.buildIndex(cleanstr);
 
 			System.out.println("Index created");
@@ -237,7 +228,6 @@ public class ExpertRecommenderService extends Service {
 
 		// Application.createFilteredQnAMap();
 
-
 		System.out.println("Applying Pagerank...");
 
 		PageRankStrategy strategy = new PageRankStrategy(jcreator.getGraph(),
@@ -248,8 +238,7 @@ public class ExpertRecommenderService extends Service {
 		expert_posts = scontext.getExperts();
 
 		EvaluationMeasure eMeasure = new EvaluationMeasure(
-				scontext.getExpertMap(), dbIndexer.getUserMap(),
-				"pagerank");
+				scontext.getExpertMap(), dbIndexer.getUserMap(), "pagerank");
 
 		// Compute Evaluation Measures.
 		try {
@@ -279,12 +268,11 @@ public class ExpertRecommenderService extends Service {
 		StopWordRemover remover = new StopWordRemover(query);
 		String cleanstr = remover.getPlainText();
 
-
 		String expert_posts = "{}";
 
 		System.out.println("TRYING TO CONNECT TO DB");
 		JUNGGraphCreator jcreator = null;
-		DbIndexer dbIndexer = null;
+		DbTextIndexer dbIndexer = null;
 
 		try {
 
@@ -293,7 +281,7 @@ public class ExpertRecommenderService extends Service {
 
 			System.out.println("DB connected");
 
-			dbIndexer = new DbIndexer(dbHandler.getConnectionSource());
+			dbIndexer = new DbTextIndexer(dbHandler.getConnectionSource());
 			dbIndexer.buildIndex(cleanstr);
 
 			System.out.println("Index created");
@@ -353,23 +341,9 @@ public class ExpertRecommenderService extends Service {
 		StopWordRemover remover = new StopWordRemover(query);
 		String cleanstr = remover.getPlainText();
 
-
 		String expert_posts = "{}";
 
-		try {
-			ConnectionSource connSrc = MySqlHelper
-					.createConnectionSource("healthcare");
-			// MySqlHelper.createUserMap(connSrc);
-			// MySqlHelper.createTermFreqMap(connSrc);
-		} catch (SQLException e) {
 
-			e.printStackTrace();
-			HttpResponse res = new HttpResponse(
-					"Some error occured on the server, Please contact the developer..."
-							+ e);
-			res.setStatus(404);
-			return res;
-		}
 
 		// Application.createFilteredQnAMap();
 
@@ -413,11 +387,11 @@ public class ExpertRecommenderService extends Service {
 	@Path("querysetEvaluator")
 	public HttpResponse evaluateQuerySet() {
 		ConnectionSource connSrc = null;
-		try {
-			connSrc = MySqlHelper.createConnectionSource("healthcare");
-		} catch (SQLException e1) {
-			e1.printStackTrace();
-		}
+		// try {
+		// connSrc = MySqlHelper.createConnectionSource("healthcare");
+		// } catch (SQLException e1) {
+		// e1.printStackTrace();
+		// }
 
 		ArrayList<String> queries = new ArrayList<String>();
 
@@ -451,13 +425,11 @@ public class ExpertRecommenderService extends Service {
 
 				System.out.println("Getting tokens...");
 
-
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 
 			System.out.println("Creating user and term freq map");
-
 
 			// Application.createFilteredQnAMap();
 
@@ -527,50 +499,52 @@ public class ExpertRecommenderService extends Service {
 
 		try {
 			JAXBContext context = JAXBContext
-					.newInstance(i5.las2peer.services.servicePackage.xmlparsers.Resources.class);
+					.newInstance(i5.las2peer.services.servicePackage.parsers.Resources.class);
 			Unmarshaller um = context.createUnmarshaller();
 			File file = new File("res/posts.xml");
 
-			i5.las2peer.services.servicePackage.xmlparsers.Resources resources = (i5.las2peer.services.servicePackage.xmlparsers.Resources) um
+			i5.las2peer.services.servicePackage.parsers.Resources resources = (i5.las2peer.services.servicePackage.parsers.Resources) um
 					.unmarshal(file);
-			List<i5.las2peer.services.servicePackage.xmlparsers.Resource> resources_list = (ArrayList) resources
+			List<i5.las2peer.services.servicePackage.parsers.Resource> resources_list = (ArrayList) resources
 					.getResources();
 
 			System.out.println("" + resources_list);
 
-			MySqlHelper.createDatabase("healthcare");
-			ConnectionSource connectionSrc = MySqlHelper
-					.createConnectionSource("healthcare");
+			// MySqlHelper.createDatabase("healthcare");
+			// ConnectionSource connectionSrc = MySqlHelper
+			// .createConnectionSource("healthcare");
 
 			// Create Data table.
-			TableUtils.createTableIfNotExists(connectionSrc, DataEntity.class);
+			// TableUtils.createTableIfNotExists(connectionSrc,
+			// DataEntity.class);
 			// MySqlHelper.createAndInsertResourceDAO(resources_list,
 			// connectionSrc);
 
 			// Create User table.
 			context = JAXBContext
-					.newInstance(i5.las2peer.services.servicePackage.xmlparsers.Users.class);
+					.newInstance(i5.las2peer.services.servicePackage.parsers.Users.class);
 			File users_file = new File("res/Users.xml");
 			Unmarshaller um1 = context.createUnmarshaller();
 
 			System.out.println("Creating User table...");
-			i5.las2peer.services.servicePackage.xmlparsers.Users users = (i5.las2peer.services.servicePackage.xmlparsers.Users) um1
+			i5.las2peer.services.servicePackage.parsers.Users users = (i5.las2peer.services.servicePackage.parsers.Users) um1
 					.unmarshal(users_file);
-			List<i5.las2peer.services.servicePackage.xmlparsers.User> user_list = (ArrayList) users
+			List<i5.las2peer.services.servicePackage.parsers.User> user_list = (ArrayList) users
 					.getUsersList();
 
 			System.out.println("Inserting into User table...");
-			TableUtils.createTableIfNotExists(connectionSrc, UserEntity.class);
+			// TableUtils.createTableIfNotExists(connectionSrc,
+			// UserEntity.class);
 			// MySqlHelper.createAndInsertUserDAO(user_list, connectionSrc);
 
-			MySqlHelper.markExpertsForEvaluation(connectionSrc);
+			// MySqlHelper.markExpertsForEvaluation(connectionSrc);
 
 			// Create Semantics table and insert data.
 			// TableUtils.createTableIfNotExists(connectionSrc,
 			// SemanticTagEntity.class);
 			// MySqlHelper.createAndInsertSemanticTags(connectionSrc);
 
-			connectionSrc.close();
+			// connectionSrc.close();
 
 			System.out.println("Inserting into user table completed...");
 		} catch (Exception e) {

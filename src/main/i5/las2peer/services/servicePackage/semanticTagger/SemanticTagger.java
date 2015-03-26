@@ -1,6 +1,6 @@
 package i5.las2peer.services.servicePackage.semanticTagger;
 
-import i5.las2peer.services.servicePackage.models.TagMeAnnotation;
+import i5.las2peer.services.servicePackage.models.SemanticData;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -18,6 +18,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.HashMultiset;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -45,10 +47,15 @@ public class SemanticTagger {
 		tags = new ArrayList<String>(Arrays.asList(tagstr.split(",")));
 	}
 
-	public TagMeAnnotation getTags() {
+	public HashMultiset<String> getTokens() {
+		return HashMultiset.create(Splitter.on(",").omitEmptyStrings()
+				.split(getSemanticData().getTags()));
+	}
+
+	public SemanticData getSemanticData() {
 
 		JsonArray annotations = new JsonArray();
-		TagMeAnnotation annotationObj = null;
+		SemanticData annotationObj = null;
 
 		if (mText != null && mText.length() > 0) {
 
@@ -109,7 +116,7 @@ public class SemanticTagger {
 				// System.out.println("TAGS " + tags);
 
 				if (annotations != null && tags != null) {
-					annotationObj = new TagMeAnnotation(annotations.toString(),
+					annotationObj = new SemanticData(annotations.toString(),
 						tags.toString());
 				}
 

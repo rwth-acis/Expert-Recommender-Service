@@ -6,7 +6,7 @@ import static org.junit.Assert.fail;
 import i5.las2peer.p2p.LocalNode;
 import i5.las2peer.security.ServiceAgent;
 import i5.las2peer.security.UserAgent;
-import i5.las2peer.services.servicePackage.evaluation.NormalizedDiscountedCumulativeGain;
+import i5.las2peer.services.servicePackage.evaluator.NormalizedDiscountedCumulativeGain;
 import i5.las2peer.services.servicePackage.parsers.CSVParser;
 import i5.las2peer.testing.MockAgentFactory;
 import i5.las2peer.webConnector.WebConnector;
