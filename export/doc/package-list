@@ -1,0 +1,15 @@
+i5.las2peer.services.servicePackage
+i5.las2peer.services.servicePackage.datamodel
+i5.las2peer.services.servicePackage.evaluator
+i5.las2peer.services.servicePackage.graph
+i5.las2peer.services.servicePackage.indexer
+i5.las2peer.services.servicePackage.models
+i5.las2peer.services.servicePackage.ocd
+i5.las2peer.services.servicePackage.parsers
+i5.las2peer.services.servicePackage.scoring
+i5.las2peer.services.servicePackage.searcher
+i5.las2peer.services.servicePackage.semanticTagger
+i5.las2peer.services.servicePackage.statistics
+i5.las2peer.services.servicePackage.textProcessor
+i5.las2peer.services.servicePackage.utils
+i5.las2peer.services.servicePackage.visualization

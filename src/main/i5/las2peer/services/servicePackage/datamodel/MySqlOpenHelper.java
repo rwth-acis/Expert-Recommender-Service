@@ -11,6 +11,9 @@ import com.j256.ormlite.jdbc.JdbcDatabaseConnection;
 import com.j256.ormlite.support.ConnectionSource;
 
 /**
+ * An abstract MySQL helper class to create database and to get connection
+ * source, required by ORMLite methods for CRUD operations.
+ * 
  * @author sathvik
  *
  */
