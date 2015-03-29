@@ -31,125 +31,122 @@ import com.google.gson.JsonPrimitive;
  */
 
 public class SemanticTagger {
-	private String mText;
-	ArrayList<String> tags;
-	public String TAG_ME_KEY = "174baff695d027d98674a1ebcf84d50c"; // Replace
-																	// with the
-																	// tagme API
-																	// key.
-	public String TAGME_URL = "http://tagme.di.unipi.it/tag";
+    private String mText;
+    ArrayList<String> tags;
+    public String TAG_ME_KEY = "174baff695d027d98674a1ebcf84d50c"; // Replace
+								   // with the
+								   // tagme API
+								   // key.
+    public String TAGME_URL = "http://tagme.di.unipi.it/tag";
 
-	public SemanticTagger(String text) {
-		mText = text;
-	}
+    public SemanticTagger(String text) {
+	mText = text;
+    }
 
-	public void setTags(String tagstr) {
-		tags = new ArrayList<String>(Arrays.asList(tagstr.split(",")));
-	}
+    public void setTags(String tagstr) {
+	tags = new ArrayList<String>(Arrays.asList(tagstr.split(",")));
+    }
 
-	public HashMultiset<String> getTokens() {
-		return HashMultiset.create(Splitter.on(",").omitEmptyStrings()
-				.split(getSemanticData().getTags()));
-	}
+    public HashMultiset<String> getTokens() {
+	return HashMultiset.create(Splitter.on(",").omitEmptyStrings().split(getSemanticData().getTags()));
+    }
 
-	public SemanticData getSemanticData() {
+    // TODO: Move extraction of DbCategories to SemanticData class.
+    public SemanticData getSemanticData() {
 
-		JsonArray annotations = new JsonArray();
-		SemanticData annotationObj = null;
+	JsonArray annotations = new JsonArray();
+	SemanticData annotationObj = null;
 
-		if (mText != null && mText.length() > 0) {
+	if (mText != null && mText.length() > 0) {
 
-			CloseableHttpClient httpclient = HttpClients.createDefault();
-			HttpPost httpPost = new HttpPost(TAGME_URL);
-			List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-			nvps.add(new BasicNameValuePair("key", TAG_ME_KEY));
-			nvps.add(new BasicNameValuePair("text", mText));
-			nvps.add(new BasicNameValuePair("include_categories", "true"));
+	    CloseableHttpClient httpclient = HttpClients.createDefault();
+	    HttpPost httpPost = new HttpPost(TAGME_URL);
+	    List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+	    nvps.add(new BasicNameValuePair("key", TAG_ME_KEY));
+	    nvps.add(new BasicNameValuePair("text", mText));
+	    nvps.add(new BasicNameValuePair("include_categories", "true"));
 
-			CloseableHttpResponse response = null;
+	    CloseableHttpResponse response = null;
 
+	    try {
+		httpPost.setEntity(new UrlEncodedFormEntity(nvps));
+		response = httpclient.execute(httpPost);
+		// System.out.println(response.getStatusLine());
 
-			try {
-				httpPost.setEntity(new UrlEncodedFormEntity(nvps));
-				response = httpclient.execute(httpPost);
-				// System.out.println(response.getStatusLine());
+		HttpEntity entity = response.getEntity();
+		String responseString = EntityUtils.toString(entity, "UTF-8");
 
-				HttpEntity entity = response.getEntity();
-				String responseString = EntityUtils.toString(entity, "UTF-8");
+		// System.out.println(mText);
+		// System.out.println(responseString);
 
-				// System.out.println(mText);
-				// System.out.println(responseString);
+		JsonParser parser = new JsonParser();
+		JsonElement jelement = parser.parse(responseString);
+		JsonObject jobject = jelement.getAsJsonObject();
+		JsonArray jarray = jobject.getAsJsonArray("annotations");
 
-				JsonParser parser = new JsonParser();
-				JsonElement jelement = parser.parse(responseString);
-				JsonObject jobject = jelement.getAsJsonObject();
-				JsonArray jarray = jobject.getAsJsonArray("annotations");
+		JsonObject jobj = null;
+		StringBuilder tags = new StringBuilder();
+		for (int i = 0; i < jarray.size(); i++) {
+		    jobject = jarray.get(i).getAsJsonObject();
+		    JsonPrimitive rho = jobject.getAsJsonPrimitive("rho");
+		    JsonPrimitive title = jobject.getAsJsonPrimitive("title");
 
-				JsonObject jobj = null;
-				StringBuilder tags = new StringBuilder();
-				for (int i = 0; i < jarray.size(); i++) {
-					jobject = jarray.get(i).getAsJsonObject();
-					JsonPrimitive rho = jobject.getAsJsonPrimitive("rho");
-					JsonPrimitive title = jobject.getAsJsonPrimitive("title");
+		    JsonArray categories = jobject.getAsJsonArray("dbpedia_categories");
 
-					JsonArray categories = jobject
-							.getAsJsonArray("dbpedia_categories");
-
-					if (Float.parseFloat(rho.getAsString()) >= 0.1) {
-						jobj = new JsonObject();
-						jobj.add("tags", categories);
-						jobj.add("title", title);
-						jobj.add("rho", rho);
-						annotations.add(jobj);
-						if (categories != null && categories.size() > 0) {
-							for (JsonElement jelem : categories) {
-								if (jelem != null) {
-									tags.append(jelem.getAsString());
-									tags.append(",");
-								}
-							}
-						}
-					}
+		    if (Float.parseFloat(rho.getAsString()) >= 0.1) {
+			jobj = new JsonObject();
+			jobj.add("tags", categories);
+			jobj.add("title", title);
+			jobj.add("rho", rho);
+			annotations.add(jobj);
+			if (categories != null && categories.size() > 0) {
+			    for (JsonElement jelem : categories) {
+				if (jelem != null) {
+				    tags.append(jelem.getAsString());
+				    tags.append(",");
 				}
-
-				// System.out.println("ANNOTATIONS " + annotations);
-				// System.out.println("TAGS " + tags);
-
-				if (annotations != null && tags != null) {
-					annotationObj = new SemanticData(annotations.toString(),
-						tags.toString());
-				}
-
-				// Gson gson = new GsonBuilder().registerTypeAdapter(
-				// TagMePOJO.class, new TagMeAdapter()).create();
-				//
-				// TagMePOJOContainer tagMe = gson.fromJson(responseString,
-				// TagMePOJOContainer.class);
-				//
-				// for (TagMePOJO tagpojo : tagMe.getAnnotations()) {
-				// if (tagpojo != null) {
-				// tagmeObjs.add(tagpojo);
-				// // Utils.println("TAG OBJ ::" + new
-				// // Gson().toJson(tagpojo));
-				// }
-				// }
-
-				// Release all the underlying resource.
-				EntityUtils.consume(entity);
-
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} finally {
-				try {
-					response.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-
+			    }
 			}
+		    }
 		}
-		return annotationObj;
+
+		// System.out.println("ANNOTATIONS " + annotations);
+		// System.out.println("TAGS " + tags);
+
+		if (annotations != null && tags != null) {
+		    annotationObj = new SemanticData(annotations.toString(), tags.toString());
+		}
+
+		// Gson gson = new GsonBuilder().registerTypeAdapter(
+		// TagMePOJO.class, new TagMeAdapter()).create();
+		//
+		// TagMePOJOContainer tagMe = gson.fromJson(responseString,
+		// TagMePOJOContainer.class);
+		//
+		// for (TagMePOJO tagpojo : tagMe.getAnnotations()) {
+		// if (tagpojo != null) {
+		// tagmeObjs.add(tagpojo);
+		// // Utils.println("TAG OBJ ::" + new
+		// // Gson().toJson(tagpojo));
+		// }
+		// }
+
+		// Release all the underlying resource.
+		EntityUtils.consume(entity);
+
+	    } catch (UnsupportedEncodingException e) {
+		e.printStackTrace();
+	    } catch (IOException e) {
+		e.printStackTrace();
+	    } finally {
+		try {
+		    response.close();
+		} catch (IOException e) {
+		    e.printStackTrace();
+		}
+
+	    }
 	}
+	return annotationObj;
+    }
 }
