@@ -1,4 +1,4 @@
-package i5.las2peer.services.servicePackage.graph;
+package i5.las2peer.services.servicePackage.utils;
 
 /**
  * @author sathvik
