@@ -3,7 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.datamodel;
 
-import i5.las2peer.services.servicePackage.parsers.Resource;
+import i5.las2peer.services.servicePackage.parsers.Post;
 import i5.las2peer.services.servicePackage.parsers.User;
 import i5.las2peer.services.servicePackage.semanticTagger.SemanticTagger;
 import i5.las2peer.services.servicePackage.statistics.Stats;
@@ -54,7 +54,7 @@ public class DatabaseHandler extends MySqlOpenHelper {
      *             table constraints.
      * 
      * */
-    public void addPosts(ArrayList<Resource> posts) throws SQLException {
+    public void addPosts(ArrayList<Post> posts) throws SQLException {
 
 	ConnectionSource source = super.getConnectionSource();
 	Dao<DataEntity, Long> DataDao = DaoManager.createDao(source, DataEntity.class);
@@ -62,7 +62,7 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	DataEntity data = null;
 	StopWordRemover remover = null;
 
-	for (Resource res : posts) {
+	for (Post res : posts) {
 	    data = new DataEntity();
 	    // boolean idExists = false;
 

@@ -5,6 +5,12 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
+ * 
+ * XML binding to the users.xml.
+ * 
+ * This contains the properties of a user who made the post.
+ * JAXB is used to parse the tags of an XML.
+ * 
  * @author sathvik
  */
 

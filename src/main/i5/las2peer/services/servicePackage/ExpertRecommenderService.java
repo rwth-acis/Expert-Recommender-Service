@@ -492,13 +492,13 @@ public class ExpertRecommenderService extends Service {
     public HttpResponse prepareDefaultData() {
 
 	try {
-	    JAXBContext context = JAXBContext.newInstance(i5.las2peer.services.servicePackage.parsers.Resources.class);
+	    JAXBContext context = JAXBContext.newInstance(i5.las2peer.services.servicePackage.parsers.Posts.class);
 	    Unmarshaller um = context.createUnmarshaller();
 	    File file = new File("res/posts.xml");
 
-	    i5.las2peer.services.servicePackage.parsers.Resources resources = (i5.las2peer.services.servicePackage.parsers.Resources) um
+	    i5.las2peer.services.servicePackage.parsers.Posts resources = (i5.las2peer.services.servicePackage.parsers.Posts) um
 		    .unmarshal(file);
-	    List<i5.las2peer.services.servicePackage.parsers.Resource> resources_list = (ArrayList) resources.getResources();
+	    List<i5.las2peer.services.servicePackage.parsers.Post> resources_list = (ArrayList) resources.getResources();
 
 	    System.out.println("" + resources_list);
 
