@@ -2,6 +2,15 @@
 ## An Expert Recommender framework.
 ### UNDER DEVELOPMENT.
 
+Build - Passed.
+
+To build the project, clone the project and run "ant" command from the root directory of the project.
+
+To start the LAS2Peer server, 
+Run
+sh bin/start_network.sh from the root of the project.
+
+Currently, Framework is under development and cannot be used directly. 
 
 Requirements:
 
