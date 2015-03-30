@@ -241,7 +241,7 @@ public class ExpertRecommenderService extends Service {
 	GraphWriter writer = new GraphWriter(jcreator);
 	try {
 	    writer.saveToGraphMl("fitness_graph_jung.graphml");
-	} catch (IOException e) {
+	} catch (Exception e) {
 	    e.printStackTrace();
 	}
 

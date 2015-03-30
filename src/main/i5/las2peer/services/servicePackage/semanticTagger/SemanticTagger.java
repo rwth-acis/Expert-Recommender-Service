@@ -31,16 +31,13 @@ import com.google.gson.JsonPrimitive;
  */
 
 public class SemanticTagger {
-    private String mText;
-    ArrayList<String> tags;
-    public String TAG_ME_KEY = "174baff695d027d98674a1ebcf84d50c"; // Replace
-								   // with the
-								   // tagme API
-								   // key.
+    private String text;
+    private ArrayList<String> tags;
+    public String TAG_ME_KEY = "174baff695d027d98674a1ebcf84d50c";
     public String TAGME_URL = "http://tagme.di.unipi.it/tag";
 
     public SemanticTagger(String text) {
-	mText = text;
+	this.text = text;
     }
 
     public void setTags(String tagstr) {
@@ -57,13 +54,13 @@ public class SemanticTagger {
 	JsonArray annotations = new JsonArray();
 	SemanticData annotationObj = null;
 
-	if (mText != null && mText.length() > 0) {
+	if (text != null && text.length() > 0) {
 
 	    CloseableHttpClient httpclient = HttpClients.createDefault();
 	    HttpPost httpPost = new HttpPost(TAGME_URL);
 	    List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 	    nvps.add(new BasicNameValuePair("key", TAG_ME_KEY));
-	    nvps.add(new BasicNameValuePair("text", mText));
+	    nvps.add(new BasicNameValuePair("text", text));
 	    nvps.add(new BasicNameValuePair("include_categories", "true"));
 
 	    CloseableHttpResponse response = null;

@@ -7,6 +7,9 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
+
+import org.apache.commons.collections15.Transformer;
 
 import edu.uci.ics.jung.io.GraphMLWriter;
 
@@ -17,7 +20,7 @@ import edu.uci.ics.jung.io.GraphMLWriter;
  *
  */
 public class GraphWriter {
-    private GraphMLWriter<String, RelationshipEdge> graphWriter;
+    private GraphMLWriterWithAttrNameAndType<String, RelationshipEdge> graphWriter;
     private JUNGGraphCreator creator;
 
     /**
@@ -28,7 +31,7 @@ public class GraphWriter {
      */
 
     public GraphWriter(JUNGGraphCreator creator) {
-	this.graphWriter = new GraphMLWriter<String, RelationshipEdge>();
+	this.graphWriter = new GraphMLWriterWithAttrNameAndType<String, RelationshipEdge>();
 	this.creator = creator;
     }
 
@@ -45,10 +48,21 @@ public class GraphWriter {
 
     public void saveToGraphMl(String filename) throws IOException {
 
-	// graphWriter.addEdgeData("label", "label for an edge", "0", null);
-	// graphWriter.setEdgeData(jcreator.getGraph().getEndpoints(arg0));
 	PrintWriter out = null;
 	out = new PrintWriter(new BufferedWriter(new FileWriter(filename)));
+
+	graphWriter.addVertexData("d3", "name", null, new Transformer<String, String>() {
+
+	    @Override
+	    public String transform(String nodeid) {
+		return nodeid;
+	    }
+	});
+
+	HashMap<String, String> key2val = new HashMap<String, String>();
+	key2val.put("attr.name", "name");
+	key2val.put("attr.type", "string");
+	graphWriter.setKeyAttributes(key2val);
 
 	graphWriter.save(creator.getGraph(), out);
 
