@@ -2,7 +2,7 @@
 ## An Expert Recommender framework.
 ### UNDER DEVELOPMENT.
 
-![alt text](https://github.com/rwth-acis/Recommendation-Service/blob/master/screenshot.png "Sample screenshot of a graph.")
+-> ![alt text](https://github.com/rwth-acis/Recommendation-Service/blob/master/screenshot.png "Sample screenshot of a graph.") <-
 
 Build - Passed.
 
