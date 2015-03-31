@@ -15,6 +15,8 @@ import i5.las2peer.services.servicePackage.graph.GraphWriter;
 import i5.las2peer.services.servicePackage.graph.JUNGGraphCreator;
 import i5.las2peer.services.servicePackage.indexer.DbSematicsIndexer;
 import i5.las2peer.services.servicePackage.indexer.DbTextIndexer;
+import i5.las2peer.services.servicePackage.parsers.CommunityCoverMatrixParser;
+import i5.las2peer.services.servicePackage.scoring.CommunityAwareStrategy;
 import i5.las2peer.services.servicePackage.scoring.HITSStrategy;
 import i5.las2peer.services.servicePackage.scoring.ModelingStrategy1;
 import i5.las2peer.services.servicePackage.scoring.PageRankStrategy;
@@ -329,17 +331,65 @@ public class ExpertRecommenderService extends Service {
 
 	String query = text;
 
-	Stopwatch timer = Stopwatch.createStarted();
-	// TODO: Semantic analysis of the text.
+	// Stopwatch timer = Stopwatch.createStarted();
 	StopWordRemover remover = new StopWordRemover(query);
 	String cleanstr = remover.getPlainText();
 
 	String expert_posts = "{}";
 
-	// Application.createFilteredQnAMap();
+	System.out.println("TRYING TO CONNECT TO DB");
+	JUNGGraphCreator jcreator = null;
+	DbTextIndexer dbIndexer = null;
+	CommunityCoverMatrixParser CCMP = null;
 
-	JUNGGraphCreator jcreator = new JUNGGraphCreator();
-	// jcreator.createGraph(Application.q2a1, Application.postId2userId1);
+	try {
+
+	    DatabaseHandler dbHandler = new DatabaseHandler("healthcare", "root", "");
+
+	    System.out.println("DB connected");
+
+	    dbIndexer = new DbTextIndexer(dbHandler.getConnectionSource());
+	    dbIndexer.buildIndex(cleanstr);
+
+	    System.out.println("Index created");
+
+	    jcreator = new JUNGGraphCreator();
+	    jcreator.createGraph(dbIndexer.getQnAMap(), dbIndexer.getPostId2UserIdMap());
+	    System.out.println("Graph created");
+
+	    System.out.println("Getting communities");
+
+	    CCMP = new CommunityCoverMatrixParser("slpa_fitness.txt");
+	    CCMP.parse();
+
+	} catch (Exception e) {
+	    e.printStackTrace();
+	    System.out.println(e);
+	    HttpResponse res = new HttpResponse("Cannot connect to Db");
+	    res.setStatus(200);
+
+	}
+
+	System.out.println("Applying HITS...");
+
+	try {
+	    CommunityAwareStrategy strategy = new CommunityAwareStrategy(jcreator.getGraph(), dbIndexer.getUserMap(), CCMP.getNodeId2CoversMap());
+
+	    ScoringContext scontext = new ScoringContext(strategy);
+	    scontext.executeStrategy();
+
+	    expert_posts = scontext.getExperts();
+
+	    EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), dbIndexer.getUserMap(), "hits");
+
+	    // Compute Evaluation Measures.
+
+	    eMeasure.computeAll();
+	    // Retrieve the id from the database.
+	    eMeasure.save(Integer.toString(query.hashCode()));
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
 
 	GraphWriter writer = new GraphWriter(jcreator);
 	try {
@@ -348,9 +398,7 @@ public class ExpertRecommenderService extends Service {
 	    e.printStackTrace();
 	}
 
-	System.out.println("Created Graph ans saved it... ");
-
-	System.out.println("Total time " + timer.stop());
+	// System.out.println("Total time " + timer.stop());
 	HttpResponse res = new HttpResponse(expert_posts);
 	res.setStatus(200);
 	return res;
@@ -496,8 +544,7 @@ public class ExpertRecommenderService extends Service {
 	    Unmarshaller um = context.createUnmarshaller();
 	    File file = new File("res/posts.xml");
 
-	    i5.las2peer.services.servicePackage.parsers.Posts resources = (i5.las2peer.services.servicePackage.parsers.Posts) um
-		    .unmarshal(file);
+	    i5.las2peer.services.servicePackage.parsers.Posts resources = (i5.las2peer.services.servicePackage.parsers.Posts) um.unmarshal(file);
 	    List<i5.las2peer.services.servicePackage.parsers.Post> resources_list = (ArrayList) resources.getResources();
 
 	    System.out.println("" + resources_list);

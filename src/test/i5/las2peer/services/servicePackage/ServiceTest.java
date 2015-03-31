@@ -8,6 +8,7 @@ import i5.las2peer.security.ServiceAgent;
 import i5.las2peer.security.UserAgent;
 import i5.las2peer.services.servicePackage.evaluator.NormalizedDiscountedCumulativeGain;
 import i5.las2peer.services.servicePackage.parsers.CSVParser;
+import i5.las2peer.services.servicePackage.parsers.CommunityCoverMatrixParser;
 import i5.las2peer.testing.MockAgentFactory;
 import i5.las2peer.webConnector.WebConnector;
 import i5.las2peer.webConnector.client.ClientResponse;
@@ -219,6 +220,12 @@ public class ServiceTest {
 		converter.parse();
 		converter.saveRecordsToDb();
 	}
+
+    @Test
+    public void testCoverParser() throws IOException {
+	CommunityCoverMatrixParser parser = new CommunityCoverMatrixParser("slpa_fitness.txt");
+	parser.parse();
+    }
 
 	/**
 	 * Test the ServiceClass for valid rest mapping.

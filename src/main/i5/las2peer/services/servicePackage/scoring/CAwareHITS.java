@@ -1,5 +1,9 @@
 package i5.las2peer.services.servicePackage.scoring;
 
+import i5.las2peer.services.servicePackage.datamodel.NodeCoverManager;
+
+import java.util.HashMap;
+
 import org.apache.commons.collections15.Transformer;
 
 import edu.uci.ics.jung.algorithms.scoring.HITS;
@@ -13,55 +17,94 @@ import edu.uci.ics.jung.graph.Graph;
  */
 
 public class CAwareHITS<V, E> extends HITSWithPriors<V, E> {
+    private HashMap<Long, NodeCoverManager> nodeId2Covers;
 
-	public CAwareHITS(Graph<V, E> g, Transformer<E, Double> edge_weights,
-			double alpha) {
-		super(g, edge_weights, ScoringUtils.getHITSUniformRootPrior(g
-				.getVertices()), alpha);
+    public CAwareHITS(Graph<V, E> g, Transformer<E, Double> edge_weights, double alpha, HashMap<Long, NodeCoverManager> nodeId2Covers) {
+	super(g, edge_weights, ScoringUtils.getHITSUniformRootPrior(g.getVertices()), alpha);
+	this.nodeId2Covers = nodeId2Covers;
+    }
+
+    public CAwareHITS(Graph<V, E> g, double alpha, HashMap<Long, NodeCoverManager> nodeId2Covers) {
+	super(g, ScoringUtils.getHITSUniformRootPrior(g.getVertices()), alpha);
+	this.nodeId2Covers = nodeId2Covers;
+    }
+
+    /**
+     * Updates the value for this vertex taking into consideration about
+     * neighboring covers.
+     * 
+     * @param v
+     *            A vertex id, generally a long value.
+     */
+    @Override
+    protected double update(V v) {
+	collectDisappearingPotential(v);
+	System.out.println("Vertex id is" + v);
+	NodeCoverManager ncManager = nodeId2Covers.get(Long.parseLong(v.toString()));
+
+	// If cannot find a cover, do a regular HITS update.
+	if (ncManager == null) {
+	    System.out.println("Not able to find cover, falling back to normal HITS update..");
+	    super.update(v);
 	}
 
-	public CAwareHITS(Graph<V, E> g, double alpha) {
-		super(g, ScoringUtils.getHITSUniformRootPrior(g.getVertices()), alpha);
+	long currCoverId = ncManager.getDominantCover();
+
+
+	// This is to be calculated depending on the Community
+	double v_auth = 0;
+	for (E e : graph.getInEdges(v)) {
+	    int incident_count = getAdjustedIncidentCount(e);
+	    for (V w : graph.getIncidentVertices(e)) {
+		NodeCoverManager neighborNCManager = nodeId2Covers.get(Long.parseLong(w.toString()));
+		long neighbourCoverId = neighborNCManager.getDominantCover();
+
+		if (!w.equals(v) || hyperedges_are_self_loops) {
+		    double hubweight = getCurrentValue(w).hub;
+
+		    // If current node and neighboring node does not belong to
+		    // same cover(community) reduce the incoming hub weight from
+		    // the external node.
+		    if (currCoverId != neighbourCoverId) {
+			hubweight = hubweight * 0.5;
+		    }
+		    // Update depending on community.
+		    v_auth += (hubweight * getEdgeWeight(w, e).doubleValue() / incident_count);
+		}
+	    }
 	}
 
-	/**
-	 * Updates the value for this vertex.
-	 */
-	@Override
-	protected double update(V v) {
-		collectDisappearingPotential(v);
+	double v_hub = 0;
+	for (E e : graph.getOutEdges(v)) {
+	    int incident_count = getAdjustedIncidentCount(e);
+	    for (V w : graph.getIncidentVertices(e)) {
+		NodeCoverManager neighborNCManager = nodeId2Covers.get(Long.parseLong(w.toString()));
+		long neighbourCoverId = neighborNCManager.getDominantCover();
 
-		// This is to be calculated depending on the Community
-		double v_auth = 0;
-		for (E e : graph.getInEdges(v)) {
-			int incident_count = getAdjustedIncidentCount(e);
-			for (V w : graph.getIncidentVertices(e)) {
-				if (!w.equals(v) || hyperedges_are_self_loops)
-					// Update depending on community.
-					v_auth += (getCurrentValue(w).hub
-							* getEdgeWeight(w, e).doubleValue() / incident_count);
-			}
+		if (!w.equals(v) || hyperedges_are_self_loops) {
+		    double authweight = getCurrentValue(w).authority;
+
+		    // If current node and neighboring node does not belong to
+		    // same cover(community) reduce the incoming authority
+		    // weight from the external node.
+		    if (currCoverId != neighbourCoverId) {
+			authweight = authweight * 0.5;
+		    }
+
+		    // Update depending on community.
+		    v_hub += (authweight * getEdgeWeight(w, e).doubleValue() / incident_count);
+
 		}
-
-		double v_hub = 0;
-		for (E e : graph.getOutEdges(v)) {
-			int incident_count = getAdjustedIncidentCount(e);
-			for (V w : graph.getIncidentVertices(e)) {
-				if (!w.equals(v) || hyperedges_are_self_loops)
-					// Update depending on community.
-					v_hub += (getCurrentValue(w).authority
-							* getEdgeWeight(w, e).doubleValue() / incident_count);
-			}
-		}
-
-		// modify total_input according to alpha
-		if (alpha > 0) {
-			v_auth = v_auth * (1 - alpha) + getVertexPrior(v).authority * alpha;
-			v_hub = v_hub * (1 - alpha) + getVertexPrior(v).hub * alpha;
-		}
-		setOutputValue(v, new HITS.Scores(v_hub, v_auth));
-
-		return Math.max(Math.abs(getCurrentValue(v).hub - v_hub),
-				Math.abs(getCurrentValue(v).authority - v_auth));
+	    }
 	}
+
+	// modify total_input according to alpha
+	if (alpha > 0) {
+	    v_auth = v_auth * (1 - alpha) + getVertexPrior(v).authority * alpha;
+	    v_hub = v_hub * (1 - alpha) + getVertexPrior(v).hub * alpha;
+	}
+	setOutputValue(v, new HITS.Scores(v_hub, v_auth));
+
+	return Math.max(Math.abs(getCurrentValue(v).hub - v_hub), Math.abs(getCurrentValue(v).authority - v_auth));
+    }
 }
