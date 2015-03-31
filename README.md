@@ -7,7 +7,7 @@
 Red node is the main hub in the network. 
 
 Blue and Violet nodes shows the differnce in two algorithms namely Community aware HITS and regular HITS.
-
+Motivation is to find not only hub nodes but to find useful nodes with awareness of community knowledge.
 
 Build - Passed.
 
