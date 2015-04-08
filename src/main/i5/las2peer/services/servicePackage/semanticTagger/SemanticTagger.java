@@ -36,10 +36,18 @@ public class SemanticTagger {
     public String TAG_ME_KEY = "174baff695d027d98674a1ebcf84d50c";
     public String TAGME_URL = "http://tagme.di.unipi.it/tag";
 
+    /**
+     * 
+     * @param text
+     */
     public SemanticTagger(String text) {
 	this.text = text;
     }
 
+    /**
+     * 
+     * @param tagstr
+     */
     public void setTags(String tagstr) {
 	tags = new ArrayList<String>(Arrays.asList(tagstr.split(",")));
     }
@@ -48,6 +56,10 @@ public class SemanticTagger {
 	return HashMultiset.create(Splitter.on(",").omitEmptyStrings().split(getSemanticData().getTags()));
     }
 
+    /**
+     * 
+     * @return
+     */
     // TODO: Move extraction of DbCategories to SemanticData class.
     public SemanticData getSemanticData() {
 

@@ -28,6 +28,12 @@ public class CommunityAwareStrategy implements ScoreStrategy {
     private Map<Long, UserEntity> userId2userObj;
     private HashMap<Long, NodeCoverManager> nodeId2Covers;
 
+    /**
+     * 
+     * @param graph
+     * @param userId2userObj
+     * @param nodeId2Covers
+     */
     public CommunityAwareStrategy(Graph<String, RelationshipEdge> graph, Map<Long, UserEntity> userId2userObj,
 	    HashMap<Long, NodeCoverManager> nodeId2Covers) {
 	this.graph = graph;
@@ -35,6 +41,9 @@ public class CommunityAwareStrategy implements ScoreStrategy {
 	this.nodeId2Covers = nodeId2Covers;
     }
 
+    /**
+     * 
+     */
     @Override
     public void executeAlgorithm() {
 
@@ -51,6 +60,9 @@ public class CommunityAwareStrategy implements ScoreStrategy {
 
     }
 
+    /**
+     * 
+     */
     @Override
     public String getExperts() {
 	expert2score = Application.sortByValue(node2hitsscore);

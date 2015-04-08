@@ -20,53 +20,59 @@ import org.openide.util.Lookup;
  *
  */
 public class GraphMl2GEXFConverter {
-	GraphModel graphModel;
+    GraphModel graphModel;
 
-	public GraphMl2GEXFConverter() {
+    public GraphMl2GEXFConverter() {
 
+    }
+
+    /**
+     * 
+     * @param srcpath
+     * @throws IOException
+     */
+    public void convert(String srcpath) throws IOException {
+	File graphmlFile = new File(srcpath);
+
+	// Init a project - and therefore a workspace
+	ProjectController pc = Lookup.getDefault().lookup(ProjectController.class);
+	pc.newProject();
+	Workspace workspace = pc.getCurrentWorkspace();
+
+	// get import controller
+	ImportController importController = Lookup.getDefault().lookup(ImportController.class);
+
+	// Import file
+	Container container = importController.importFile(graphmlFile);
+
+	// Append imported data to GraphAPI
+	importController.process(container, new DefaultProcessor(), workspace);
+
+	graphModel = Lookup.getDefault().lookup(GraphController.class).getModel();
+
+    }
+
+    public void applyLayout() {
+	YifanHuLayout layout = new YifanHuLayout(null, new StepDisplacement(1f));
+	layout.setGraphModel(graphModel);
+	layout.initAlgo();
+	layout.resetPropertiesValues();
+	layout.setOptimalDistance(200f);
+
+	for (int i = 0; i < 100 && layout.canAlgo(); i++) {
+	    layout.goAlgo();
 	}
+	layout.endAlgo();
+    }
 
-	public void convert(String srcpath) throws IOException {
-		File graphmlFile = new File(srcpath);
-
-		// Init a project - and therefore a workspace
-		ProjectController pc = Lookup.getDefault().lookup(
-				ProjectController.class);
-		pc.newProject();
-		Workspace workspace = pc.getCurrentWorkspace();
-
-		// get import controller
-		ImportController importController = Lookup.getDefault().lookup(
-				ImportController.class);
-
-		// Import file
-		Container container = importController.importFile(graphmlFile);
-
-		// Append imported data to GraphAPI
-		importController.process(container, new DefaultProcessor(), workspace);
-
-		graphModel = Lookup.getDefault().lookup(GraphController.class)
-				.getModel();
-
-	}
-
-	public void applyLayout() {
-		YifanHuLayout layout = new YifanHuLayout(null, new StepDisplacement(1f));
-		layout.setGraphModel(graphModel);
-		layout.initAlgo();
-		layout.resetPropertiesValues();
-		layout.setOptimalDistance(200f);
-
-		for (int i = 0; i < 100 && layout.canAlgo(); i++) {
-			layout.goAlgo();
-		}
-		layout.endAlgo();
-	}
-
-	public void export(String destpath) throws IOException {
-		// Export graph to PDF
-		ExportController ec = Lookup.getDefault()
-				.lookup(ExportController.class);
-		ec.exportFile(new File(destpath + ".gexf"));
-	}
+    /**
+     * 
+     * @param destpath
+     * @throws IOException
+     */
+    public void export(String destpath) throws IOException {
+	// Export graph to PDF
+	ExportController ec = Lookup.getDefault().lookup(ExportController.class);
+	ec.exportFile(new File(destpath + ".gexf"));
+    }
 }

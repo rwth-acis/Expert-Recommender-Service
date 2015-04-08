@@ -19,11 +19,24 @@ import edu.uci.ics.jung.graph.Graph;
 public class CAwareHITS<V, E> extends HITSWithPriors<V, E> {
     private HashMap<Long, NodeCoverManager> nodeId2Covers;
 
+    /**
+     * 
+     * @param g
+     * @param edge_weights
+     * @param alpha
+     * @param nodeId2Covers
+     */
     public CAwareHITS(Graph<V, E> g, Transformer<E, Double> edge_weights, double alpha, HashMap<Long, NodeCoverManager> nodeId2Covers) {
 	super(g, edge_weights, ScoringUtils.getHITSUniformRootPrior(g.getVertices()), alpha);
 	this.nodeId2Covers = nodeId2Covers;
     }
 
+    /**
+     * 
+     * @param g
+     * @param alpha
+     * @param nodeId2Covers
+     */
     public CAwareHITS(Graph<V, E> g, double alpha, HashMap<Long, NodeCoverManager> nodeId2Covers) {
 	super(g, ScoringUtils.getHITSUniformRootPrior(g.getVertices()), alpha);
 	this.nodeId2Covers = nodeId2Covers;

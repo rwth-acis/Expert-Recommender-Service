@@ -26,6 +26,11 @@ public class HITSStrategy implements ScoreStrategy {
     private LinkedHashMap<String, Double> expert2score;
     private Map<Long, UserEntity> userId2userObj;
 
+    /**
+     * 
+     * @param graph
+     * @param userId2userObj
+     */
     public HITSStrategy(Graph<String, RelationshipEdge> graph, Map<Long, UserEntity> userId2userObj) {
 	this.graph = graph;
 	this.userId2userObj = userId2userObj;
