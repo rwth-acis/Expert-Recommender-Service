@@ -1,0 +1,418 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Expert Recommender System",
+        "description": "An open source expert recommender system to recommend experts from the given data.",
+        "version": "1.0.0"
+    },
+    "host": "api.i5.ers",
+    "schemes": [
+        "http"
+    ],
+    "basePath": "/ers/v1",
+    "produces": [
+        "application/json"
+    ],
+    "paths": {
+        "/dataset": {
+            "post": {
+                "summary": "Upload a dataset",
+                "description": "This can be used to upload the new dataset to the server. A dataset name and Id will be returned after successful upload of the data.\n",
+                "responses": {
+                    "200": {
+                        "description": "An id of the uploaded dataset",
+                        "schema": {
+                            "type": "object",
+                            "items": {
+                                "$ref": "#/definitions/Dataset"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/datasets": {
+            "get": {
+                "summary": "Get the list of available dataset in the server.",
+                "description": "Retrieves the list of all the datasets available with the ids and more details.\n",
+                "responses": {
+                    "200": {
+                        "description": "Array of Dataset",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Datasets"
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "Unexpected error",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/datasets/{dataset_id}/stats": {
+            "post": {
+                "summary": "Calculate differnet statistics measures on the dataset.",
+                "description": "This triggers the calculation of differnet statistics measures on the dataset. The particular dataset is identified with the dataset id supplied in the resource url.",
+                "parameters": [
+                    {
+                        "name": "dataset_id",
+                        "in": "path",
+                        "description": "Id of the dataset",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "object",
+                        "schema": {
+                            "$ref": "#/definitions/stat"
+                        }
+                    }
+                }
+            }
+        },
+        "/dataset/{dataset_id}/stats": {
+            "get": {
+                "summary": "Get all the recorded statistics",
+                "description": "An array of statistics recorded on the dataset at various time is returned.",
+                "parameters": [
+                    {
+                        "name": "dataset_id",
+                        "in": "path",
+                        "description": "Id of the dataset",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "array",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/stats"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/datasets/{dataset_id}/stats/{id}": {
+            "get": {
+                "summary": "gets the statistics of the particular id.",
+                "description": "Statistics on the data recorded at different time have an unique id. This can be used to retrieve a specific statistics details.",
+                "parameters": [
+                    {
+                        "name": "dataset_id",
+                        "in": "path",
+                        "description": "Id of the dataset",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Id of the statistics",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "object",
+                        "schema": {
+                            "$ref": "#/definitions/stat"
+                        }
+                    }
+                }
+            }
+        },
+        "/datasets/{dataset_id}/stopwords": {
+            "get": {
+                "summary": "get the list of stop words from the dataset.",
+                "description": "get the list of stop words from the dataset.",
+                "parameters": [
+                    {
+                        "name": "dataset_id",
+                        "in": "path",
+                        "description": "Id of the dataset",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of stop words"
+                    }
+                }
+            }
+        },
+        "/datasets/{dataset_id}/algorithms/{algorithm_name}/experts": {
+            "get": {
+                "summary": "Executes given algorithm on the specified dataset and returns experts",
+                "description": "Executes the specified algorithm on the data and returns the experts from the dataset",
+                "parameters": [
+                    {
+                        "name": "dataset_id",
+                        "in": "path",
+                        "description": "Id of the dataset",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    {
+                        "name": "algorithm_name",
+                        "in": "path",
+                        "description": "name of the algorithm",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "evaluate",
+                        "in": "query",
+                        "description": "indication for calculation of evaluation measure",
+                        "required": false,
+                        "type": "boolean",
+                        "format": "boolean"
+                    },
+                    {
+                        "name": "visalize",
+                        "in": "query",
+                        "description": "indication to generate graph for visualization",
+                        "required": false,
+                        "type": "boolean",
+                        "format": "boolean"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "array of expert",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/experts"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/datasets/{dataset_id}/evaluations": {
+            "get": {
+                "summary": "Lists all the evaluation id.",
+                "description": "Evaluation id that was recorded at differnt time when evaluation was requested by client.",
+                "parameters": [
+                    {
+                        "name": "dataset_id",
+                        "in": "path",
+                        "description": "Id of the dataset",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/datasets/{dataset_id}/evaluations/{evaluation_id}": {
+            "get": {
+                "summary": "get the evaluation measures for the specified evaluation id.",
+                "description": "ok",
+                "parameters": [
+                    {
+                        "name": "dataset_id",
+                        "in": "path",
+                        "description": "Id of the dataset",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    {
+                        "name": "evaluation_id",
+                        "in": "path",
+                        "description": "Id of the evaluation",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/datasets/{dataset_id}/visualizations": {
+            "get": {
+                "summary": "Lists all the visualization id.",
+                "description": "visualization id that was recorded at differnt time when visualization was requested by client.",
+                "parameters": [
+                    {
+                        "name": "dataset_id",
+                        "in": "path",
+                        "description": "Id of the dataset",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/datasets/{dataset_id}/visulaizations/{visulaization_id}": {
+            "get": {
+                "summary": "get the evaluation measures for the specified evaluation id.",
+                "description": "ok",
+                "parameters": [
+                    {
+                        "name": "dataset_id",
+                        "in": "path",
+                        "description": "Id of the dataset",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    {
+                        "name": "visulaization_id",
+                        "in": "path",
+                        "description": "Id of the evaluation",
+                        "required": true,
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "object",
+                        "schema": {
+                            "$ref": "#/definitions/visualization"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Dataset": {
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier representing a specific dataset. For example, healthcare dataset will have its own unique id"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of dataset"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of dataset"
+                }
+            }
+        },
+        "Datasets": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/Dataset"
+            }
+        },
+        "expert": {
+            "properties": {
+                "userId": {
+                    "type": "string"
+                },
+                "userName": {
+                    "type": "string"
+                },
+                "reputation": {
+                    "type": "string"
+                },
+                "creationDate": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "contactInfo": {
+                    "type": "string"
+                },
+                "topics": {
+                    "type": "string"
+                },
+                "algorithmScore": {
+                    "type": "number"
+                }
+            }
+        },
+        "experts": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/expert"
+            }
+        },
+        "stat": {
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "stats": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/stat"
+            }
+        },
+        "visualization": {
+            "properties": {
+                "graph": {
+                    "type": "string",
+                    "description": "A graphml string used for visualization."
+                }
+            }
+        },
+        "Error": {
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int32"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "fields": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
