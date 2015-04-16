@@ -10,20 +10,24 @@ import i5.las2peer.restMapper.annotations.Version;
 import i5.las2peer.restMapper.tools.ValidationResult;
 import i5.las2peer.restMapper.tools.XMLCheck;
 import i5.las2peer.services.servicePackage.datamodel.DatabaseHandler;
+import i5.las2peer.services.servicePackage.datamodel.UserEntity;
 import i5.las2peer.services.servicePackage.evaluator.EvaluationMeasure;
 import i5.las2peer.services.servicePackage.graph.GraphWriter;
 import i5.las2peer.services.servicePackage.graph.JUNGGraphCreator;
 import i5.las2peer.services.servicePackage.indexer.DbSematicsIndexer;
 import i5.las2peer.services.servicePackage.indexer.DbTextIndexer;
+import i5.las2peer.services.servicePackage.ocd.OCD;
 import i5.las2peer.services.servicePackage.parsers.CommunityCoverMatrixParser;
 import i5.las2peer.services.servicePackage.scoring.CommunityAwareStrategy;
 import i5.las2peer.services.servicePackage.scoring.HITSStrategy;
 import i5.las2peer.services.servicePackage.scoring.ModelingStrategy1;
 import i5.las2peer.services.servicePackage.scoring.PageRankStrategy;
 import i5.las2peer.services.servicePackage.scoring.ScoringContext;
+import i5.las2peer.services.servicePackage.searcher.LuceneSearcher;
 import i5.las2peer.services.servicePackage.textProcessor.PorterStemmer;
 import i5.las2peer.services.servicePackage.textProcessor.StopWordRemover;
 import i5.las2peer.services.servicePackage.utils.Application;
+import i5.las2peer.services.servicePackage.utils.UserMapSingleton;
 import i5.las2peer.services.servicePackage.visualization.GraphMl2GEXFConverter;
 
 import java.io.BufferedReader;
@@ -34,11 +38,13 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
 import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.TopDocs;
 
 import com.google.common.base.Stopwatch;
 import com.j256.ormlite.support.ConnectionSource;
@@ -170,10 +176,15 @@ public class ExpertRecommenderService extends Service {
 
     @POST
     @Path("pagerank")
-    public HttpResponse applyPageRank(@ContentParam String text) {
+    public HttpResponse applyPageRank(@ContentParam String query) {
+	if (query == null) {
+	    // TODO: Throw custom exception.
+	}
 
-	Application.algoName = "pagerank";
-	String query = text;
+	if (query != null && query.length() < 0) {
+	    // TODO: Throw custom exception.
+	}
+
 	StopWordRemover remover = null;
 	String cleanstr = null;
 	String expert_posts = "{}";
@@ -188,48 +199,50 @@ public class ExpertRecommenderService extends Service {
 	    e.printStackTrace();
 	}
 
-	System.out.println("TRYING TO CONNECT TO DB");
 	JUNGGraphCreator jcreator = null;
-	DbTextIndexer dbIndexer = null;
+	LuceneSearcher searcher = null;
 
 	try {
-	    // ConnectionSource connSrc = MySqlHelper
-	    // .createConnectionSource("healthcare");
-	    // MySqlHelper.createUserMap(connSrc);
-	    // MySqlHelper.createTermFreqMap(connSrc);
+	    System.out.println("Performing search...");
 
-	    DatabaseHandler dbHandler = new DatabaseHandler("healthcare", "root", "");
-
-	    System.out.println("DB connected");
-
-	    dbIndexer = new DbTextIndexer(dbHandler.getConnectionSource());
-	    dbIndexer.buildIndex(cleanstr);
-
-	    System.out.println("Index created");
+	    searcher = new LuceneSearcher(cleanstr, "healthcare_index");
+	    TopDocs docs = searcher.performSearch(cleanstr, Integer.MAX_VALUE);
+	    searcher.buildQnAMap(docs);
 
 	    jcreator = new JUNGGraphCreator();
-	    jcreator.createGraph(dbIndexer.getQnAMap(), dbIndexer.getPostId2UserIdMap());
+	    jcreator.createGraph(searcher.getQnAMap(), searcher.getPostId2UserIdMap());
 	    System.out.println("Graph created");
 
 	} catch (Exception e) {
 	    e.printStackTrace();
 	    System.out.println(e);
-	    HttpResponse res = new HttpResponse("Cannot connect to Db");
+	    HttpResponse res = new HttpResponse("Exception while searching...");
 	    res.setStatus(200);
-
 	}
 
-	// Application.createFilteredQnAMap();
+	Map<Long, UserEntity> usermap = null;
 
+	try {
+	    DatabaseHandler dbHandler = new DatabaseHandler("healthcare", "root", "");
+	    usermap = UserMapSingleton.getInstance().getUserMap(dbHandler.getConnectionSource());
+	} catch (SQLException e1) {
+	    e1.printStackTrace();
+	}
 	System.out.println("Applying Pagerank...");
 
-	PageRankStrategy strategy = new PageRankStrategy(jcreator.getGraph(), dbIndexer.getUserMap());
+	if (usermap == null) {
+	    // TODO: Throw custom exception.
+	}
+
+	System.out.println("Applying page rank strategey...");
+
+	PageRankStrategy strategy = new PageRankStrategy(jcreator.getGraph(), usermap);
 	ScoringContext scontext = new ScoringContext(strategy);
 	scontext.executeStrategy();
 
 	expert_posts = scontext.getExperts();
 
-	EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), dbIndexer.getUserMap(), "pagerank");
+	EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), usermap, "pagerank");
 
 	// Compute Evaluation Measures.
 	try {
@@ -255,53 +268,75 @@ public class ExpertRecommenderService extends Service {
 
     @POST
     @Path("hits")
-    public HttpResponse applyHITS(@ContentParam String text) {
+    public HttpResponse applyHITS(@ContentParam String query) {
 
-	String query = text;
+	if (query == null) {
+	    // TODO: Throw custom exception.
+	}
 
-	// Stopwatch timer = Stopwatch.createStarted();
-	StopWordRemover remover = new StopWordRemover(query);
-	String cleanstr = remover.getPlainText();
+	if (query != null && query.length() < 0) {
+	    // TODO: Throw custom exception.
+	}
 
+	StopWordRemover remover = null;
+	String cleanstr = null;
 	String expert_posts = "{}";
+	Stopwatch timer = null;
+	try {
+	    // timer = Stopwatch.createStarted();
+	    // TODO: Semantic analysis of the text.
+	    remover = new StopWordRemover(query);
+	    cleanstr = remover.getPlainText();
 
-	System.out.println("TRYING TO CONNECT TO DB");
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
+
 	JUNGGraphCreator jcreator = null;
-	DbTextIndexer dbIndexer = null;
+	LuceneSearcher searcher = null;
 
 	try {
+	    System.out.println("Performing search...");
 
-	    DatabaseHandler dbHandler = new DatabaseHandler("healthcare", "root", "");
-
-	    System.out.println("DB connected");
-
-	    dbIndexer = new DbTextIndexer(dbHandler.getConnectionSource());
-	    dbIndexer.buildIndex(cleanstr);
-
-	    System.out.println("Index created");
+	    searcher = new LuceneSearcher(cleanstr, "healthcare_index");
+	    TopDocs docs = searcher.performSearch(cleanstr, Integer.MAX_VALUE);
+	    searcher.buildQnAMap(docs);
 
 	    jcreator = new JUNGGraphCreator();
-	    jcreator.createGraph(dbIndexer.getQnAMap(), dbIndexer.getPostId2UserIdMap());
+	    jcreator.createGraph(searcher.getQnAMap(), searcher.getPostId2UserIdMap());
 	    System.out.println("Graph created");
 
 	} catch (Exception e) {
 	    e.printStackTrace();
 	    System.out.println(e);
-	    HttpResponse res = new HttpResponse("Cannot connect to Db");
+	    HttpResponse res = new HttpResponse("Exception while searching...");
 	    res.setStatus(200);
+	}
 
+	Map<Long, UserEntity> usermap = null;
+
+	try {
+	    DatabaseHandler dbHandler = new DatabaseHandler("healthcare", "root", "");
+	    usermap = UserMapSingleton.getInstance().getUserMap(dbHandler.getConnectionSource());
+	} catch (SQLException e1) {
+	    e1.printStackTrace();
+	}
+	System.out.println("Applying Pagerank...");
+
+	if (usermap == null) {
+	    // TODO: Throw custom exception.
 	}
 
 	System.out.println("Applying HITS...");
 
-	HITSStrategy strategy = new HITSStrategy(jcreator.getGraph(), dbIndexer.getUserMap());
+	HITSStrategy strategy = new HITSStrategy(jcreator.getGraph(), usermap);
 
 	ScoringContext scontext = new ScoringContext(strategy);
 	scontext.executeStrategy();
 
 	expert_posts = scontext.getExperts();
 
-	EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), dbIndexer.getUserMap(), "hits");
+	EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), usermap, "hits");
 
 	// Compute Evaluation Measures.
 	try {
@@ -327,60 +362,91 @@ public class ExpertRecommenderService extends Service {
 
     @POST
     @Path("community_aware_rank")
-    public HttpResponse applyCommunityAwareRank(@ContentParam String text) {
+    public HttpResponse applyCommunityAwareRank(@ContentParam String query) {
 
-	String query = text;
+	if (query == null) {
+	    // TODO: Throw custom exception.
+	}
 
-	// Stopwatch timer = Stopwatch.createStarted();
-	StopWordRemover remover = new StopWordRemover(query);
-	String cleanstr = remover.getPlainText();
+	if (query != null && query.length() < 0) {
+	    // TODO: Throw custom exception.
+	}
 
+	StopWordRemover remover = null;
+	String cleanstr = null;
 	String expert_posts = "{}";
+	Stopwatch timer = null;
+	try {
+	    // timer = Stopwatch.createStarted();
+	    // TODO: Semantic analysis of the text.
+	    remover = new StopWordRemover(query);
+	    cleanstr = remover.getPlainText();
 
-	System.out.println("TRYING TO CONNECT TO DB");
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
+
 	JUNGGraphCreator jcreator = null;
-	DbTextIndexer dbIndexer = null;
-	CommunityCoverMatrixParser CCMP = null;
+	LuceneSearcher searcher = null;
 
 	try {
+	    System.out.println("Performing search...");
 
-	    DatabaseHandler dbHandler = new DatabaseHandler("healthcare", "root", "");
-
-	    System.out.println("DB connected");
-
-	    dbIndexer = new DbTextIndexer(dbHandler.getConnectionSource());
-	    dbIndexer.buildIndex(cleanstr);
-
-	    System.out.println("Index created");
+	    searcher = new LuceneSearcher(cleanstr, "healthcare_index");
+	    TopDocs docs = searcher.performSearch(cleanstr, Integer.MAX_VALUE);
+	    searcher.buildQnAMap(docs);
 
 	    jcreator = new JUNGGraphCreator();
-	    jcreator.createGraph(dbIndexer.getQnAMap(), dbIndexer.getPostId2UserIdMap());
+	    jcreator.createGraph(searcher.getQnAMap(), searcher.getPostId2UserIdMap());
+
 	    System.out.println("Graph created");
-
-	    System.out.println("Getting communities");
-
-	    CCMP = new CommunityCoverMatrixParser("slpa_fitness.txt");
-	    CCMP.parse();
 
 	} catch (Exception e) {
 	    e.printStackTrace();
 	    System.out.println(e);
-	    HttpResponse res = new HttpResponse("Cannot connect to Db");
+	    HttpResponse res = new HttpResponse("Exception while searching...");
 	    res.setStatus(200);
-
 	}
 
-	System.out.println("Applying HITS...");
+	GraphWriter writer = new GraphWriter(jcreator);
+	String graphContent = null;
+	try {
+	    writer.saveToGraphMl("relationship_graph.graphml");
+	    graphContent = writer.getGraphAsString("relationship_graph.graphml");
+	} catch (IOException e) {
+	    e.printStackTrace();
+	}
+
+	Map<Long, UserEntity> usermap = null;
 
 	try {
-	    CommunityAwareStrategy strategy = new CommunityAwareStrategy(jcreator.getGraph(), dbIndexer.getUserMap(), CCMP.getNodeId2CoversMap());
+	    DatabaseHandler dbHandler = new DatabaseHandler("healthcare", "root", "");
+	    usermap = UserMapSingleton.getInstance().getUserMap(dbHandler.getConnectionSource());
+	} catch (SQLException e1) {
+	    e1.printStackTrace();
+	}
+
+	System.out.println("Getting communities");
+
+	OCD ocd = new OCD();
+	ocd.uploadGraph("relationship_graph", graphContent);
+	ocd.identifyCovers();
+	String covers = ocd.getCovers();
+	
+	CommunityCoverMatrixParser CCMP = new CommunityCoverMatrixParser(covers);
+	CCMP.parse();
+
+	System.out.println("Applying Commuinity aware HITS...");
+
+	try {
+	    CommunityAwareStrategy strategy = new CommunityAwareStrategy(jcreator.getGraph(), usermap, CCMP.getNodeId2CoversMap());
 
 	    ScoringContext scontext = new ScoringContext(strategy);
 	    scontext.executeStrategy();
 
 	    expert_posts = scontext.getExperts();
 
-	    EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), dbIndexer.getUserMap(), "hits");
+	    EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), usermap, "hits");
 
 	    // Compute Evaluation Measures.
 
@@ -388,13 +454,6 @@ public class ExpertRecommenderService extends Service {
 	    // Retrieve the id from the database.
 	    eMeasure.save(Integer.toString(query.hashCode()));
 	} catch (Exception e) {
-	    e.printStackTrace();
-	}
-
-	GraphWriter writer = new GraphWriter(jcreator);
-	try {
-	    writer.saveToGraphMl("fitness_graph_jung.graphml");
-	} catch (IOException e) {
 	    e.printStackTrace();
 	}
 

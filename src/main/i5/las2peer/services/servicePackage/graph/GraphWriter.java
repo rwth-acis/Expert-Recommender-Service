@@ -3,10 +3,13 @@
  */
 package i5.las2peer.services.servicePackage.graph;
 
+import i5.las2peer.services.servicePackage.utils.Application;
+
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 import org.apache.commons.collections15.Transformer;
@@ -66,5 +69,9 @@ public class GraphWriter {
 
 	graphWriter.save(creator.getGraph(), out);
 
+    }
+
+    public String getGraphAsString(String filename) throws IOException {
+	return Application.readFile(filename, StandardCharsets.UTF_8);
     }
 }

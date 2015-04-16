@@ -6,10 +6,20 @@ import static org.junit.Assert.fail;
 import i5.las2peer.p2p.LocalNode;
 import i5.las2peer.security.ServiceAgent;
 import i5.las2peer.security.UserAgent;
+import i5.las2peer.services.servicePackage.datamodel.DataEntity;
+import i5.las2peer.services.servicePackage.datamodel.DatabaseHandler;
+import i5.las2peer.services.servicePackage.datamodel.SemanticTagEntity;
+import i5.las2peer.services.servicePackage.datamodel.UserEntity;
 import i5.las2peer.services.servicePackage.evaluator.NormalizedDiscountedCumulativeGain;
+import i5.las2peer.services.servicePackage.indexer.LuceneMysqlIndexer;
 import i5.las2peer.services.servicePackage.ocd.OCD;
 import i5.las2peer.services.servicePackage.parsers.CSVParser;
 import i5.las2peer.services.servicePackage.parsers.CommunityCoverMatrixParser;
+import i5.las2peer.services.servicePackage.parsers.Post;
+import i5.las2peer.services.servicePackage.parsers.Posts;
+import i5.las2peer.services.servicePackage.parsers.User;
+import i5.las2peer.services.servicePackage.parsers.Users;
+import i5.las2peer.services.servicePackage.searcher.LuceneSearcher;
 import i5.las2peer.services.servicePackage.utils.Application;
 import i5.las2peer.testing.MockAgentFactory;
 import i5.las2peer.webConnector.WebConnector;
@@ -17,17 +27,28 @@ import i5.las2peer.webConnector.client.ClientResponse;
 import i5.las2peer.webConnector.client.MiniClient;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Random;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.TopDocs;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import com.j256.ormlite.support.ConnectionSource;
+import com.j256.ormlite.table.TableUtils;
 
 /**
  * Example Test Class demonstrating a basic JUnit test structure.
@@ -221,24 +242,113 @@ public class ServiceTest {
 	parser.parse();
     }
 
+
+    @Ignore
     @Test
-    public void testGetCovers() throws IOException {
+    public void testUploadGraph() throws IOException {
 	OCD ocd = new OCD();
-	ocd.getCovers("");
+	String graphContent = Application.readFile("fitness_graph_jung.graphml", StandardCharsets.UTF_8);
+	ocd.uploadGraph("fitness_graph_jung", graphContent);
+	ocd.identifyCovers();
+	ocd.getCovers();
+	// Assert for string
+
+    }
+
+    @Test
+    public void testLuceneMysqlIndexer() throws IOException, SQLException {
+	DatabaseHandler dbHandler = new DatabaseHandler("healthcare", "root", "");
+	LuceneMysqlIndexer li = new LuceneMysqlIndexer(dbHandler.getConnectionSource(), "healthcare_index");
+	li.buildIndex();
     }
 
     @Ignore
     @Test
-    public void testGetUploadGraph() throws IOException {
-	OCD ocd = new OCD();
-	String graphContent = Application.readFile("fitness_graph_jung.graphml", StandardCharsets.UTF_8);
-	ocd.uploadGraph("fitness_graph_jung", graphContent);
+    public void testLuceneSearcher() throws IOException, SQLException {
+	String queryStr = "Expert in protein";
+	LuceneSearcher searcher = new LuceneSearcher(queryStr, "healthcare_index");
+	try {
+	    TopDocs docs = searcher.performSearch(queryStr, Integer.MAX_VALUE);
+	} catch (ParseException e) {
+	    e.printStackTrace();
+	}
+
     }
 
     @Test
-    public void testIdentifyCovers() throws IOException {
-	OCD ocd = new OCD();
-	ocd.identifyCovers("226");
+    public void testPrepareData() throws IOException, SQLException {
+
+	String dirPath = "healthcare1"; // This will be generated if files are
+					// to
+				       // be uploaded, this will also be the
+				       // name of the database.
+
+
+	DatabaseHandler dbHandler = new DatabaseHandler(dirPath, "root", "");
+	ConnectionSource connectionSrc = dbHandler.getConnectionSource(); // Creates database if not present.
+
+	try {
+	    JAXBContext context = JAXBContext.newInstance(Posts.class);
+	    Unmarshaller um = context.createUnmarshaller();
+	    File file = new File(dirPath + "posts.xml");
+
+	    Posts posts = (Posts) um.unmarshal(file);
+	    List<Post> posts_list = (ArrayList) posts.getResources();
+
+	    System.out.println("" + posts_list);
+
+	    // Create Data table.
+	    TableUtils.createTableIfNotExists(connectionSrc, DataEntity.class);
+	    dbHandler.addPosts(posts_list);
+
+	    // Create User table.
+	    context = JAXBContext.newInstance(Users.class);
+	    File users_file = new File(dirPath + "users.xml");
+	    Unmarshaller um1 = context.createUnmarshaller();
+
+	    System.out.println("Creating User table and inserting values ...");
+	    Users users = (Users) um1.unmarshal(users_file);
+	    List<User> user_list = (ArrayList) users.getUsersList();
+	    TableUtils.createTableIfNotExists(connectionSrc, UserEntity.class);
+	    dbHandler.addUsers(user_list);
+
+	    System.out.println("Inserting into User table...");
+
+	    // MySqlHelper.markExpertsForEvaluation(connectionSrc);
+
+	    System.out.println("Creating Semantics table and inserting values ...");
+	    TableUtils.createTableIfNotExists(connectionSrc, SemanticTagEntity.class);
+	    dbHandler.addSemanticTags();
+
+	    System.out.println("Database operations completed...");
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
+
+	// Get filepath.
+	// Create Database.
+	//
+	// Create Table.
+	// Table data
+	// Table user
+	// Table semantics
+	// Table query (id, query, timestamp)
+	// Table measure (id,various measures..., timestamp)
+	// Table datasetInfo (id, upload_filepath, lucene_index_filepath,
+	// timestamp)
+	//
+	// Update DatabaseInfo.xml (<databases><database
+	// id="Id generated in datasetInfo"
+	// name="User give name or generated one"
+	// timestamp=""></database>...</databases>)
+	// Return the id generated.
+	//
+	// Create lucene Index
+	//
+	// Return dataset_id;
+	
+
+
     }
 
     /**

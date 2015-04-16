@@ -54,7 +54,7 @@ public class DatabaseHandler extends MySqlOpenHelper {
      *             table constraints.
      * 
      * */
-    public void addPosts(ArrayList<Post> posts) throws SQLException {
+    public void addPosts(List<Post> posts) throws SQLException {
 
 	ConnectionSource source = super.getConnectionSource();
 	Dao<DataEntity, Long> DataDao = DaoManager.createDao(source, DataEntity.class);
@@ -147,7 +147,7 @@ public class DatabaseHandler extends MySqlOpenHelper {
      *             table constraints.
      * */
 
-    public void addUsers(ArrayList<User> users) throws SQLException {
+    public void addUsers(List<User> users) throws SQLException {
 	ConnectionSource source = super.getConnectionSource();
 	UserEntity entity = null;
 	Dao<UserEntity, Long> UserDao = DaoManager.createDao(source, UserEntity.class);
