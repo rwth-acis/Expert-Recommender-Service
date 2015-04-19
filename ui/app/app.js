@@ -1,6 +1,7 @@
 var erApp = angular.module('erApp', [
   'ngRoute',
-  'erControllers'
+  'erControllers',
+  'ui.bootstrap'
 ]);
 
 erApp.config(['$routeProvider', '$locationProvider', 
