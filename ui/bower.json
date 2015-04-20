@@ -3,7 +3,11 @@
   "version": "0.0.1",
   "dependencies": {
     "angular-route": "~1.3.0",
-    "angular-bootstrap": "0.12.1"
+    "angular-bootstrap": "0.12.1",
+    "ng-slider": null
   },
-  "private": true
+  "private": true,
+  "resolutions": {
+    "angular": "1.3.x"
+  }
 }

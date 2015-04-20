@@ -1,0 +1,141 @@
+/* datasets.html css */
+
+#choose-dataset-wrapper {
+	margin-top: 200px;
+	text-align: center;
+}
+
+.choose-dataset, .upload-dataset {
+	display: inline-block;
+}
+
+.choose-dataset-label {
+	float:left;
+	margin:10px;
+	margin-top:8px;
+}
+
+.dataset-options {
+	float:left;
+	margin:10px;
+}
+
+#upload-dataset-wrapper {
+	text-align: center;
+	margin-top: 70px;
+}
+
+.upload-dataset-label {
+	float:left;
+	margin:10px;
+	width:225px;
+}
+
+.upload-btn {
+	float:left;
+	height: 35px;
+	margin:10px;
+}
+#upload-users-dataset-wrapper {
+	margin-top: 20px;
+	text-align: center;
+}
+
+/*  search.html css */
+
+#search-top-container {
+	margin-top: 200px;
+	text-align: center;
+}
+
+.inner-container {
+	display: inline-block;
+}
+
+.datasetlabel {
+	float:left;
+}
+
+.datasetname {
+	margin-left: 10px;
+	float:left;	
+}
+
+.inputbox {
+	margin-top: 30px;
+}
+
+#inputbox-container {
+	width: 500px;
+	height: 50px;
+	text-align: center;
+	margin: 0 auto;
+}
+
+
+#tab-container{
+margin: 10px;
+}
+
+/* expert-details.html*/
+
+ol {
+	list-style-type:none;
+}
+.expert-details-container {
+	margin-top: 5px;
+	width:450px;
+	height:100px;	
+	border-style: solid;
+    border-color: #ff0000 #0000ff;
+    float:left;
+    clear:both;
+}
+.expert-interest-container {
+	margin-top: 5px;
+	margin-left: 15px;
+	width:450px;
+	height:100px;	
+	border-style: solid;
+    border-color: #ff0000 #0000ff;
+    float:left;
+}
+
+#expert-container {
+	text-align: center;
+	margin-top: 50px;
+}
+
+.expert-list {
+	display: inline-block;
+}
+
+/*visulaization.html*/
+
+#visulaization_wrapper {
+	text-align: center;
+}
+
+.visulaization_container {
+	margin-top: 10px;
+	width: 700px;
+	height: 400px;
+	background: #C0C0C0;
+	display: inline-block;
+}
+
+.vis-expert-details {
+	display: inline-block;
+}
+
+/*evaluation.html*/
+.precision-container, .recall-container, .map-container, .rr-container, .ndcg-container, .elevenpt-container {
+	margin:10px;
+	font-size: 16pt;
+}
+
+.elevenpt-graph {
+	width:400px;
+	height:400px;
+	background: #C0C0C0;
+}
