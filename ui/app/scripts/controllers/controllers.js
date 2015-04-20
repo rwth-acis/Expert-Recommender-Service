@@ -52,3 +52,30 @@ erControllers.controller('DropdownCtrl', function ($scope, $log) {
     $scope.status.isopen = !$scope.status.isopen;
   };
 });
+
+erControllers.controller('settingsCtrl', ['$scope',
+  function($scope) {
+    $scope.value = 30;
+    $scope.prValue = 0.3;
+    $scope.hitsValue = 0.3;
+    $scope.CaPrValue = 0.3;
+    $scope.CAHitsValue = 0.3;
+
+    console.log("settingsCtrl Controller...");
+    $scope.options = {        
+        from: 0,
+        to: 100,
+        step: 1,
+        skin: 'round',
+        dimension: "%",
+    };
+
+    $scope.prOptions = {        
+        from: 0,
+        to: 100,
+        step: 1,
+        skin: 'round',
+        dimension: "",
+    };
+
+  }]);

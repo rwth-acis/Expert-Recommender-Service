@@ -139,3 +139,32 @@ ol {
 	height:400px;
 	background: #C0C0C0;
 }
+
+/*settings.html*/
+#settings-table-container {
+	text-align: center;
+}
+
+.settings-table {
+	display: inline-block;
+	margin-top: 10px;
+}
+
+.slider-label-center {
+	text-align: center;
+}
+
+.left-label {
+	float:left;
+}
+
+.right-label {
+	float:right;
+}
+
+th, td {
+    border: 1px solid gray;
+    overflow: hidden;
+    width: 400px;
+    height:80px;
+}

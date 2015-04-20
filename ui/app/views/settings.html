@@ -1,0 +1,52 @@
+<div id="settings-table-container" ng-controller="settingsCtrl"> 
+
+<table class="settings-table">
+	<tr>
+    	<th>Choose option</th>
+    	<th>Scoring Algorithm</th> 
+    	<th>Parameters</th>
+  	</tr>
+
+  <tr>
+  	<td><input type="radio" name="radiobtn" /></td>
+    <td>Modeling Technique</td>
+    	<td>
+    		<input ng-model="value" type="text" slider options="options" /> 
+    		<div class="slider-label"> <div class="left-label">Text</div> <div class="right-label">Semantics</div>  </div>
+    	</td>	
+  </tr>
+  <tr>
+  	<td><input type="radio" name="radiobtn"/></td>
+    <td>PageRank</td>
+    <td>
+    		<input ng-model="prValue" type="text" slider options="prOptions" /> 
+    		<div class="slider-label-center"> alpha(/100)  </div>
+    	</td>	
+  </tr>
+  <tr>
+  	<td><input type="radio" name="radiobtn" /></td>
+    <td>HITS</td>
+    <td>
+    		<input ng-model="hitsValue" type="text" slider options="options" /> 
+    		<div class="slider-label-center"> alpha  </div>
+    	</td>	
+  </tr>
+  <tr>
+  	<td><input type="radio" name="radiobtn" /></td>
+    <td>Community Aware PageRank</td>
+   <td>
+    		<input ng-model="CaPrValue" type="text" slider options="options" /> 
+    		<div class="slider-label"> <div class="left-label">INTRA</div> <div class="right-label">EXTRA</div>  </div>
+    	</td>	
+  </tr>
+  <tr>
+  	<td><input type="radio" name="radiobtn"  /></td>
+    <td>Community Aware HITS</td>
+    <td>
+    		<input ng-model="CAHitsValue" type="text" slider options="options" /> 
+    		<div class="slider-label"> <div class="left-label">INTRA</div> <div class="right-label">EXTRA</div>  </div>
+    	</td>	
+  </tr>
+</table>
+
+</div>

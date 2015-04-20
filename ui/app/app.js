@@ -1,7 +1,8 @@
 var erApp = angular.module('erApp', [
   'ngRoute',
   'erControllers',
-  'ui.bootstrap'
+  'ui.bootstrap',
+  'ngSlider'
 ]);
 
 erApp.config(['$routeProvider', '$locationProvider', 
