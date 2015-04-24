@@ -374,6 +374,11 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	return -1;
     }
 
+    /**
+     * 
+     * @param expertsId
+     * @return
+     */
     public String getExperts(long expertsId) {
 	Dao<ExpertEntity, Long> expertsDao = null;
 	try {
