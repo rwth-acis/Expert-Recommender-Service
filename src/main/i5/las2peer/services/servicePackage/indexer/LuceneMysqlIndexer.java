@@ -83,11 +83,12 @@ public class LuceneMysqlIndexer {
 	    doc.add(new StringField("userid", String.valueOf(userId), Field.Store.YES));
 	    doc.add(new TextField("searchableText", fullSearchableText.toString(), Field.Store.YES));
 
-	    System.out.print("Adding document...");
 	    indexWriter.addDocument(doc);
 	}
 
 	if (indexWriter != null) {
+	    // TODO: Add relative path of the the index directory to the
+	    // datainfo table.
 	    indexWriter.close();
 	}
 

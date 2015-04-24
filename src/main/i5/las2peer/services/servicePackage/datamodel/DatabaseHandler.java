@@ -11,8 +11,10 @@ import i5.las2peer.services.servicePackage.textProcessor.StopWordRemover;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import com.google.gson.Gson;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.stmt.UpdateBuilder;
@@ -229,9 +231,7 @@ public class DatabaseHandler extends MySqlOpenHelper {
 
 		SemanticDao.createIfNotExists(tagEntity);
 	    }
-
 	}
-
     }
 
     /**
@@ -289,6 +289,103 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	    }
 	}
 
+    }
+
+    /**
+     * 
+     * @param evaluationId
+     * @return
+     */
+    public String getEvaluationMetrics(long evaluationId) {
+	Dao<EvaluationMetricsEntity, Long> evaluationDao = null;
+	try {
+	    evaluationDao = DaoManager.createDao(super.getConnectionSource(), EvaluationMetricsEntity.class);
+	    EvaluationMetricsEntity entity = evaluationDao.queryForId(evaluationId);
+
+	    return entity.getMetrics();
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+
+	return null;
+    }
+
+    /**
+     * 
+     * @param queryId
+     * @return
+     */
+    public String getVisGraph(long queryId) {
+	Dao<VisualizationEntity, Long> visulaizationDao = null;
+	try {
+	    visulaizationDao = DaoManager.createDao(super.getConnectionSource(), VisualizationEntity.class);
+	    VisualizationEntity entity = visulaizationDao.queryForId(queryId);
+
+	    return entity.getGraph();
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+
+	return null;
+    }
+
+    /**
+     * 
+     * @param userId
+     * @return
+     */
+    public String getUser(long userId) {
+	Dao<UserEntity, Long> userDao = null;
+	try {
+	    userDao = DaoManager.createDao(super.getConnectionSource(), UserEntity.class);
+	    UserEntity entity = userDao.queryForId(userId);
+
+	    Gson gson = new Gson();
+	   
+	    return gson.toJson(entity);
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+
+	return null;
+    }
+
+    /**
+     * 
+     * @param queryId
+     *            Id to identify the expert list.
+     * @param experts
+     *            A list of experts and their details stored as json string.
+     * @return
+     */
+    public long addExperts(long queryId, String experts) {
+	try {
+	    Dao<ExpertEntity, Long> ExpertDao = DaoManager.createDao(super.getConnectionSource(), ExpertEntity.class);
+	    ExpertEntity entity = new ExpertEntity();
+	    entity.setQueryId(queryId);
+	    entity.setExperts(experts);
+	    entity.setDate(new Date());
+	    ExpertDao.createIfNotExists(entity);
+
+	    return entity.getId();
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+	return -1;
+    }
+
+    public String getExperts(long expertsId) {
+	Dao<ExpertEntity, Long> expertsDao = null;
+	try {
+	    expertsDao = DaoManager.createDao(super.getConnectionSource(), ExpertEntity.class);
+	    ExpertEntity entity = expertsDao.queryForId(expertsId);
+
+	    return entity.getExperts();
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+
+	return null;
     }
 
 }

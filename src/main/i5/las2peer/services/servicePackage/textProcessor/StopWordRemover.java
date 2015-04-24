@@ -16,75 +16,74 @@ import java.util.regex.Pattern;
  *
  */
 public class StopWordRemover {
-	private String mText;
-	private String mFilePath;
+    private String mText;
+    private String mFilePath;
 
-	private Pattern stopWordsPattern;
+    private Pattern stopWordsPattern;
 
-	StringBuilder builder = new StringBuilder();
-	String pattern = "\\b(?:%s)\\b";
+    StringBuilder builder = new StringBuilder();
+    String pattern = "\\b(?:%s)\\b";
 
-	public StopWordRemover(String text) {
-		mText = text;
+    public StopWordRemover(String text) {
+	mText = text;
+    }
+
+    public StopWordRemover(String text, String filepath) {
+	mText = text;
+	mFilePath = filepath;
+    }
+
+    public String getPlainText() {
+	if (mFilePath != null) {
+	    createPatternFromFile();
+	} else {
+	    createPattern();
 	}
 
-	public StopWordRemover(String text, String filepath) {
-		mText = text;
-		mFilePath = filepath;
-	}
+	// Remove punctuations.
+	String stripped_text = mText.replaceAll("\\W", " ");
+	Matcher matcher = stopWordsPattern.matcher(stripped_text);
+	String cleantext = matcher.replaceAll("");
 
-	public String getPlainText() {
-		if(mFilePath != null) {
-			createPatternFromFile();
-		} else {
-			createPattern();
+	return cleantext;
+    }
+
+    private void createPattern() {
+	for (String word : StopWordList.lucene_wordlist) {
+	    builder.append(word);
+	    builder.append("|");
+	}
+	pattern = String.format(pattern, builder);
+
+	stopWordsPattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
+    }
+
+    // TODO: Test this pattern.
+    public void createPatternFromFile() {
+
+	if (mFilePath != null) {
+	    BufferedReader br;
+	    try {
+		ClassLoader classLoader = getClass().getClassLoader();
+		br = new BufferedReader(new InputStreamReader((classLoader.getResourceAsStream(mFilePath))));
+		// File f = new File(filepath);
+		// Utils.println("Abs path is:: "+f.getAbsolutePath());
+		// br = new BufferedReader(new FileReader(f.getAbsolutePath()));
+		String line;
+		while ((line = br.readLine()) != null) {
+		    builder.append(line);
+		    builder.append("|");
 		}
-		
-		// Remove punctuations.
-		String stripped_text = mText.replaceAll("\\W", " ");
-		Matcher matcher = stopWordsPattern.matcher(stripped_text);
-		String cleantext = matcher.replaceAll("");
 
-		return cleantext;
-	}
-
-	public void createPattern() {
-		for (String word : StopWordList.lucene_wordlist) {
-			builder.append(word);
-			builder.append("|");
-		}
 		pattern = String.format(pattern, builder);
-
-		stopWordsPattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
+		br.close();
+	    } catch (FileNotFoundException e) {
+		e.printStackTrace();
+	    } catch (IOException e1) {
+		e1.printStackTrace();
+	    }
 	}
-
-	//TODO: Test this pattern.
-	public void createPatternFromFile() {
-
-		if (mFilePath != null) {
-			BufferedReader br;
-			try {
-				ClassLoader classLoader = getClass().getClassLoader();
-				br = new BufferedReader(new InputStreamReader(
-						(classLoader.getResourceAsStream(mFilePath))));
-				// File f = new File(filepath);
-				// Utils.println("Abs path is:: "+f.getAbsolutePath());
-				// br = new BufferedReader(new FileReader(f.getAbsolutePath()));
-				String line;
-				while ((line = br.readLine()) != null) {
-					builder.append(line);
-					builder.append("|");
-				}
-
-				pattern = String.format(pattern, builder);
-				br.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-		}
-		stopWordsPattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
-	}
+	stopWordsPattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
+    }
 
 }

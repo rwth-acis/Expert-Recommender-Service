@@ -14,7 +14,7 @@ import com.j256.ormlite.table.DatabaseTable;
  * @author sathvik
  */
 
-@DatabaseTable(tableName = "semantics1")
+@DatabaseTable(tableName = "semantics")
 public class SemanticTagEntity {
     @DatabaseField(columnName = "post_id", dataType = DataType.LONG, id = true, unique = true)
     private long postId;

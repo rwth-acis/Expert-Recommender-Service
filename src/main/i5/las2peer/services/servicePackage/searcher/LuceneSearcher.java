@@ -107,7 +107,7 @@ public class LuceneSearcher {
 		parentId2postIds.put(parentId, postId);
 	    }
 
-	    System.out.println("USERID::" + userId);
+	    // System.out.println("USERID::" + userId);
 	    if (userId > 0) {
 		postId2userId.put(postId, userId);
 	    }

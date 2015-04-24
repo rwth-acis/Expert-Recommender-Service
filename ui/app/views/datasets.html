@@ -4,11 +4,11 @@
 	<div class="dataset-options" ng-controller="DropdownCtrl">
 		<div class="btn-group" dropdown is-open="status.isopen">
      	 <button type="button" class="btn btn-primary dropdown-toggle" dropdown-toggle ng-disabled="disabled">
-        	Datasets... <span class="caret"></span>
+        	{{selectedItem.name}} <span class="caret"></span>
       	</button>
       	<ul class="dropdown-menu">
-        <li ng-repeat="choice in items">
-          <a href>{{choice}}</a>
+        <li ng-click="handleSelection($index)" ng-repeat="item in items">
+          <a href="#">{{item.name}}</a>
         </li>
       </ul>
     	</div>

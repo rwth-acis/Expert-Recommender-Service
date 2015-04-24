@@ -172,6 +172,21 @@ public class ServiceTest {
     }
 
     @Test
+    public void testIndexer() {
+	MiniClient c = new MiniClient();
+	c.setAddressPort(HTTP_ADDRESS, HTTP_PORT);
+
+	try {
+	    c.setLogin(Long.toString(testAgent.getId()), testPass);
+	    ClientResponse result = c.sendRequest("POST", mainPath + "indexer", "healthcare");
+	} catch (Exception e) {
+	    e.printStackTrace();
+	    fail("Exception: " + e);
+	}
+
+    }
+
+    @Test
     public void testStemmerMethod() {
 	MiniClient c = new MiniClient();
 	c.setAddressPort(HTTP_ADDRESS, HTTP_PORT);
@@ -255,6 +270,7 @@ public class ServiceTest {
 
     }
 
+    @Ignore
     @Test
     public void testLuceneMysqlIndexer() throws IOException, SQLException {
 	DatabaseHandler dbHandler = new DatabaseHandler("healthcare", "root", "");
@@ -272,9 +288,9 @@ public class ServiceTest {
 	} catch (ParseException e) {
 	    e.printStackTrace();
 	}
-
     }
 
+    @Ignore
     @Test
     public void testPrepareData() throws IOException, SQLException {
 

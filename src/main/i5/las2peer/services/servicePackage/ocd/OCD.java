@@ -29,7 +29,6 @@ public class OCD {
     private String coverId;
 
     public static final String basepath = "";
-    String url = "graphs/name/expertnetwork_graph/REAL_WORLD/inputFormat/GRAPH_ML";
 
     public OCD() {
 

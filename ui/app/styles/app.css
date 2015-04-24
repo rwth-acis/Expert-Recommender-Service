@@ -87,9 +87,11 @@ ol {
 	width:450px;
 	height:100px;	
 	border-style: solid;
-    border-color: #ff0000 #0000ff;
+    border-color: #C0C0C0 #C0C0C0;
     float:left;
     clear:both;
+    background-image: url("geometry2.png");
+    background-repeat: repeat;
 }
 .expert-interest-container {
 	margin-top: 5px;
@@ -97,8 +99,10 @@ ol {
 	width:450px;
 	height:100px;	
 	border-style: solid;
-    border-color: #ff0000 #0000ff;
+    border-color: #C0C0C0 #C0C0C0;
     float:left;
+    background-image: url("geometry2.png");
+    background-repeat: repeat;
 }
 
 #expert-container {
@@ -110,19 +114,40 @@ ol {
 	display: inline-block;
 }
 
+.username {
+	text-align: left;
+	margin:5px;
+}
+
+.reputation {
+	text-align: left;
+	margin:5px;
+}
+
+.contactinfo {
+	text-align: left;
+	margin:5px;
+}
 /*visulaization.html*/
 
 #visulaization_wrapper {
 	text-align: center;
 }
 
+#sigma-container {
+    max-width: 500px;
+    height: 500px;
+    margin-left: 200px;
+  }
+
+/*
 .visulaization_container {
 	margin-top: 10px;
 	width: 700px;
 	height: 400px;
 	background: #C0C0C0;
 	display: inline-block;
-}
+}*/
 
 .vis-expert-details {
 	display: inline-block;
@@ -167,4 +192,15 @@ th, td {
     overflow: hidden;
     width: 400px;
     height:80px;
+    padding:10px;
+    text-align: center;
+}
+
+#evaluation-table-container {
+	text-align: center;
+}
+
+.evaluation-table {
+	display: inline-block;
+	margin-top: 10px;
 }

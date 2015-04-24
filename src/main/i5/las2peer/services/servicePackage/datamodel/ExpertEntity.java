@@ -14,39 +14,51 @@ import com.j256.ormlite.table.DatabaseTable;
  * @author sathvik
  */
 
-@DatabaseTable(tableName = "query")
-public class QueryEntity {
+@DatabaseTable(tableName = "experts")
+public class ExpertEntity {
 
     @DatabaseField(generatedId = true)
     private long id;
 
-    @DatabaseField(columnName = "name", dataType = DataType.LONG_STRING)
-    private String text;
+    @DatabaseField(columnName = "query_id", dataType = DataType.LONG)
+    private long queryId;
+
+    @DatabaseField(columnName = "experts", dataType = DataType.LONG_STRING)
+    private String experts;
 
     @DatabaseField(columnName = "date_created", dataType = DataType.DATE)
     private Date date;
 
-    public QueryEntity() {
+    public ExpertEntity() {
 
     }
 
-    public void setText(String text) {
-	this.text = text;
+    public void setQueryId(long id) {
+	this.queryId = id;
     }
 
     public void setDate(Date date) {
 	this.date = date;
     }
 
+    public void setExperts(String experts) {
+	this.experts = experts;
+    }
+
     public long getId() {
 	return id;
     }
 
-    public String getName() {
-	return text;
+    public long getQueryId() {
+	return queryId;
     }
 
     public Date getDate() {
 	return date;
     }
+
+    public String getExperts() {
+	return experts;
+    }
+
 }
