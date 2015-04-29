@@ -4,13 +4,12 @@
 package i5.las2peer.services.servicePackage.graph;
 
 import i5.las2peer.services.servicePackage.datamodel.GraphEntity;
-import i5.las2peer.services.servicePackage.utils.Application;
+import i5.las2peer.services.servicePackage.utils.LocalFileManager;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
@@ -82,12 +81,7 @@ public class GraphWriter {
     }
 
     public String getGraphAsString(String filename) {
-	try {
-	    return Application.readFile(filename, StandardCharsets.UTF_8);
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
-	return null;
+	return LocalFileManager.getFile(filename).toString();
     }
 
     public void saveToDb(long queryId, ConnectionSource connSrc) {

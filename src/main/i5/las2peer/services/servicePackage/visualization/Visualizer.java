@@ -4,10 +4,9 @@
 package i5.las2peer.services.servicePackage.visualization;
 
 import i5.las2peer.services.servicePackage.datamodel.GraphEntity;
-import i5.las2peer.services.servicePackage.utils.Application;
+import i5.las2peer.services.servicePackage.utils.LocalFileManager;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 
 import com.j256.ormlite.dao.Dao;
@@ -37,7 +36,9 @@ public class Visualizer {
 	    try {
 		Dao<GraphEntity, Long> visulaizationDao = DaoManager.createDao(connSrc, GraphEntity.class);
 		visEntity = visulaizationDao.queryForId(queryId);
-		visEntity.setVisGraph(Application.readFile("visgraph.gexf", StandardCharsets.UTF_8));
+
+		String graphContent = LocalFileManager.getFile("visgraph.gexf").toString();
+		visEntity.setVisGraph(graphContent);
 
 	    } catch (SQLException e) {
 		e.printStackTrace();

@@ -20,7 +20,7 @@ import i5.las2peer.services.servicePackage.parsers.Posts;
 import i5.las2peer.services.servicePackage.parsers.User;
 import i5.las2peer.services.servicePackage.parsers.Users;
 import i5.las2peer.services.servicePackage.searcher.LuceneSearcher;
-import i5.las2peer.services.servicePackage.utils.Application;
+import i5.las2peer.services.servicePackage.utils.LocalFileManager;
 import i5.las2peer.testing.MockAgentFactory;
 import i5.las2peer.webConnector.WebConnector;
 import i5.las2peer.webConnector.client.ClientResponse;
@@ -30,7 +30,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -262,7 +261,8 @@ public class ServiceTest {
     @Test
     public void testUploadGraph() throws IOException {
 	OCD ocd = new OCD();
-	String graphContent = Application.readFile("fitness_graph_jung.graphml", StandardCharsets.UTF_8);
+
+	String graphContent = LocalFileManager.getFile("fitness_graph_jung.graphml").toString();
 	ocd.uploadGraph("fitness_graph_jung", graphContent);
 	ocd.identifyCovers();
 	ocd.getCovers();

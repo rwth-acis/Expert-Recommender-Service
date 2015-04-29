@@ -40,6 +40,7 @@ import i5.las2peer.services.servicePackage.textProcessor.PorterStemmer;
 import i5.las2peer.services.servicePackage.textProcessor.QueryAnalyzer;
 import i5.las2peer.services.servicePackage.textProcessor.StopWordRemover;
 import i5.las2peer.services.servicePackage.utils.Application;
+import i5.las2peer.services.servicePackage.utils.LocalFileManager;
 import i5.las2peer.services.servicePackage.utils.UserMapSingleton;
 import i5.las2peer.services.servicePackage.visualization.Visualizer;
 
@@ -47,11 +48,13 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.TopDocs;
 
@@ -173,20 +176,23 @@ public class ExpertRecommenderService extends Service {
     // return res;
     // }
 
-    // @GET
-    // @Path("datasets/{datasetId}/visulaizations/{visulaizationId}")
-    // public HttpResponse getVisulaizationData(@PathParam("visulaizationId")
-    // String visId) {
-    //
-    // System.out.println("expertsId:: " + visId);
-    // DatabaseHandler dbHandler = null;
-    // dbHandler = new DatabaseHandler("healthcare", "root", "");
-    // String visGraph = dbHandler.getVisGraph(Long.parseLong(visId));
-    //
-    // HttpResponse res = new HttpResponse(visGraph);
-    // res.setStatus(200);
-    // return res;
-    // }
+    @GET
+    @Path("datasets/{datasetId}/visualizations/{visualizationId}")
+    public HttpResponse getVisulaizationData(@PathParam("visualizationId") String visId) {
+
+	System.out.println("expertsId:: " + visId);
+	DatabaseHandler dbHandler = null;
+	dbHandler = new DatabaseHandler("healthcare", "root", "");
+	String visGraph = dbHandler.getVisGraph(Long.parseLong(visId));
+
+	String fileContentsString = "data:" + "text/xml" + ";base64," + Base64.encodeBase64String(visGraph.getBytes());
+
+	HttpResponse res = new HttpResponse(fileContentsString, 200);
+	res.setHeader("content-type", "text/xml");
+	res.setStatus(200);
+
+	return res;
+    }
 
     /**
      * Method to remove stop words form the text.
@@ -235,19 +241,19 @@ public class ExpertRecommenderService extends Service {
 
     }
 
-    // @GET
-    // @Path("datasets/{datasetId}/users/{userId}")
-    // public HttpResponse getUser(@PathParam("userId") String userId) {
-    //
-    // System.out.println("expertsId:: " + userId);
-    // DatabaseHandler dbHandler = null;
-    // dbHandler = new DatabaseHandler("healthcare", "root", "");
-    // String userDetails = dbHandler.getUser(Long.parseLong(userId));
-    //
-    // HttpResponse res = new HttpResponse(userDetails);
-    // res.setStatus(200);
-    // return res;
-    // }
+    @GET
+    @Path("datasets/{datasetId}/users/{userId}")
+    public HttpResponse getUser(@PathParam("userId") String userId) {
+
+	System.out.println("expertsId:: " + userId);
+	DatabaseHandler dbHandler = null;
+	dbHandler = new DatabaseHandler("healthcare", "root", "");
+	String userDetails = dbHandler.getUser(Long.parseLong(userId));
+
+	HttpResponse res = new HttpResponse(userDetails);
+	res.setStatus(200);
+	return res;
+    }
 
     @POST
     @Path("modeling")
@@ -451,7 +457,7 @@ public class ExpertRecommenderService extends Service {
 	long visId = -1;
 	if (isVisualization) {
 	    Visualizer visualizer = new Visualizer();
-	    visualizer.saveVisGraph(queryId, connectionSource);
+	    visualizer.saveVisGraph(graphWriter.getId(), connectionSource);
 	    visId = visualizer.getId();
 	}
 
@@ -488,8 +494,6 @@ public class ExpertRecommenderService extends Service {
 	for (String query : queries) {
 	    System.out.println("Query:: " + query);
 	    Application.reset();
-	    System.out.println("Reset complete:: ");
-
 	    StopWordRemover remover = null;
 	    String cleanstr = null;
 	    // Stopwatch timer = null;
@@ -515,10 +519,30 @@ public class ExpertRecommenderService extends Service {
 	return res;
     }
 
+    // TODO:Refactor the path and the method.
+    @GET
+    @Path("download/{filename}")
+    public HttpResponse getGraph(@PathParam("filename") String filename) {
+
+	byte[] data = LocalFileManager.getFile(filename);
+	String fileContentsString = null;
+	try {
+	    fileContentsString = new String(data, "UTF-8");
+	} catch (UnsupportedEncodingException e) {
+	    e.printStackTrace();
+	}
+	System.out.println(fileContentsString);
+
+	HttpResponse res = new HttpResponse(fileContentsString, 200);
+	res.setHeader("content-type", "text/xml");
+
+	return res;
+    }
+
     @POST
     @Path("indexer")
     public HttpResponse prepareData(@ContentParam String dataset_name) {
-	System.out.println("Indexer called...........");
+	System.out.println("Indexer called...");
 	DatabaseHandler dbHandler = new DatabaseHandler(dataset_name, "root", "");
 	ConnectionSource connectionSrc;
 	try {
