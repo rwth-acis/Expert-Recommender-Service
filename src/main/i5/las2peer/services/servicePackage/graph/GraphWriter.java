@@ -3,6 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.graph;
 
+import i5.las2peer.services.servicePackage.datamodel.GraphEntity;
 import i5.las2peer.services.servicePackage.utils.Application;
 
 import java.io.BufferedWriter;
@@ -10,9 +11,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
+import java.util.Date;
 import java.util.HashMap;
 
 import org.apache.commons.collections15.Transformer;
+
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.support.ConnectionSource;
 
 import edu.uci.ics.jung.io.GraphMLWriter;
 
@@ -25,6 +32,7 @@ import edu.uci.ics.jung.io.GraphMLWriter;
 public class GraphWriter {
     private GraphMLWriterWithAttrNameAndType<String, RelationshipEdge> graphWriter;
     private JUNGGraphCreator creator;
+    private GraphEntity graphEntity;
 
     /**
      * @param creator
@@ -67,11 +75,46 @@ public class GraphWriter {
 	key2val.put("attr.type", "string");
 	graphWriter.setKeyAttributes(key2val);
 
+	// TODO:Check if saving is necessary, If we can get string
+	// representation, saving in db should be enough
 	graphWriter.save(creator.getGraph(), out);
 
     }
 
-    public String getGraphAsString(String filename) throws IOException {
-	return Application.readFile(filename, StandardCharsets.UTF_8);
+    public String getGraphAsString(String filename) {
+	try {
+	    return Application.readFile(filename, StandardCharsets.UTF_8);
+	} catch (IOException e) {
+	    e.printStackTrace();
+	}
+	return null;
+    }
+
+    public void saveToDb(long queryId, ConnectionSource connSrc) {
+	try {
+	    Dao<GraphEntity, Long> graphDao = DaoManager.createDao(connSrc, GraphEntity.class);
+
+	    graphEntity = new GraphEntity();
+	    graphEntity.setQueryId(queryId);
+	    graphEntity.setCreateDate(new Date());
+	    graphEntity.setGraph(getGraphAsString("graph_jung.graphml"));
+
+	    graphDao.createIfNotExists(graphEntity);
+
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+
+    }
+
+    public String getGraph() {
+	return graphEntity.getGraph();
+    }
+
+    public long getId() {
+	if (graphEntity != null) {
+	    return graphEntity.getId();
+	}
+	return -1;
     }
 }

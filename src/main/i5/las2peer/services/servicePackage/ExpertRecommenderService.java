@@ -8,6 +8,7 @@ import i5.las2peer.restMapper.annotations.GET;
 import i5.las2peer.restMapper.annotations.POST;
 import i5.las2peer.restMapper.annotations.Path;
 import i5.las2peer.restMapper.annotations.PathParam;
+import i5.las2peer.restMapper.annotations.QueryParam;
 import i5.las2peer.restMapper.annotations.Version;
 import i5.las2peer.restMapper.tools.ValidationResult;
 import i5.las2peer.restMapper.tools.XMLCheck;
@@ -16,11 +17,12 @@ import i5.las2peer.services.servicePackage.datamodel.DataInfoEntity;
 import i5.las2peer.services.servicePackage.datamodel.DatabaseHandler;
 import i5.las2peer.services.servicePackage.datamodel.EvaluationMetricsEntity;
 import i5.las2peer.services.servicePackage.datamodel.ExpertEntity;
+import i5.las2peer.services.servicePackage.datamodel.GraphEntity;
 import i5.las2peer.services.servicePackage.datamodel.QueryEntity;
 import i5.las2peer.services.servicePackage.datamodel.SemanticTagEntity;
 import i5.las2peer.services.servicePackage.datamodel.UserEntity;
-import i5.las2peer.services.servicePackage.datamodel.VisualizationEntity;
 import i5.las2peer.services.servicePackage.evaluator.EvaluationMeasure;
+import i5.las2peer.services.servicePackage.graph.GraphWriter;
 import i5.las2peer.services.servicePackage.graph.JUNGGraphCreator;
 import i5.las2peer.services.servicePackage.indexer.DbSematicsIndexer;
 import i5.las2peer.services.servicePackage.indexer.DbTextIndexer;
@@ -31,6 +33,7 @@ import i5.las2peer.services.servicePackage.scoring.CommunityAwareStrategy;
 import i5.las2peer.services.servicePackage.scoring.HITSStrategy;
 import i5.las2peer.services.servicePackage.scoring.ModelingStrategy1;
 import i5.las2peer.services.servicePackage.scoring.PageRankStrategy;
+import i5.las2peer.services.servicePackage.scoring.ScoreStrategy;
 import i5.las2peer.services.servicePackage.scoring.ScoringContext;
 import i5.las2peer.services.servicePackage.searcher.LuceneSearcher;
 import i5.las2peer.services.servicePackage.textProcessor.PorterStemmer;
@@ -38,11 +41,9 @@ import i5.las2peer.services.servicePackage.textProcessor.QueryAnalyzer;
 import i5.las2peer.services.servicePackage.textProcessor.StopWordRemover;
 import i5.las2peer.services.servicePackage.utils.Application;
 import i5.las2peer.services.servicePackage.utils.UserMapSingleton;
-import i5.las2peer.services.servicePackage.visualization.GraphMl2GEXFConverter;
 import i5.las2peer.services.servicePackage.visualization.Visualizer;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -50,9 +51,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
 
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.TopDocs;
@@ -80,6 +78,13 @@ public class ExpertRecommenderService extends Service {
 	// TO BE CHANGED TOO!
 	setFieldValues();
 
+    }
+
+    @POST
+    @Path("datasets")
+    public HttpResponse uploadDataset() {
+	// TODO: Allow users to upload datasets.
+	return null;
     }
 
     @GET
@@ -111,13 +116,77 @@ public class ExpertRecommenderService extends Service {
 	    e.printStackTrace();
 	}
 
-	// System.out.println("JSON STRING " + datasetsObj.toString());
-
 	HttpResponse res = new HttpResponse(datasetsObj.toString());
 	res.setStatus(200);
 	return res;
 
     }
+
+    // @GET
+    // @Path("datasets/{datasetId}/stopwords")
+    // public HttpResponse getStopWords() {
+    // // TODO:Get list of stop words used for the particular dataset.
+    // return null;
+    //
+    // }
+
+    // @POST
+    // @Path("datasets/{datasetId}/algorithms/{algorithmName}")
+    // public HttpResponse applyAlgorithm() {
+    // // TODO: Apply algorithm and return ids.
+    // return null;
+    //
+    // }
+
+    @GET
+    @Path("datasets/{datasetId}/experts/{expertsId}")
+    public HttpResponse getExperts(@PathParam("datasetId") String datasetId, @PathParam("expertsId") String expertsId) {
+	System.out.println("expertsId:: " + expertsId);
+	String databaseName = getDatabaseName(datasetId);
+	if (databaseName == null) {
+	    // Throw custom exception.
+	}
+
+	DatabaseHandler dbHandler = null;
+	dbHandler = new DatabaseHandler(databaseName, "root", "");
+	String experts = dbHandler.getExperts(Long.parseLong(expertsId));
+
+	HttpResponse res = new HttpResponse(experts);
+	res.setStatus(200);
+	return res;
+
+    }
+
+    // @GET
+    // @Path("datasets/{datasetId}/evaluations/{evaluationId}")
+    // public HttpResponse getEvaluationResults(@PathParam("evaluationId")
+    // String evaluationId) {
+    //
+    // System.out.println("evaluationId:: " + evaluationId);
+    // DatabaseHandler dbHandler = null;
+    // dbHandler = new DatabaseHandler("healthcare", "root", "");
+    // String evaluationMeasures =
+    // dbHandler.getEvaluationMetrics(Long.parseLong(evaluationId));
+    //
+    // HttpResponse res = new HttpResponse(evaluationMeasures);
+    // res.setStatus(200);
+    // return res;
+    // }
+
+    // @GET
+    // @Path("datasets/{datasetId}/visulaizations/{visulaizationId}")
+    // public HttpResponse getVisulaizationData(@PathParam("visulaizationId")
+    // String visId) {
+    //
+    // System.out.println("expertsId:: " + visId);
+    // DatabaseHandler dbHandler = null;
+    // dbHandler = new DatabaseHandler("healthcare", "root", "");
+    // String visGraph = dbHandler.getVisGraph(Long.parseLong(visId));
+    //
+    // HttpResponse res = new HttpResponse(visGraph);
+    // res.setStatus(200);
+    // return res;
+    // }
 
     /**
      * Method to remove stop words form the text.
@@ -166,61 +235,19 @@ public class ExpertRecommenderService extends Service {
 
     }
 
-    @GET
-    @Path("experts/{expertsId}")
-    public HttpResponse getExperts(@PathParam("expertsId") String expertsId) {
-
-	System.out.println("expertsId:: " + expertsId);
-	DatabaseHandler dbHandler = null;
-	dbHandler = new DatabaseHandler("healthcare", "root", "");
-	String experts = dbHandler.getExperts(Long.parseLong(expertsId));
-
-	HttpResponse res = new HttpResponse(experts);
-	res.setStatus(200);
-	return res;
-    }
-
-    @GET
-    @Path("users/{userId}")
-    public HttpResponse getUser(@PathParam("userId") String userId) {
-
-	System.out.println("expertsId:: " + userId);
-	DatabaseHandler dbHandler = null;
-	dbHandler = new DatabaseHandler("healthcare", "root", "");
-	String userDetails = dbHandler.getUser(Long.parseLong(userId));
-
-	HttpResponse res = new HttpResponse(userDetails);
-	res.setStatus(200);
-	return res;
-    }
-
-    @GET
-    @Path("visualization/{visId}")
-    public HttpResponse getVisulaizationData(@PathParam("visId") String visId) {
-
-	System.out.println("expertsId:: " + visId);
-	DatabaseHandler dbHandler = null;
-	dbHandler = new DatabaseHandler("healthcare", "root", "");
-	String visGraph = dbHandler.getVisGraph(Long.parseLong(visId));
-
-	HttpResponse res = new HttpResponse(visGraph);
-	res.setStatus(200);
-	return res;
-    }
-
-    @GET
-    @Path("evaluation/{evaluationId}")
-    public HttpResponse getEvaluationResults(@PathParam("evaluationId") String evaluationId) {
-
-	System.out.println("evaluationId:: " + evaluationId);
-	DatabaseHandler dbHandler = null;
-	dbHandler = new DatabaseHandler("healthcare", "root", "");
-	String evaluationMeasures = dbHandler.getEvaluationMetrics(Long.parseLong(evaluationId));
-
-	HttpResponse res = new HttpResponse(evaluationMeasures);
-	res.setStatus(200);
-	return res;
-    }
+    // @GET
+    // @Path("datasets/{datasetId}/users/{userId}")
+    // public HttpResponse getUser(@PathParam("userId") String userId) {
+    //
+    // System.out.println("expertsId:: " + userId);
+    // DatabaseHandler dbHandler = null;
+    // dbHandler = new DatabaseHandler("healthcare", "root", "");
+    // String userDetails = dbHandler.getUser(Long.parseLong(userId));
+    //
+    // HttpResponse res = new HttpResponse(userDetails);
+    // res.setStatus(200);
+    // return res;
+    // }
 
     @POST
     @Path("modeling")
@@ -242,11 +269,7 @@ public class ExpertRecommenderService extends Service {
 	dbHandler = new DatabaseHandler("healthcare", "root", "");
 
 	ConnectionSource connectionSource = null;
-	try {
-	    connectionSource = dbHandler.getConnectionSource();
-	} catch (SQLException e2) {
-	    e2.printStackTrace();
-	}
+	connectionSource = dbHandler.getConnectionSource();
 	long queryId = qAnalyzer.getId(connectionSource);
 
 	String expert_posts = "{}";
@@ -296,8 +319,11 @@ public class ExpertRecommenderService extends Service {
     }
 
     @POST
-    @Path("pagerank")
-    public HttpResponse applyPageRank(@ContentParam String query) {
+    @Path("datasets/{datasetId}/algorithms/{algorithmName}")
+    public HttpResponse applyPageRank(@PathParam("datasetId") String datasetId, @PathParam("algorithmName") String algorithmName,
+	    @ContentParam String query, @QueryParam(name = "evaluation", defaultValue = "false") boolean isEvaluation,
+	    @QueryParam(name = "visualization", defaultValue = "false") boolean isVisualization) {
+
 	if (query == null) {
 	    // TODO: Throw custom exception.
 	}
@@ -314,30 +340,36 @@ public class ExpertRecommenderService extends Service {
 	    e.printStackTrace();
 	}
 
+	String databaseName = getDatabaseName(datasetId);
+	if (databaseName == null) {
+	    // Throw custom exception.
+	}
+
 	DatabaseHandler dbHandler = null;
-	dbHandler = new DatabaseHandler("healthcare", "root", "");
+	dbHandler = new DatabaseHandler(databaseName, "root", "");
 
 	ConnectionSource connectionSource = null;
-	try {
-	    connectionSource = dbHandler.getConnectionSource();
-	} catch (SQLException e2) {
-	    e2.printStackTrace();
-	}
+	connectionSource = dbHandler.getConnectionSource();
 	long queryId = qAnalyzer.getId(connectionSource);
 
 	JUNGGraphCreator jcreator = null;
 	LuceneSearcher searcher = null;
+	GraphWriter graphWriter = null;
 
 	try {
-	    System.out.println("Performing search...");
+	    // System.out.println("Performing search...");
 
-	    searcher = new LuceneSearcher(qAnalyzer.getText(), "healthcare_index");
+	    searcher = new LuceneSearcher(qAnalyzer.getText(), databaseName + "_index");
 	    TopDocs docs = searcher.performSearch(qAnalyzer.getText(), Integer.MAX_VALUE);
 	    searcher.buildQnAMap(docs);
 
 	    jcreator = new JUNGGraphCreator();
 	    jcreator.createGraph(searcher.getQnAMap(), searcher.getPostId2UserIdMap());
-	    System.out.println("Graph created");
+	    // System.out.println("Graph created");
+
+	    graphWriter = new GraphWriter(jcreator);
+	    graphWriter.saveToGraphMl("graph_jung.graphml");
+	    graphWriter.saveToDb(queryId, connectionSource);
 
 	} catch (Exception e) {
 	    e.printStackTrace();
@@ -353,42 +385,75 @@ public class ExpertRecommenderService extends Service {
 	} catch (SQLException e1) {
 	    e1.printStackTrace();
 	}
-	System.out.println("Applying Pagerank...");
 
 	if (usermap == null) {
 	    // TODO: Throw custom exception.
 	}
 
-	System.out.println("Applying page rank strategey...");
+	ScoreStrategy strategy = null;
+	switch (algorithmName) {
+	case "pagerank":
+	    // System.out.println("Applying page rank strategy...");
+	    strategy = new PageRankStrategy(jcreator.getGraph(), usermap);
+	    break;
+	case "hits":
+	    System.out.println("Applying HITS strategy...");
+	    strategy = new HITSStrategy(jcreator.getGraph(), usermap);
+	    break;
+	case "communityAwarePagerank":
+	    break;
+	case "communityAwareHITS":
+	    System.out.println("Applying community Aware HITS strategy...");
+	    OCD ocd = new OCD();
+	    ocd.uploadGraph("relationship_graph", graphWriter.getGraphAsString("graph_jung.graphml"));
+	    ocd.identifyCovers();
+	    String covers = ocd.getCovers();
 
-	PageRankStrategy strategy = new PageRankStrategy(jcreator.getGraph(), usermap);
+	    CommunityCoverMatrixParser CCMP = new CommunityCoverMatrixParser(covers);
+	    CCMP.parse();
+
+	    strategy = new CommunityAwareStrategy(jcreator.getGraph(), usermap, CCMP.getNodeId2CoversMap());
+
+	    break;
+	default:
+	    break;
+	}
+
 	ScoringContext scontext = new ScoringContext(strategy);
 	scontext.executeStrategy();
-
 	expert_posts = scontext.getExperts();
 
 	long expertsId = dbHandler.addExperts(queryId, expert_posts);
 
-	EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), usermap, "pagerank");
-
-	// Compute Evaluation Measures.
+	// If evaluation is requested.
 	long eMeasureId = -1;
-	try {
-	    eMeasure.computeAll();
-	    eMeasure.save(queryId, connectionSource);
-	    eMeasureId = eMeasure.getId();
-	} catch (IOException e) {
-	    e.printStackTrace();
-	} catch (JsonIOException e) {
-	    e.printStackTrace();
-	} catch (JsonSyntaxException e) {
-	    e.printStackTrace();
+	if (isEvaluation) {
+	    EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), usermap, algorithmName);
+
+	    // Compute Evaluation Measures.
+	    try {
+		eMeasure.computeAll();
+		eMeasure.save(queryId, connectionSource);
+		eMeasureId = eMeasure.getId();
+	    } catch (IOException e) {
+		e.printStackTrace();
+	    } catch (JsonIOException e) {
+		e.printStackTrace();
+	    } catch (JsonSyntaxException e) {
+		e.printStackTrace();
+	    }
+
 	}
 
-	// Visualize the result
-	Visualizer visualizer = new Visualizer();
-	visualizer.save(queryId, connectionSource, jcreator);
-	long visId = visualizer.getId();
+	// If visulaization is requested, Visualize the result
+	// TODO: Currently, vis graph is same as actual graph, later on markers
+	// may be added.
+	long visId = -1;
+	if (isVisualization) {
+	    Visualizer visualizer = new Visualizer();
+	    visualizer.saveVisGraph(queryId, connectionSource);
+	    visId = visualizer.getId();
+	}
 
 	JsonObject jObj = new JsonObject();
 	jObj.addProperty("expertsId", expertsId);
@@ -401,245 +466,11 @@ public class ExpertRecommenderService extends Service {
 	return res;
     }
 
-    @POST
-    @Path("hits")
-    public HttpResponse applyHITS(@ContentParam String query) {
-
-	if (query == null) {
-	    // TODO: Throw custom exception.
-	}
-
-	if (query != null && query.length() < 0) {
-	    // TODO: Throw custom exception.
-	}
-
-	String expert_posts = "{}";
-	QueryAnalyzer qAnalyzer = null;
-	try {
-	    qAnalyzer = new QueryAnalyzer(query);
-	} catch (Exception e) {
-	    e.printStackTrace();
-	}
-
-	DatabaseHandler dbHandler = null;
-	dbHandler = new DatabaseHandler("healthcare", "root", "");
-
-	ConnectionSource connectionSource = null;
-	try {
-	    connectionSource = dbHandler.getConnectionSource();
-	} catch (SQLException e2) {
-	    e2.printStackTrace();
-	}
-	long queryId = qAnalyzer.getId(connectionSource);
-
-	JUNGGraphCreator jcreator = null;
-	LuceneSearcher searcher = null;
-
-	try {
-	    System.out.println("Performing search...");
-
-	    searcher = new LuceneSearcher(qAnalyzer.getText(), "healthcare_index");
-	    TopDocs docs = searcher.performSearch(qAnalyzer.getText(), Integer.MAX_VALUE);
-	    searcher.buildQnAMap(docs);
-
-	    jcreator = new JUNGGraphCreator();
-	    jcreator.createGraph(searcher.getQnAMap(), searcher.getPostId2UserIdMap());
-	    System.out.println("Graph created");
-
-	} catch (Exception e) {
-	    e.printStackTrace();
-	    System.out.println(e);
-	    HttpResponse res = new HttpResponse("Exception while searching...");
-	    res.setStatus(200);
-	}
-
-	Map<Long, UserEntity> usermap = null;
-
-	try {
-	    usermap = UserMapSingleton.getInstance().getUserMap(connectionSource);
-	} catch (SQLException e1) {
-	    e1.printStackTrace();
-	}
-
-	if (usermap == null) {
-	    // TODO: Throw custom exception.
-	}
-
-	System.out.println("Applying HITS...");
-
-	HITSStrategy strategy = new HITSStrategy(jcreator.getGraph(), usermap);
-
-	ScoringContext scontext = new ScoringContext(strategy);
-	scontext.executeStrategy();
-
-	expert_posts = scontext.getExperts();
-
-	// Evaluate the results.
-	EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), usermap, "hits");
-
-	try {
-	    eMeasure.computeAll();
-	    eMeasure.save(queryId, connectionSource);
-	    long eMeasureId = eMeasure.getId();
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
-
-	// Visualize the result
-	Visualizer visualizer = new Visualizer();
-	visualizer.save(queryId, connectionSource, jcreator);
-	long visId = visualizer.getId();
-
-	// System.out.println("Total time " + timer.stop());
-	HttpResponse res = new HttpResponse(expert_posts);
-	res.setStatus(200);
-	return res;
-    }
-
-    @POST
-    @Path("community_aware_rank")
-    public HttpResponse applyCommunityAwareRank(@ContentParam String query) {
-
-	if (query == null) {
-	    // TODO: Throw custom exception.
-	}
-
-	if (query != null && query.length() < 0) {
-	    // TODO: Throw custom exception.
-	}
-
-	String expert_posts = "{}";
-
-	QueryAnalyzer qAnalyzer = null;
-	try {
-	    qAnalyzer = new QueryAnalyzer(query);
-	} catch (Exception e) {
-	    e.printStackTrace();
-	}
-
-	DatabaseHandler dbHandler = null;
-	dbHandler = new DatabaseHandler("healthcare", "root", "");
-
-	ConnectionSource connectionSource = null;
-	try {
-	    connectionSource = dbHandler.getConnectionSource();
-	} catch (SQLException e2) {
-	    e2.printStackTrace();
-	}
-	long queryId = qAnalyzer.getId(connectionSource);
-
-	JUNGGraphCreator jcreator = null;
-	LuceneSearcher searcher = null;
-
-	try {
-	    System.out.println("Performing search...");
-
-	    searcher = new LuceneSearcher(qAnalyzer.getText(), "healthcare_index");
-	    TopDocs docs = searcher.performSearch(qAnalyzer.getText(), Integer.MAX_VALUE);
-	    searcher.buildQnAMap(docs);
-
-	    jcreator = new JUNGGraphCreator();
-	    jcreator.createGraph(searcher.getQnAMap(), searcher.getPostId2UserIdMap());
-
-	    System.out.println("Graph created");
-
-	} catch (Exception e) {
-	    e.printStackTrace();
-	    System.out.println(e);
-	    HttpResponse res = new HttpResponse("Exception while searching...");
-	    res.setStatus(200);
-	}
-
-	// GraphWriter writer = new GraphWriter(jcreator);
-	// String graphContent = null;
-	// try {
-	// writer.saveToGraphMl("relationship_graph.graphml");
-	// graphContent = writer.getGraphAsString("relationship_graph.graphml");
-	// } catch (IOException e) {
-	// e.printStackTrace();
-	// }
-
-	// Visualize the result
-	Visualizer visualizer = new Visualizer();
-	visualizer.save(queryId, connectionSource, jcreator);
-
-	Map<Long, UserEntity> usermap = null;
-
-	try {
-	    usermap = UserMapSingleton.getInstance().getUserMap(connectionSource);
-	} catch (SQLException e1) {
-	    e1.printStackTrace();
-	}
-
-	System.out.println("Getting communities");
-
-	OCD ocd = new OCD();
-	ocd.uploadGraph("relationship_graph", dbHandler.getVisGraph(queryId));
-	ocd.identifyCovers();
-	String covers = ocd.getCovers();
-
-	CommunityCoverMatrixParser CCMP = new CommunityCoverMatrixParser(covers);
-	CCMP.parse();
-
-	System.out.println("Applying Commuinity aware HITS...");
-
-	try {
-	    CommunityAwareStrategy strategy = new CommunityAwareStrategy(jcreator.getGraph(), usermap, CCMP.getNodeId2CoversMap());
-
-	    ScoringContext scontext = new ScoringContext(strategy);
-	    scontext.executeStrategy();
-
-	    expert_posts = scontext.getExperts();
-
-	    EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), usermap, "hits");
-
-	    // Compute Evaluation Measures.
-
-	    eMeasure.computeAll();
-	    // Retrieve the id from the database.
-	    eMeasure.save(queryId, connectionSource);
-	} catch (Exception e) {
-	    e.printStackTrace();
-	}
-
-	// System.out.println("Total time " + timer.stop());
-	HttpResponse res = new HttpResponse(expert_posts);
-	res.setStatus(200);
-	return res;
-    }
-
-    @POST
-    @Path("visulaizer")
-    public HttpResponse visualize(@ContentParam String text) {
-
-	System.out.println("Visualizing...");
-
-	// Converting graphml format to gexf format.
-	GraphMl2GEXFConverter converter = new GraphMl2GEXFConverter();
-	try {
-	    converter.convert("fitness_graph_jung.graphml");
-	    converter.applyLayout();
-	    converter.export("fitness_graph_jung");
-
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
-
-	HttpResponse res = new HttpResponse("Everything went good...");
-	res.setStatus(200);
-	return res;
-    }
-
+    // TODO: Move this to test case.
     @POST
     @Path("querysetEvaluator")
     public HttpResponse evaluateQuerySet() {
 	ConnectionSource connSrc = null;
-	// try {
-	// connSrc = MySqlHelper.createConnectionSource("healthcare");
-	// } catch (SQLException e1) {
-	// e1.printStackTrace();
-	// }
-
 	ArrayList<String> queries = new ArrayList<String>();
 
 	try (BufferedReader br = new BufferedReader(new FileReader("fitness_queries_small.txt"))) {
@@ -675,129 +506,13 @@ public class ExpertRecommenderService extends Service {
 		e.printStackTrace();
 	    }
 
-	    System.out.println("Creating user and term freq map");
-
-	    // Application.createFilteredQnAMap();
-
-	    JUNGGraphCreator jcreator = new JUNGGraphCreator();
-	    // jcreator.createGraph(Application.q2a1,
-	    // Application.postId2userId1);
-
+	    // Execute startegies.
 	    System.out.println("Applying Pagerank...");
-
-	    // PageRankStrategy strategy = new PageRankStrategy(
-	    // jcreator.getGraph());
-	    // ScoringContext scontext = new ScoringContext(strategy);
-	    // scontext.executeStrategy();
-	    // scontext.getExperts();
-	    //
-	    // try {
-	    // System.out.println("PRECISION ::" + scontext.getExpertMap());
-	    // Precision precision = new Precision(scontext.getExpertMap(), 40);
-	    // precision.getAveragePrecision();
-	    // precision.saveAvgPrecisionToFile();
-	    // precision.savePrecisionValuesToFile();
-	    //
-	    // Recall recall = new Recall(scontext.getExpertMap(), 40);
-	    // recall.calculateValuesAtEveryPosition();
-	    // recall.saveRecallValuesToFile();
-	    //
-	    // System.out.println("PRECISION - RECALL ::");
-	    // PrecisionRecall precision_recall = new PrecisionRecall(
-	    // precision.getRoundedValues(), recall.getRoundedValues());
-	    // precision_recall.savePrecisionRecallCSV1();
-	    // precision_recall.insertStandardRecallPoints();
-	    //
-	    // // System.out.println("MEAN AVG PRECISION ::");
-	    // // MeanAveragePrecision MAP = new MeanAveragePrecision();
-	    //
-	    // System.out.println("11 pt Interpolated precision ::");
-	    // ElevenPointInterpolatedAveragePrecision epap = new
-	    // ElevenPointInterpolatedAveragePrecision();
-	    // epap.calculateInterPrecisionValues(recall.getRoundedValues(),
-	    // precision.getRoundedValues());
-	    //
-	    // epap.calculateInterPrecisionValues(ArrayUtils
-	    // .toPrimitive(precision_recall.getRecallValues()),
-	    // ArrayUtils.toPrimitive(precision_recall
-	    // .getPrecisionValues()));
-	    //
-	    // epap.save();
-	    //
-	    // System.out.println("MRR ::");
-	    // ReciprocalRank rr = new ReciprocalRank();
-	    // rr.computeReciprocalRank(scontext.getExpertMap());
-	    // rr.save();
-	    //
-	    // } catch (Exception e) {
-	    // e.printStackTrace();
-	    // }
 	}
 
 	HttpResponse res = new HttpResponse("All tests finished successfully");
 	res.setStatus(200);
 	return res;
-    }
-
-    @POST
-    @Path("DbPreparer")
-    public HttpResponse prepareDefaultData() {
-
-	try {
-	    JAXBContext context = JAXBContext.newInstance(i5.las2peer.services.servicePackage.parsers.Posts.class);
-	    Unmarshaller um = context.createUnmarshaller();
-	    File file = new File("res/posts.xml");
-
-	    i5.las2peer.services.servicePackage.parsers.Posts resources = (i5.las2peer.services.servicePackage.parsers.Posts) um.unmarshal(file);
-	    List<i5.las2peer.services.servicePackage.parsers.Post> resources_list = (ArrayList) resources.getResources();
-
-	    System.out.println("" + resources_list);
-
-	    // MySqlHelper.createDatabase("healthcare");
-	    // ConnectionSource connectionSrc = MySqlHelper
-	    // .createConnectionSource("healthcare");
-
-	    // Create Data table.
-	    // TableUtils.createTableIfNotExists(connectionSrc,
-	    // DataEntity.class);
-	    // MySqlHelper.createAndInsertResourceDAO(resources_list,
-	    // connectionSrc);
-
-	    // Create User table.
-	    context = JAXBContext.newInstance(i5.las2peer.services.servicePackage.parsers.Users.class);
-	    File users_file = new File("res/Users.xml");
-	    Unmarshaller um1 = context.createUnmarshaller();
-
-	    System.out.println("Creating User table...");
-	    i5.las2peer.services.servicePackage.parsers.Users users = (i5.las2peer.services.servicePackage.parsers.Users) um1.unmarshal(users_file);
-	    List<i5.las2peer.services.servicePackage.parsers.User> user_list = (ArrayList) users.getUsersList();
-
-	    System.out.println("Inserting into User table...");
-	    // TableUtils.createTableIfNotExists(connectionSrc,
-	    // UserEntity.class);
-	    // MySqlHelper.createAndInsertUserDAO(user_list, connectionSrc);
-
-	    // MySqlHelper.markExpertsForEvaluation(connectionSrc);
-
-	    // Create Semantics table and insert data.
-	    // TableUtils.createTableIfNotExists(connectionSrc,
-	    // SemanticTagEntity.class);
-	    // MySqlHelper.createAndInsertSemanticTags(connectionSrc);
-
-	    // connectionSrc.close();
-
-	    System.out.println("Inserting into user table completed...");
-	} catch (Exception e) {
-	    e.printStackTrace();
-	    HttpResponse res = new HttpResponse("Something went wrong..");
-	    res.setStatus(200);
-	    return res;
-	}
-
-	HttpResponse res = new HttpResponse("Everything went good...");
-	res.setStatus(200);
-	return res;
-
     }
 
     @POST
@@ -814,7 +529,7 @@ public class ExpertRecommenderService extends Service {
 	    TableUtils.createTableIfNotExists(connectionSrc, SemanticTagEntity.class);
 	    TableUtils.createTableIfNotExists(connectionSrc, QueryEntity.class);
 	    TableUtils.createTableIfNotExists(connectionSrc, EvaluationMetricsEntity.class);
-	    TableUtils.createTableIfNotExists(connectionSrc, VisualizationEntity.class);
+	    TableUtils.createTableIfNotExists(connectionSrc, GraphEntity.class);
 	    TableUtils.createTableIfNotExists(connectionSrc, ExpertEntity.class);
 
 	    // try {
@@ -898,6 +613,23 @@ public class ExpertRecommenderService extends Service {
 	    e.printStackTrace();
 	}
 	return result;
+    }
+
+    private String getDatabaseName(String datasetId) {
+	DatabaseHandler handler = new DatabaseHandler("ersdb", "root", "");
+	String databaseName = null;
+	try {
+	    Dao<DataInfoEntity, Long> DatasetInfoDao = DaoManager.createDao(handler.getConnectionSource(), DataInfoEntity.class);
+	    DataInfoEntity datasetEntity = DatasetInfoDao.queryForId(Long.parseLong(datasetId));
+	    databaseName = datasetEntity.getDatabaseName();
+
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+
+	handler.close();
+
+	return databaseName;
     }
 
 }

@@ -36,10 +36,13 @@ public abstract class MySqlOpenHelper {
 	connection.executeStatement("CREATE DATABASE IF NOT EXISTS " + mDbName, -1);
     }
 
-    public ConnectionSource getConnectionSource() throws SQLException {
-	createDatabase();
-
-	mConnectionSource = new JdbcConnectionSource(DB_URL + mDbName);
+    public ConnectionSource getConnectionSource() {
+	try {
+	    createDatabase();
+	    mConnectionSource = new JdbcConnectionSource(DB_URL + mDbName);
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
 	((JdbcConnectionSource) mConnectionSource).setUsername(mUserName);
 	((JdbcConnectionSource) mConnectionSource).setPassword(mPassword);
 	return mConnectionSource;

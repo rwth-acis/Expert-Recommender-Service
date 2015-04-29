@@ -14,8 +14,8 @@ import com.j256.ormlite.table.DatabaseTable;
  * @author sathvik
  */
 
-@DatabaseTable(tableName = "visulaization")
-public class VisualizationEntity {
+@DatabaseTable(tableName = "graph")
+public class GraphEntity {
 
     @DatabaseField(generatedId = true)
     private long id;
@@ -26,11 +26,13 @@ public class VisualizationEntity {
     @DatabaseField(columnName = "date_created", dataType = DataType.DATE)
     private Date createdAt;
 
-    // A json string consisting of all metric details.
+    @DatabaseField(columnName = "graph_data", dataType = DataType.LONG_STRING)
+    private String graphData;
+
     @DatabaseField(columnName = "vis_data", dataType = DataType.LONG_STRING)
     private String visData;
 
-    public VisualizationEntity() {
+    public GraphEntity() {
 
     }
 
@@ -43,7 +45,11 @@ public class VisualizationEntity {
     }
 
     public void setGraph(String graph) {
-	visData = graph;
+	graphData = graph;
+    }
+
+    public void setVisGraph(String visGraph) {
+	visData = visGraph;
     }
 
     public long getId() {
@@ -59,6 +65,10 @@ public class VisualizationEntity {
     }
 
     public String getGraph() {
+	return graphData;
+    }
+
+    public String getVisGraph() {
 	return visData;
     }
 }

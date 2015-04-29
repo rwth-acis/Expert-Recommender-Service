@@ -316,10 +316,10 @@ public class DatabaseHandler extends MySqlOpenHelper {
      * @return
      */
     public String getVisGraph(long queryId) {
-	Dao<VisualizationEntity, Long> visulaizationDao = null;
+	Dao<GraphEntity, Long> visulaizationDao = null;
 	try {
-	    visulaizationDao = DaoManager.createDao(super.getConnectionSource(), VisualizationEntity.class);
-	    VisualizationEntity entity = visulaizationDao.queryForId(queryId);
+	    visulaizationDao = DaoManager.createDao(super.getConnectionSource(), GraphEntity.class);
+	    GraphEntity entity = visulaizationDao.queryForId(queryId);
 
 	    return entity.getGraph();
 	} catch (SQLException e) {

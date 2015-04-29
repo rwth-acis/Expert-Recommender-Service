@@ -95,7 +95,7 @@ public class LuceneSearcher {
 	    long userId = doc.get("userid") != null ? Long.parseLong(doc.get("userid")) : -1;
 
 	    String text = doc.get("searchableText");
-	    System.out.println(postId + " :: " + parentId);
+	    // System.out.println(postId + " :: " + parentId);
 
 	    if (postId > 0) {
 		token = new Token(postId, text);
