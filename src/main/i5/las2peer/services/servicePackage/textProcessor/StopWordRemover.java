@@ -49,7 +49,7 @@ public class StopWordRemover {
     }
 
     private void createPattern() {
-	for (String word : StopWordList.lucene_wordlist) {
+	for (String word : StopWordList.lucene_stopwordlist) {
 	    builder.append(word);
 	    builder.append("|");
 	}

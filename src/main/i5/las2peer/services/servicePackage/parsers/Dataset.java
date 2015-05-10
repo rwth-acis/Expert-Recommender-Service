@@ -6,8 +6,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- * This contains all the users available in the users.xml
- * which is a list of all the user.
+ * Parses all the available datasets
  * 
  * @see User
  * @author sathvik

@@ -12,29 +12,29 @@ import i5.las2peer.restMapper.annotations.QueryParam;
 import i5.las2peer.restMapper.annotations.Version;
 import i5.las2peer.restMapper.tools.ValidationResult;
 import i5.las2peer.restMapper.tools.XMLCheck;
-import i5.las2peer.services.servicePackage.datamodel.DataEntity;
-import i5.las2peer.services.servicePackage.datamodel.DataInfoEntity;
-import i5.las2peer.services.servicePackage.datamodel.DatabaseHandler;
-import i5.las2peer.services.servicePackage.datamodel.EvaluationMetricsEntity;
-import i5.las2peer.services.servicePackage.datamodel.ExpertEntity;
-import i5.las2peer.services.servicePackage.datamodel.GraphEntity;
-import i5.las2peer.services.servicePackage.datamodel.QueryEntity;
-import i5.las2peer.services.servicePackage.datamodel.SemanticTagEntity;
-import i5.las2peer.services.servicePackage.datamodel.UserEntity;
-import i5.las2peer.services.servicePackage.evaluator.EvaluationMeasure;
+import i5.las2peer.services.servicePackage.database.DatabaseHandler;
+import i5.las2peer.services.servicePackage.entities.DataEntity;
+import i5.las2peer.services.servicePackage.entities.DataInfoEntity;
+import i5.las2peer.services.servicePackage.entities.EvaluationMetricsEntity;
+import i5.las2peer.services.servicePackage.entities.ExpertEntity;
+import i5.las2peer.services.servicePackage.entities.GraphEntity;
+import i5.las2peer.services.servicePackage.entities.QueryEntity;
+import i5.las2peer.services.servicePackage.entities.SemanticTagEntity;
+import i5.las2peer.services.servicePackage.entities.UserEntity;
 import i5.las2peer.services.servicePackage.graph.GraphWriter;
 import i5.las2peer.services.servicePackage.graph.JUNGGraphCreator;
 import i5.las2peer.services.servicePackage.indexer.DbSematicsIndexer;
 import i5.las2peer.services.servicePackage.indexer.DbTextIndexer;
 import i5.las2peer.services.servicePackage.indexer.LuceneMysqlIndexer;
+import i5.las2peer.services.servicePackage.metrics.EvaluationMeasure;
 import i5.las2peer.services.servicePackage.ocd.OCD;
 import i5.las2peer.services.servicePackage.parsers.CommunityCoverMatrixParser;
-import i5.las2peer.services.servicePackage.scoring.CommunityAwareStrategy;
-import i5.las2peer.services.servicePackage.scoring.HITSStrategy;
-import i5.las2peer.services.servicePackage.scoring.ModelingStrategy1;
-import i5.las2peer.services.servicePackage.scoring.PageRankStrategy;
-import i5.las2peer.services.servicePackage.scoring.ScoreStrategy;
-import i5.las2peer.services.servicePackage.scoring.ScoringContext;
+import i5.las2peer.services.servicePackage.scorer.CommunityAwareStrategy;
+import i5.las2peer.services.servicePackage.scorer.HITSStrategy;
+import i5.las2peer.services.servicePackage.scorer.ModelingStrategy1;
+import i5.las2peer.services.servicePackage.scorer.PageRankStrategy;
+import i5.las2peer.services.servicePackage.scorer.ScoreStrategy;
+import i5.las2peer.services.servicePackage.scorer.ScoringContext;
 import i5.las2peer.services.servicePackage.searcher.LuceneSearcher;
 import i5.las2peer.services.servicePackage.textProcessor.PorterStemmer;
 import i5.las2peer.services.servicePackage.textProcessor.QueryAnalyzer;
@@ -160,21 +160,24 @@ public class ExpertRecommenderService extends Service {
 
     }
 
-    // @GET
-    // @Path("datasets/{datasetId}/evaluations/{evaluationId}")
-    // public HttpResponse getEvaluationResults(@PathParam("evaluationId")
-    // String evaluationId) {
-    //
-    // System.out.println("evaluationId:: " + evaluationId);
-    // DatabaseHandler dbHandler = null;
-    // dbHandler = new DatabaseHandler("healthcare", "root", "");
-    // String evaluationMeasures =
-    // dbHandler.getEvaluationMetrics(Long.parseLong(evaluationId));
-    //
-    // HttpResponse res = new HttpResponse(evaluationMeasures);
-    // res.setStatus(200);
-    // return res;
-    // }
+    @GET
+    @Path("datasets/{datasetId}/evaluations/{evaluationId}")
+    public HttpResponse getEvaluationResults(@PathParam("datasetId") String datasetId, @PathParam("evaluationId") String evaluationId) {
+
+	String databaseName = getDatabaseName(datasetId);
+	if (databaseName == null) {
+	    // Throw custom exception.
+	}
+	
+	System.out.println("evaluationId:: " + evaluationId);
+	DatabaseHandler dbHandler = null;
+	dbHandler = new DatabaseHandler(databaseName, "root", "");
+	String evaluationMeasures = dbHandler.getEvaluationMetrics(Long.parseLong(evaluationId));
+
+	HttpResponse res = new HttpResponse(evaluationMeasures);
+	res.setStatus(200);
+	return res;
+    }
 
     @GET
     @Path("datasets/{datasetId}/visualizations/{visualizationId}")

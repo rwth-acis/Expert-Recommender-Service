@@ -3,7 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.parsers;
 
-import i5.las2peer.services.servicePackage.datamodel.NodeCoverManager;
+import i5.las2peer.services.servicePackage.ocd.NodeCoverManager;
 
 import java.util.HashMap;
 import java.util.Scanner;

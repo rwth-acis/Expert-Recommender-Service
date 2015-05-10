@@ -3,7 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.indexer;
 
-import i5.las2peer.services.servicePackage.datamodel.SemanticTagEntity;
+import i5.las2peer.services.servicePackage.entities.SemanticTagEntity;
 import i5.las2peer.services.servicePackage.models.SemanticToken;
 import i5.las2peer.services.servicePackage.semanticTagger.SemanticTagger;
 import i5.las2peer.services.servicePackage.utils.Application;

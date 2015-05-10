@@ -16,9 +16,9 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class DatasetInfo {
 
-    long id;
-    String name;
-    Date createdDateTime;
+    private long id;
+    private String name;
+    private Date createdDateTime;
 
     public String getName() {
 	return name;

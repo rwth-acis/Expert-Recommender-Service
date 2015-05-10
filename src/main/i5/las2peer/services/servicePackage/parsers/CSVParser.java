@@ -3,7 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.parsers;
 
-import i5.las2peer.services.servicePackage.datamodel.DataEntity;
+import i5.las2peer.services.servicePackage.entities.DataEntity;
 
 import java.io.FileReader;
 import java.io.IOException;

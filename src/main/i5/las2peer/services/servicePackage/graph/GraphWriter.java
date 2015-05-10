@@ -3,7 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.graph;
 
-import i5.las2peer.services.servicePackage.datamodel.GraphEntity;
+import i5.las2peer.services.servicePackage.entities.GraphEntity;
 import i5.las2peer.services.servicePackage.utils.LocalFileManager;
 
 import java.io.BufferedWriter;

@@ -3,7 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.indexer;
 
-import i5.las2peer.services.servicePackage.datamodel.DataEntity;
+import i5.las2peer.services.servicePackage.entities.DataEntity;
 import i5.las2peer.services.servicePackage.utils.Application;
 
 import java.io.File;

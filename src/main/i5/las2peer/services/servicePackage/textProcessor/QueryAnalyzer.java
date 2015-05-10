@@ -3,7 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.textProcessor;
 
-import i5.las2peer.services.servicePackage.datamodel.QueryEntity;
+import i5.las2peer.services.servicePackage.entities.QueryEntity;
 
 import java.sql.SQLException;
 import java.util.Date;
