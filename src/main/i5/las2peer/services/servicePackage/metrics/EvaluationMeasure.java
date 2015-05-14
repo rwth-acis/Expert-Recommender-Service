@@ -9,6 +9,7 @@ import i5.las2peer.services.servicePackage.entities.UserEntity;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -34,15 +35,18 @@ public class EvaluationMeasure {
     private Precision precision;
     private Recall recall;
     private PrecisionRecall precision_recall;
-    private ElevenPointInterpolatedAveragePrecision epap;
+    private ElevenPointInterpolatedAveragePrecision epIAP;
     private ReciprocalRank rr;
+    private NormalizedDiscountedCumulativeGain ndcg;
     private String algoName;
     private Map<Long, UserEntity> userId2userObj;
     private EvaluationMetricsEntity evaluationEntity;
 
+    private static int collectionSize = 10;
+
     public EvaluationMeasure(LinkedHashMap<String, Double> id2Score, Map<Long, UserEntity> userId2userObj, String name) {
-	userId2Score = id2Score;
-	algoName = name;
+	this.userId2Score = id2Score;
+	this.algoName = name;
 	this.userId2userObj = userId2userObj;
     }
 
@@ -52,19 +56,21 @@ public class EvaluationMeasure {
 	computePrecisionRecall();
 	compute11ptIP();
 	computeMRR();
+	computeNormalDiscountedCumilativeGain();
+    }
+
+    private void computeNormalDiscountedCumilativeGain() {
+	// ndcg = new NormalizedDiscountedCumulativeGain(relevance_scores);
     }
 
     public void computePrecision() {
-	precision = new Precision(userId2Score, this.userId2userObj, 40);
-	precision.getAveragePrecision();
-	precision.saveAvgPrecisionToFile();
-	precision.savePrecisionValuesToFile();
+	precision = new Precision(userId2Score, userId2userObj, collectionSize);
+	precision.compute();
     }
 
     public void computeRecall() {
-	recall = new Recall(userId2Score, userId2userObj, 40);
-	recall.calculateValuesAtEveryPosition();
-	recall.saveRecallValuesToFile();
+	recall = new Recall(userId2Score, userId2userObj, collectionSize);
+	recall.compute();
     }
 
     public void computePrecisionRecall() throws IOException {
@@ -77,20 +83,19 @@ public class EvaluationMeasure {
 	    computeRecall();
 	}
 
-	precision_recall = new PrecisionRecall(precision.getRoundedValues(), recall.getRoundedValues());
-	precision_recall.savePrecisionRecallCSV1();
-	precision_recall.insertStandardRecallPoints();
+	precision_recall = new PrecisionRecall(precision.getRoundedPrecisionValues(), recall.getRoundedValues());
+	// precision_recall.savePrecisionRecallCSV1();
+	precision_recall.compute();
     }
 
     public void compute11ptIP() {
 	System.out.println("11 pt Interpolated precision ::");
-	epap = new ElevenPointInterpolatedAveragePrecision();
-	epap.calculateInterPrecisionValues(recall.getRoundedValues(), precision.getRoundedValues());
+	epIAP = new ElevenPointInterpolatedAveragePrecision();
+	epIAP.compute(recall.getRoundedValues(), precision.getRoundedPrecisionValues());
 
-	epap.calculateInterPrecisionValues(ArrayUtils.toPrimitive(precision_recall.getRecallValues()),
-		ArrayUtils.toPrimitive(precision_recall.getPrecisionValues()));
+	epIAP.compute(ArrayUtils.toPrimitive(precision_recall.getRecallValues()), ArrayUtils.toPrimitive(precision_recall.getPrecisionValues()));
 
-	epap.save();
+	// epap.save();
     }
 
     public void computeNDCG() {
@@ -102,60 +107,68 @@ public class EvaluationMeasure {
     }
 
     public void computeMRR() {
-	System.out.println("MRR ::");
 	rr = new ReciprocalRank(userId2userObj);
-	rr.computeReciprocalRank(userId2Score);
-	rr.save();
+	rr.compute(userId2Score);
     }
 
     public void save(long queryId, ConnectionSource connSrc) throws JsonIOException, JsonSyntaxException, IOException {
 
-	// File metricsFile = new File("metrics.json");
-	//
-	// if (metricsFile.exists() == false) {
-	// metricsFile.createNewFile();
-	// }
-	//
-	// String jsonStr = Application.readFile(metricsFile.getPath(),
-	// StandardCharsets.UTF_8);
-	JsonArray jContainer = new JsonArray();
+	JsonObject jContainer = new JsonObject();
+	JsonObject metricsObj = new JsonObject();
 
-	// if (jsonStr == null || jsonStr.length() == 0) {
-	// jsonStr = "[]";
+	// JsonArray jPrecision = new JsonArray();
+	// for (double value : precision.getRoundedPrecisionValues()) {
+	// JsonPrimitive element = new JsonPrimitive(value);
+	// jPrecision.add(element);
 	// }
-	//
-	// JsonParser parser = new JsonParser();
-	// if (parser.parse(jsonStr).isJsonArray()) {
-	// jContainer = parser.parse(jsonStr).getAsJsonArray();
-	// }
-	JsonArray metricsArray = new JsonArray();
 
-	JsonArray jPrecision = new JsonArray();
-	for (double value : precision.getRoundedValues()) {
-	    JsonPrimitive element = new JsonPrimitive(value);
-	    jPrecision.add(element);
+	// JsonArray jRecall = new JsonArray();
+	// for (double value : recall.getRoundedValues()) {
+	// JsonPrimitive element = new JsonPrimitive(value);
+	// jRecall.add(element);
+	// }
+
+	LinkedHashMap<Double, Double> recall2precicion = epIAP.getValue();
+	JsonArray jIARecallPts = new JsonArray();
+	JsonArray jIAPrecisionPts = new JsonArray();
+
+	Iterator entrySetIterator = recall2precicion.entrySet().iterator();
+	while (entrySetIterator.hasNext()) {
+	    Map.Entry pair = (Map.Entry) entrySetIterator.next();
+
+	    JsonPrimitive standardRecallPts = new JsonPrimitive((double) pair.getKey());
+	    JsonPrimitive ipPrecision = new JsonPrimitive((double) pair.getValue());
+
+	    System.out.println((double) pair.getKey() + " :: " + (double) pair.getValue());
+
+	    entrySetIterator.remove(); // To avoid
+				       // concurrentModificationException
+
+	    jIARecallPts.add(standardRecallPts);
+	    jIAPrecisionPts.add(ipPrecision);
 	}
-	JsonObject jPrecisionObj = new JsonObject();
-	jPrecisionObj.add("precision", jPrecision);
 
-	JsonArray jRecall = new JsonArray();
-	for (double value : recall.getRoundedValues()) {
-	    JsonPrimitive element = new JsonPrimitive(value);
-	    jRecall.add(element);
-	}
-	JsonObject jRecallObj = new JsonObject();
-	jRecallObj.add("recall", jRecall);
+	JsonObject IAPObject = new JsonObject();
+	IAPObject.add("recall", jIARecallPts);
+	IAPObject.add("precision", jIAPrecisionPts);
 
-	metricsArray.add(jPrecisionObj);
-	metricsArray.add(jRecallObj);
+	JsonPrimitive precisionElement = new JsonPrimitive(precision.getValue());
+	JsonPrimitive recallElement = new JsonPrimitive(recall.getValue());
+	JsonPrimitive rrElement = new JsonPrimitive(rr.getValue());
 
-	JsonObject jObj = new JsonObject();
-	jObj.addProperty("id", queryId);
-	jObj.addProperty("algo", algoName);
-	jObj.addProperty("timestamp", System.currentTimeMillis());
-	jObj.add("metrics", metricsArray);
+	metricsObj.add("avgPrecision", precisionElement);
+	metricsObj.add("avgRecall", recallElement);
+	metricsObj.add("11-ptIAP", IAPObject);
+	metricsObj.add("reciprocalRank", rrElement);
+	metricsObj.add("ndcg", new JsonPrimitive("12"));
 
-	jContainer.add(jObj);
+	JsonObject containerObj = new JsonObject();
+	containerObj.addProperty("id", queryId);
+	containerObj.addProperty("algo", algoName);
+	containerObj.addProperty("timestamp", System.currentTimeMillis());
+	containerObj.add("measures", metricsObj);
+
+	jContainer.add("metrics", containerObj);
 	String evaluationMeasures = jContainer.toString();
 
 	try {
@@ -172,9 +185,6 @@ public class EvaluationMeasure {
 	    e.printStackTrace();
 	}
 
-	// PrintWriter writer = new PrintWriter(metricsFile.getPath(), "UTF-8");
-	// writer.println(evaluationMeasures);
-	// writer.close();
     }
 
     public long getId() {

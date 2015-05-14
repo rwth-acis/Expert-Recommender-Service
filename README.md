@@ -9,7 +9,7 @@ Red node is the main hub in the network.
 Blue and Violet nodes shows the differnce in two algorithms namely Community aware HITS and regular HITS.
 Motivation is to find not only hub nodes but to find useful nodes with awareness of community knowledge.
 
-Build - Passed.
+Test cases are failed currently as it is under modifications.
 
 To build the project, clone the project and run "ant" command from the root directory of the project.
 

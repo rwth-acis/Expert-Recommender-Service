@@ -29,6 +29,10 @@ import i5.las2peer.services.servicePackage.indexer.LuceneMysqlIndexer;
 import i5.las2peer.services.servicePackage.metrics.EvaluationMeasure;
 import i5.las2peer.services.servicePackage.ocd.OCD;
 import i5.las2peer.services.servicePackage.parsers.CommunityCoverMatrixParser;
+import i5.las2peer.services.servicePackage.parsers.Post;
+import i5.las2peer.services.servicePackage.parsers.Posts;
+import i5.las2peer.services.servicePackage.parsers.User;
+import i5.las2peer.services.servicePackage.parsers.Users;
 import i5.las2peer.services.servicePackage.scorer.CommunityAwareStrategy;
 import i5.las2peer.services.servicePackage.scorer.HITSStrategy;
 import i5.las2peer.services.servicePackage.scorer.ModelingStrategy1;
@@ -45,6 +49,7 @@ import i5.las2peer.services.servicePackage.utils.UserMapSingleton;
 import i5.las2peer.services.servicePackage.visualization.Visualizer;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -53,6 +58,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -168,7 +177,7 @@ public class ExpertRecommenderService extends Service {
 	if (databaseName == null) {
 	    // Throw custom exception.
 	}
-	
+
 	System.out.println("evaluationId:: " + evaluationId);
 	DatabaseHandler dbHandler = null;
 	dbHandler = new DatabaseHandler(databaseName, "root", "");
@@ -327,6 +336,23 @@ public class ExpertRecommenderService extends Service {
 	return res;
     }
 
+    /**
+     * 
+     * @param datasetId
+     *            Long value identifying the corresponding dataset.
+     * @param algorithmName
+     *            String value specifying the algorithm name. pagerank,
+     *            hits,communityAwareHITS.
+     * @param query
+     *            String value specifying the query/information need.
+     * @param isEvaluation
+     *            A boolean value to identify if evaluation is required or not.
+     * @param isVisualization
+     *            A boolean value to identify if visualization is required or
+     *            not.
+     * @return 200 response code and A json string containing list of ids i.e
+     *         expertId, evaluationId, visualizationId.
+     */
     @POST
     @Path("datasets/{datasetId}/algorithms/{algorithmName}")
     public HttpResponse applyPageRank(@PathParam("datasetId") String datasetId, @PathParam("algorithmName") String algorithmName,
@@ -513,7 +539,7 @@ public class ExpertRecommenderService extends Service {
 		e.printStackTrace();
 	    }
 
-	    // Execute startegies.
+	    // Execute strategies.
 	    System.out.println("Applying Pagerank...");
 	}
 
@@ -542,12 +568,23 @@ public class ExpertRecommenderService extends Service {
 	return res;
     }
 
+    /**
+     * This method is called only once when the new dataset is added.
+     * Currently, it is invoked from the test case.
+     * 
+     * @param dataset_name
+     *            Name of the dataset, whose data has to be indexed. Dataset is
+     *            present in datasets directory.
+     * @return 200 response code, if database operations and indexing succeeds.
+     *         500 response code, if exception occurs.
+     */
     @POST
     @Path("indexer")
     public HttpResponse prepareData(@ContentParam String dataset_name) {
 	System.out.println("Indexer called...");
 	DatabaseHandler dbHandler = new DatabaseHandler(dataset_name, "root", "");
 	ConnectionSource connectionSrc;
+	HttpResponse res = null;
 	try {
 	    connectionSrc = dbHandler.getConnectionSource();
 	    // Create necessary tables.
@@ -559,42 +596,52 @@ public class ExpertRecommenderService extends Service {
 	    TableUtils.createTableIfNotExists(connectionSrc, GraphEntity.class);
 	    TableUtils.createTableIfNotExists(connectionSrc, ExpertEntity.class);
 
-	    // try {
-	    // String dirPath = "datasets/" + dataset_name;
-	    // JAXBContext context = JAXBContext.newInstance(Posts.class);
-	    // Unmarshaller um = context.createUnmarshaller();
-	    // File file = new File(dirPath + "/posts.xml");
-	    //
-	    // Posts posts = (Posts) um.unmarshal(file);
-	    // List<Post> posts_list = (ArrayList) posts.getResources();
-	    // // Add posts details into data table
-	    // dbHandler.addPosts(posts_list);
-	    //
-	    // // Add user details into table
-	    // context = JAXBContext.newInstance(Users.class);
-	    // File users_file = new File(dirPath + "/users.xml");
-	    // Unmarshaller um1 = context.createUnmarshaller();
-	    // Users users = (Users) um1.unmarshal(users_file);
-	    // List<User> user_list = (ArrayList) users.getUsersList();
-	    // dbHandler.addUsers(user_list);
-	    //
-	    // // Add semantics tag.
+	    String dirPath = "datasets/" + dataset_name;
+	    JAXBContext context = JAXBContext.newInstance(Posts.class);
+	    Unmarshaller um = context.createUnmarshaller();
+	    File file = new File(dirPath + "/posts.xml");
+
+	    Posts posts = (Posts) um.unmarshal(file);
+	    List<Post> posts_list = (ArrayList) posts.getResources();
+	    // Add posts details into data table
+	    dbHandler.addPosts(posts_list);
+
+	    // Add user details into table
+	    context = JAXBContext.newInstance(Users.class);
+	    File users_file = new File(dirPath + "/users.xml");
+	    Unmarshaller um1 = context.createUnmarshaller();
+	    Users users = (Users) um1.unmarshal(users_file);
+	    List<User> user_list = (ArrayList) users.getUsersList();
+	    dbHandler.addUsers(user_list);
+
+	    // Add semantics tag.
 	    // dbHandler.addSemanticTags();
-	    //
-	    // System.out.println("Database operations completed...");
-	    // } catch (Exception e) {
-	    // e.printStackTrace();
-	    // }
+
+	    dbHandler.markExpertsForEvaluation(connectionSrc);
+
+	    System.out.println("Database operations completed...");
 
 	    LuceneMysqlIndexer indexer = new LuceneMysqlIndexer(dbHandler.getConnectionSource(), dataset_name + "_index");
 	    indexer.buildIndex();
 
+	    res = new HttpResponse("Indexer finished successfully");
+	    res.setStatus(200);
+
 	} catch (SQLException e) {
 	    e.printStackTrace();
+	    res = new HttpResponse("SQL Exception");
+	    res.setStatus(500);
 	} catch (IOException e) {
 	    e.printStackTrace();
+	    res = new HttpResponse("IO Exception");
+	    res.setStatus(500);
+	} catch (JAXBException e) {
+	    e.printStackTrace();
+	    res = new HttpResponse("JAXB Exception");
+	    res.setStatus(500);
 	}
-	return null;
+
+	return res;
     }
 
     /**

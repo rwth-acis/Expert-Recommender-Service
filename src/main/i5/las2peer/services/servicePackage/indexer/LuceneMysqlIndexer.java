@@ -54,6 +54,12 @@ public class LuceneMysqlIndexer {
      * @throws IOException
      */
     public void buildIndex() throws SQLException, IOException {
+
+	// If index already exists. Delete all.
+	if (indexWriter != null) {
+	    indexWriter.deleteAll();
+	}
+
 	Document doc;
 
 	Dao<DataEntity, Long> postsDao = DaoManager.createDao(connSrc, DataEntity.class);
