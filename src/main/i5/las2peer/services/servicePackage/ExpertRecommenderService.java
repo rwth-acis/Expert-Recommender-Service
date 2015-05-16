@@ -33,7 +33,8 @@ import i5.las2peer.services.servicePackage.parsers.Post;
 import i5.las2peer.services.servicePackage.parsers.Posts;
 import i5.las2peer.services.servicePackage.parsers.User;
 import i5.las2peer.services.servicePackage.parsers.Users;
-import i5.las2peer.services.servicePackage.scorer.CommunityAwareStrategy;
+import i5.las2peer.services.servicePackage.scorer.CommunityAwareHITSStrategy;
+import i5.las2peer.services.servicePackage.scorer.CommunityAwarePageRankStrategy;
 import i5.las2peer.services.servicePackage.scorer.HITSStrategy;
 import i5.las2peer.services.servicePackage.scorer.ModelingStrategy1;
 import i5.las2peer.services.servicePackage.scorer.PageRankStrategy;
@@ -436,18 +437,22 @@ public class ExpertRecommenderService extends Service {
 	    strategy = new HITSStrategy(jcreator.getGraph(), usermap);
 	    break;
 	case "communityAwarePagerank":
-	    break;
-	case "communityAwareHITS":
-	    System.out.println("Applying community Aware HITS strategy...");
-	    OCD ocd = new OCD();
-	    ocd.uploadGraph("relationship_graph", graphWriter.getGraphAsString("graph_jung.graphml"));
-	    ocd.identifyCovers();
-	    String covers = ocd.getCovers();
-
+	    System.out.println("Applying community Aware PageRank strategy...");
+	    OCD ocdPageRank = new OCD();
+	    String covers = ocdPageRank.getCovers(graphWriter.getGraphAsString("graph_jung.graphml"));
 	    CommunityCoverMatrixParser CCMP = new CommunityCoverMatrixParser(covers);
 	    CCMP.parse();
 
-	    strategy = new CommunityAwareStrategy(jcreator.getGraph(), usermap, CCMP.getNodeId2CoversMap());
+	    strategy = new CommunityAwarePageRankStrategy(jcreator.getGraph(), usermap, CCMP.getNodeId2CoversMap());
+	    break;
+	case "communityAwareHITS":
+	    System.out.println("Applying community Aware HITS strategy...");
+	    OCD ocdHITS = new OCD();
+	    String coversHITS = ocdHITS.getCovers(graphWriter.getGraphAsString("graph_jung.graphml"));
+	    CommunityCoverMatrixParser CCMPHits = new CommunityCoverMatrixParser(coversHITS);
+	    CCMPHits.parse();
+
+	    strategy = new CommunityAwareHITSStrategy(jcreator.getGraph(), usermap, CCMPHits.getNodeId2CoversMap());
 
 	    break;
 	default:

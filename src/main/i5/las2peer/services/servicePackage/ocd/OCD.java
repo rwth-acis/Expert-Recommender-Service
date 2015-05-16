@@ -50,7 +50,7 @@ public class OCD {
      *            String containing details about the graph, generally an xml
      *            string.
      */
-    public void uploadGraph(String filename, String graphContent) {
+    private void uploadGraph(String filename, String graphContent) {
 	try {
 
 	    HttpPost httppost = new HttpPost("https://api.learning-layers.eu/ocd/graphs?name=" + filename);
@@ -98,7 +98,7 @@ public class OCD {
      * Response string of the format.
      * 
      */
-    public int identifyCovers() {
+    private int identifyCovers() {
 	int statusCode = -1;
 
 	try {
@@ -146,7 +146,10 @@ public class OCD {
 
     /**
      */
-    public String getCovers() {
+    public String getCovers(String graphContent) {
+	uploadGraph("relationship_graph", graphContent);
+	identifyCovers();
+
 	String url = "https://api.learning-layers.eu/ocd/covers/%s/graphs/%s";
 	url = String.format(url, coverId, graphId);
 	String responseString = null;

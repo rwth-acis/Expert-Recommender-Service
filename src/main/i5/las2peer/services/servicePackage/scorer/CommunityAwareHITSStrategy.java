@@ -17,7 +17,7 @@ import edu.uci.ics.jung.graph.Graph;
  * @author sathvik
  */
 
-public class CommunityAwareStrategy implements ScoreStrategy {
+public class CommunityAwareHITSStrategy implements ScoreStrategy {
     public Map<String, Double> node2hitsscore = new HashMap<String, Double>();
 
     private int maxIterations = 30;
@@ -34,7 +34,7 @@ public class CommunityAwareStrategy implements ScoreStrategy {
      * @param userId2userObj
      * @param nodeId2Covers
      */
-    public CommunityAwareStrategy(Graph<String, RelationshipEdge> graph, Map<Long, UserEntity> userId2userObj,
+    public CommunityAwareHITSStrategy(Graph<String, RelationshipEdge> graph, Map<Long, UserEntity> userId2userObj,
 	    HashMap<Long, NodeCoverManager> nodeId2Covers) {
 	this.graph = graph;
 	this.userId2userObj = userId2userObj;

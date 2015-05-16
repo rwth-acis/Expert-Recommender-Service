@@ -18,6 +18,7 @@ import edu.uci.ics.jung.graph.Graph;
 
 public class CAwareHITS<V, E> extends HITSWithPriors<V, E> {
     private HashMap<Long, NodeCoverManager> nodeId2Covers;
+    public static final double intraWeight = 0.6;
 
     /**
      * 
@@ -63,7 +64,6 @@ public class CAwareHITS<V, E> extends HITSWithPriors<V, E> {
 
 	long currCoverId = ncManager.getDominantCover();
 
-	double intra_weight = 0.6;
 	// This is to be calculated depending on the Community
 	double v_auth = 0;
 	for (E e : graph.getInEdges(v)) {
@@ -79,9 +79,9 @@ public class CAwareHITS<V, E> extends HITSWithPriors<V, E> {
 		    // same cover(community) reduce the incoming hub weight from
 		    // the external node.
 		    if (currCoverId != neighbourCoverId) {
-			hubweight = hubweight * (1 - intra_weight);
+			hubweight = hubweight * (1 - intraWeight);
 		    } else {
-			hubweight = hubweight * intra_weight;
+			hubweight = hubweight * intraWeight;
 		    }
 		    // Update depending on community.
 		    v_auth += (hubweight * getEdgeWeight(w, e).doubleValue() / incident_count);
@@ -103,9 +103,9 @@ public class CAwareHITS<V, E> extends HITSWithPriors<V, E> {
 		    // same cover(community) reduce the incoming authority
 		    // weight from the external node.
 		    if (currCoverId != neighbourCoverId) {
-			authweight = authweight * (1 - intra_weight);
+			authweight = authweight * (1 - intraWeight);
 		    } else {
-			authweight = authweight * intra_weight;
+			authweight = authweight * intraWeight;
 		    }
 
 		    // Update depending on community.
