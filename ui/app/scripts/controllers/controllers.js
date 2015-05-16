@@ -24,6 +24,7 @@
 
   erControllers.controller('SearchCtrl', ['$scope', '$rootScope', '$http' , '$routeParams', '$location',
     function ($scope, $rootScope, $http, $routeParams, $location) {
+      $rootScope.algorithm = "hits";
     	console.log("Search Controller...");
       $rootScope.query={text:""};
       $scope.handleClick = function() {
@@ -37,10 +38,19 @@
     function ($scope,  $rootScope, $routeParams, $http) {
       console.log("Results Controller..."+$rootScope.query.text);
       $scope.experts = {};
-      $http.post('http://localhost:8080/ers/pagerank', {msg: $rootScope.query.text}).
+      $rootScope.metrics = undefined;
+
+      var datasetId = $rootScope.dataset.id;
+
+      console.log(datasetId);
+      var url = 'http://localhost:8080/ers/datasets/'+datasetId+'/algorithms/'+$rootScope.algorithm+'?evaluation=true&visualization=true';
+      console.log(url);
+
+      $http.post( url , $rootScope.query.text).
         success(function(data, status, headers, config) {
+          console.log(data)
           $rootScope.ersIds = data;
-          $http.get('http://localhost:8080/ers/experts/'+data.expertsId).
+          $http.get('http://localhost:8080/ers/datasets/'+datasetId+'/experts/'+data.expertsId).
             success(function(data, status, headers, config) {
             console.log(data);
             $scope.experts = data;
@@ -108,11 +118,13 @@
 
   erControllers.controller('ResultTabsCtrl', ['$scope', '$rootScope', '$http',
     function($scope, $rootScope, $http) {
+    
     $scope.handleVisTab = function($event) {
       console.log("Handle Vis tab...");
+      console.log($rootScope);
       console.log($rootScope.ersIds);
 
-        $http.get('http://localhost:8080/ers/visualization/'+$rootScope.ersIds.visualizationId).
+        /*$http.get('http://localhost:8080/ers/datasets/'+$rootScope.dataset.id+'/visualizations/'+$rootScope.ersIds.visualizationId).
             success(function(data, status, headers, config) {
             console.log(data);
             //$scope.items=data;
@@ -121,17 +133,19 @@
             console.log(error);
             // called asynchronously if an error occurs
             // or server returns response with an error status.
-        });
+        });*/
 
       sigma.parsers.gexf(
-      'http://localhost/graphvis/fitness_graph_jung.gexf',
+      'http://localhost/graphvis/visgraph.gexf',
+      //'http://localhost:8080/ers/download/visgraph.gexf',
       //'http://localhost:8080/ers/visgraph.gexf',
       { // Here is the ID of the DOM element that
         // will contain the graph:
         container: 'sigma-container',
         settings: {
-          defaultNodeColor: '#ec5148',
-          defaultEdgeColor: 'red'
+          "defaultNodeColor": '#ec5148',
+          "defaultEdgeColor": 'red',
+          
         }
       },
       function(s) {
@@ -156,11 +170,11 @@
         config.outboundAttractionDistribution = true;
 
         //s.startForceAtlas2(config);
-
-        s.settings
         s.bind('clickNode', function(e) {
           var nodeId = e.data.node.id;
-              $http.get('http://localhost:8080/ers/users/'+nodeId).
+          
+
+              $http.get('http://localhost:8080/ers/datasets/'+$rootScope.dataset.id+'/users/'+nodeId).
                 success(function(data, status, headers, config) {
                 $scope.expert = data;
                 //$scope.items=data;
@@ -180,9 +194,12 @@
 
     $scope.handleEvaluationTab = function($event) {
       console.log("Handle Evaluation tab...");
-      $http.get('http://localhost:8080/ers/evaluation/'+$rootScope.ersIds.evaluationId).
+      $http.get('http://localhost:8080/ers/datasets/'+$rootScope.dataset.id+'/evaluations/'+$rootScope.ersIds.evaluationId).
         success(function(data, status, headers, config) {
-        console.log(data);
+          var obj = data.metrics;
+          $rootScope.metrics = obj;
+          console.log($rootScope.metrics);
+        
       }).
       error(function(data, status, headers, config) {
         console.log(error);
@@ -193,8 +210,35 @@
     }
   ]);
 
-  erControllers.controller('settingsCtrl', ['$scope',
-    function($scope) {
+  erControllers.controller('settingsCtrl', ['$scope','$rootScope',
+    function($scope, $rootScope) {
+
+      $scope.algorithm = { value: '' };
+
+      $scope.choices = [{
+          id: 1,
+          name: "modeling"
+        }, 
+        {
+          id: 2,
+          name: "pagerank"
+        },
+        {
+          id: 3,
+          name: "hits",
+          default: true
+        },
+          {
+          id: 4,
+          name: "communityAwarePagerank"
+        },
+          {
+          id: 5,
+          name: "communityAwareHITS"
+        },
+
+      ];
+      
       $scope.value = 30;
       $scope.prValue = 0.3;
       $scope.hitsValue = 0.3;
@@ -216,6 +260,14 @@
           step: 1,
           skin: 'round',
           dimension: "",
+          callback: function(value, elt) {
+            console.log(value);
+          } 
       };
+
+      $scope.handleSelection = function(algorithm) {
+        //console.log($scope.algorithm.value);
+        $rootScope.algorithm = $scope.algorithm.value;
+      }
 
     }]);

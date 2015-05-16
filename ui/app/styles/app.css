@@ -135,10 +135,14 @@ ol {
 }
 
 #sigma-container {
-    max-width: 500px;
+    max-width: 600px;
     height: 500px;
-    margin-left: 200px;
+    
   }
+.sigma-scene, .sigma-labels, .sigma-mouse {
+	top:80px;
+	left: 450px;
+}
 
 /*
 .visulaization_container {

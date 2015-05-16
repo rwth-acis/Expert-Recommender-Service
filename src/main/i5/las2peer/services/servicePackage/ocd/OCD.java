@@ -56,8 +56,8 @@ public class OCD {
 	    HttpPost httppost = new HttpPost("https://api.learning-layers.eu/ocd/graphs?name=" + filename);
 	    httppost.addHeader("Authorization", "Basic " + getBasicAuthEncodedString());
 
-	    // System.out.println("--------------GRAPH CONTENT-----------------------");
-	    // System.out.println(graphContent);
+	    System.out.println("--------------GRAPH CONTENT-----------------------");
+	    System.out.println(new String(graphContent));
 
 	    ArrayList<NameValuePair> postParameters = new ArrayList<NameValuePair>();
 	    postParameters.add(new BasicNameValuePair("name", "testing_graph_upload"));
@@ -69,6 +69,8 @@ public class OCD {
 
 	    HttpEntity entity = response.getEntity();
 	    String responseString = EntityUtils.toString(entity, "UTF-8");
+
+	    System.out.println(responseString);
 
 	    int statusCode = response.getStatusLine().getStatusCode();
 	    EntityUtils.consume(entity);

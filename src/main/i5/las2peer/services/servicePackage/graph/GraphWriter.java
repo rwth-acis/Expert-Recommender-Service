@@ -81,7 +81,7 @@ public class GraphWriter {
     }
 
     public String getGraphAsString(String filename) {
-	return LocalFileManager.getFile(filename).toString();
+	return new String(LocalFileManager.getFile(filename));
     }
 
     public void saveToDb(long queryId, ConnectionSource connSrc) {

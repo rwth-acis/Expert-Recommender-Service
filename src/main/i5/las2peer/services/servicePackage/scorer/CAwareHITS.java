@@ -52,7 +52,7 @@ public class CAwareHITS<V, E> extends HITSWithPriors<V, E> {
     @Override
     protected double update(V v) {
 	collectDisappearingPotential(v);
-	System.out.println("Vertex id is" + v);
+	// System.out.println("Vertex id is" + v);
 	NodeCoverManager ncManager = nodeId2Covers.get(Long.parseLong(v.toString()));
 
 	// If cannot find a cover, do a regular HITS update.

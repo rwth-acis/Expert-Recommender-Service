@@ -1,4 +1,4 @@
-<div id="settings-table-container" ng-controller="settingsCtrl"> 
+<div id="settings-table-container" ng-controller="settingsCtrl" ngModel=""> 
 
 <table class="settings-table">
 	<tr>
@@ -8,7 +8,7 @@
   	</tr>
 
   <tr>
-  	<td><input type="radio" name="radiobtn" /></td>
+  	<td><input type="radio" ng-change="handleSelection()" name="radiobtn" ng-model="algorithm.value" value="{{choices[0].name}}"/></td>
     <td>Modeling Technique</td>
     	<td>
     		<input ng-model="value" type="text" slider options="options" /> 
@@ -16,7 +16,7 @@
     	</td>	
   </tr>
   <tr>
-  	<td><input type="radio" name="radiobtn"/></td>
+  	<td><input type="radio" ng-change="handleSelection()" ng-checked="{{choices[1].default}}" name="radiobtn" ng-model="algorithm.value" value="{{choices[1].name}}"/></td>
     <td>PageRank</td>
     <td>
     		<input ng-model="prValue" type="text" slider options="prOptions" /> 
@@ -24,7 +24,7 @@
     	</td>	
   </tr>
   <tr>
-  	<td><input type="radio" name="radiobtn" /></td>
+  	<td><input type="radio" ng-change="handleSelection()" ng-checked="{{choices[2].default}}" name="radiobtn" ng-model="algorithm.value" value="{{choices[2].name}}"/></td>
     <td>HITS</td>
     <td>
     		<input ng-model="hitsValue" type="text" slider options="options" /> 
@@ -32,7 +32,7 @@
     	</td>	
   </tr>
   <tr>
-  	<td><input type="radio" name="radiobtn" /></td>
+  	<td><input type="radio" ng-change="handleSelection()" name="radiobtn" ng-model="algorithm.value" value="{{choices[3].name}}"/></td>
     <td>Community Aware PageRank</td>
    <td>
     		<input ng-model="CaPrValue" type="text" slider options="options" /> 
@@ -40,7 +40,7 @@
     	</td>	
   </tr>
   <tr>
-  	<td><input type="radio" name="radiobtn"  /></td>
+  	<td><input type="radio" ng-change="handleSelection()" name="radiobtn" ng-model="algorithm.value" value="{{choices[4].name}}"/></td>
     <td>Community Aware HITS</td>
     <td>
     		<input ng-model="CAHitsValue" type="text" slider options="options" /> 

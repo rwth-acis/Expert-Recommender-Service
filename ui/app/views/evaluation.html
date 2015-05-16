@@ -1,4 +1,4 @@
-<div id="settings-table-container" ng-controller="settingsCtrl"> 
+<div id="settings-table-container"> 
 <table class="evaluation-table">
 	<tr>
     	<th>Metrics</th>
@@ -6,23 +6,19 @@
   	</tr>
  	<tr>
     	<td>Precision</td>
-    	<td>0.76</td>
+    	<td>{{metrics.measures.avgPrecision}}</td>
  	</tr>
   <tr>
     <td>Recall</td>
-    <td>0.76</td>
-  </tr>
-  <tr>
-    <td>Mean Average Precision</td>
-    <td>0.60</td>
+    <td>{{metrics.measures.avgRecall}}</td>
   </tr>
   <tr>
     <td>Reciprocal rank</td>
-    <td>0.3</td>
+    <td>{{metrics.measures.reciprocalRank}}</td>
   </tr>
   <tr>
     <td>Normal Discounted cumilative gain</td>
-    <td>0.76</td>
+    <td>{{metrics.measures.ndcg}}</td>
   </tr>
   <tr>
     <td>11-pt inerpolated precision:</td>

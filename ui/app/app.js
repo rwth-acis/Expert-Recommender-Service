@@ -13,10 +13,10 @@ erApp.config(['$routeProvider', '$locationProvider',
         controller: 'ChooseDatasetCtrl'
       }).
       when('/search', {
-        templateUrl: 'app/views/search.html',
+        templateUrl: 'app/views/search_tabs.html',
         controller: 'SearchCtrl'
       }).when('/results', {
-        templateUrl: 'app/views/results.html',
+        templateUrl: 'app/views/results_tabs.html',
         controller: 'ResultsCtrl'
       });
 
