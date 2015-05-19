@@ -28,7 +28,14 @@ public class OCD {
     private String graphId;
     private String coverId;
 
-    public static final String basepath = "";
+    private static final String BASE_PATH = "https://api.learning-layers.eu/ocd/";
+
+    private static final String UPLOAD_URL = BASE_PATH + "graphs?name=%s";
+    private static final String IDENTIFY_COVERS_URL = BASE_PATH + "covers/graphs/%s/algorithms?algorithm=%s";
+    private static final String GET_COVERS_URL = BASE_PATH + "covers/%s/graphs/%s";
+
+    // Not exposed to the client.
+    private static final String ALGORITHM_LABEL = "SPEAKER_LISTENER_LABEL_PROPAGATION_ALGORITHM";
 
     public OCD() {
 
@@ -53,7 +60,7 @@ public class OCD {
     private void uploadGraph(String filename, String graphContent) {
 	try {
 
-	    HttpPost httppost = new HttpPost("https://api.learning-layers.eu/ocd/graphs?name=" + filename);
+	    HttpPost httppost = new HttpPost(String.format(UPLOAD_URL, filename));
 	    httppost.addHeader("Authorization", "Basic " + getBasicAuthEncodedString());
 
 	    System.out.println("--------------GRAPH CONTENT-----------------------");
@@ -103,8 +110,7 @@ public class OCD {
 
 	try {
 
-	    String url = "https://api.learning-layers.eu/ocd/covers/graphs/%s/algorithms";
-	    url = String.format(url, graphId);
+	    String url = String.format(IDENTIFY_COVERS_URL, graphId, ALGORITHM_LABEL);
 
 	    StringEntity strentity = new StringEntity("<?xml version=\"1.0\" encoding=\"UTF-16\"?><Parameters></Parameters>");
 
@@ -150,8 +156,7 @@ public class OCD {
 	uploadGraph("relationship_graph", graphContent);
 	identifyCovers();
 
-	String url = "https://api.learning-layers.eu/ocd/covers/%s/graphs/%s";
-	url = String.format(url, coverId, graphId);
+	String url = String.format(GET_COVERS_URL, coverId, graphId);
 	String responseString = null;
 	try {
 
