@@ -36,7 +36,7 @@ public class DataEntity {
     @DatabaseField(columnName = "view_count", dataType = DataType.LONG)
     private long viewCount;
 
-    @DatabaseField(columnName = "body", dataType = DataType.STRING_BYTES, format = "ISO-8859-13")
+    @DatabaseField(columnName = "body", dataType = DataType.STRING_BYTES)
     private String body;
 
     @DatabaseField(columnName = "owner_user_id", dataType = DataType.LONG)
@@ -51,7 +51,7 @@ public class DataEntity {
     @DatabaseField(columnName = "last_activity_date", dataType = DataType.LONG_STRING)
     private String lastActivityDate;
 
-    @DatabaseField(columnName = "title", dataType = DataType.STRING_BYTES, format = "ISO-8859-13")
+    @DatabaseField(columnName = "title", dataType = DataType.STRING_BYTES)
     private String title;
 
     @DatabaseField(columnName = "tags", dataType = DataType.LONG_STRING)
@@ -69,7 +69,7 @@ public class DataEntity {
     @DatabaseField(columnName = "parent_id", dataType = DataType.LONG)
     private long parentId;
 
-    @DatabaseField(columnName = "clean_text", dataType = DataType.STRING_BYTES, format = "ISO-8859-13")
+    @DatabaseField(columnName = "clean_text", dataType = DataType.STRING_BYTES)
     private String cleanText;
 
     // @DatabaseField(generatedId = true)

@@ -3,7 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.ocd;
 
-import i5.las2peer.services.servicePackage.parsers.SimpleDOMParser;
+import i5.las2peer.services.servicePackage.parsers.xmlparser.SimpleDOMParser;
 
 import java.util.ArrayList;
 

@@ -1,4 +1,6 @@
-package i5.las2peer.services.servicePackage.parsers;
+package i5.las2peer.services.servicePackage.parsers.xmlparser;
+
+import i5.las2peer.services.servicePackage.parsers.IPost;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -12,7 +14,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 
 @XmlRootElement(name = "row")
-public class Post {
+public class Post implements IPost {
 
     @XmlAttribute(name = "Id")
     String postid;

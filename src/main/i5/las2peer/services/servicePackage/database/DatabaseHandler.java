@@ -9,8 +9,8 @@ import i5.las2peer.services.servicePackage.entities.ExpertEntity;
 import i5.las2peer.services.servicePackage.entities.GraphEntity;
 import i5.las2peer.services.servicePackage.entities.SemanticTagEntity;
 import i5.las2peer.services.servicePackage.entities.UserEntity;
-import i5.las2peer.services.servicePackage.parsers.Post;
-import i5.las2peer.services.servicePackage.parsers.User;
+import i5.las2peer.services.servicePackage.parsers.IPost;
+import i5.las2peer.services.servicePackage.parsers.IUser;
 import i5.las2peer.services.servicePackage.semanticTagger.SemanticTagger;
 import i5.las2peer.services.servicePackage.statistics.Stats;
 import i5.las2peer.services.servicePackage.textProcessor.StopWordRemover;
@@ -62,7 +62,7 @@ public class DatabaseHandler extends MySqlOpenHelper {
      *             table constraints.
      * 
      * */
-    public void addPosts(List<Post> posts) throws SQLException {
+    public void addPosts(List<? extends IPost> posts) throws SQLException {
 
 	ConnectionSource source = super.getConnectionSource();
 	Dao<DataEntity, Long> DataDao = DaoManager.createDao(source, DataEntity.class);
@@ -70,10 +70,13 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	DataEntity data = null;
 	StopWordRemover remover = null;
 
-	for (Post res : posts) {
+	System.out.println("SIZE:::::::::::::::: " + posts.size());
+	for (IPost res : posts) {
+
 	    data = new DataEntity();
 	    // boolean idExists = false;
 
+	    System.out.println(res.getPostId());
 	    if (res.getPostId() != null) {
 		Long postid = Long.parseLong(res.getPostId());
 		data.setPostId(postid);
@@ -134,12 +137,13 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	    }
 
 	    if (res.getBody() != null) {
-		data.setBody(res.getBody());
-
 		remover = new StopWordRemover(res.getBody());
+
+		data.setBody(res.getBody());
 		data.setCleanText(remover.getPlainText());
 	    }
 	    DataDao.createIfNotExists(data);
+
 	}
     }
 
@@ -155,13 +159,13 @@ public class DatabaseHandler extends MySqlOpenHelper {
      *             table constraints.
      * */
 
-    public void addUsers(List<User> users) throws SQLException {
+    public void addUsers(List<? extends IUser> users) throws SQLException {
 	ConnectionSource source = super.getConnectionSource();
 	UserEntity entity = null;
 	Dao<UserEntity, Long> UserDao = DaoManager.createDao(source, UserEntity.class);
 
 	// Iterate tags and create DAO objects.
-	for (User user : users) {
+	for (IUser user : users) {
 	    entity = new UserEntity();
 
 	    if (user.getDownVotes() != null) {
@@ -347,7 +351,7 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	    UserEntity entity = userDao.queryForId(userId);
 
 	    Gson gson = new Gson();
-	   
+
 	    return gson.toJson(entity);
 	} catch (SQLException e) {
 	    e.printStackTrace();

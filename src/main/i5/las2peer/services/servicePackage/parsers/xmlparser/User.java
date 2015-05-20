@@ -1,5 +1,7 @@
-package i5.las2peer.services.servicePackage.parsers;
+package i5.las2peer.services.servicePackage.parsers.xmlparser;
 
+
+import i5.las2peer.services.servicePackage.parsers.IUser;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -15,7 +17,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 
 @XmlRootElement(name = "row")
-public class User {
+public class User implements IUser {
 	@XmlAttribute(name = "AccountId")
 	private String accountId;
 	

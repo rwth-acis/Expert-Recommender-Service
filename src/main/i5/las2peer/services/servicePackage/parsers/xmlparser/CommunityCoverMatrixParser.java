@@ -1,7 +1,7 @@
 /**
  * 
  */
-package i5.las2peer.services.servicePackage.parsers;
+package i5.las2peer.services.servicePackage.parsers.xmlparser;
 
 import i5.las2peer.services.servicePackage.ocd.NodeCoverManager;
 

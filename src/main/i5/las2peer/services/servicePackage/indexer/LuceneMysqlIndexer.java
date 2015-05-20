@@ -71,7 +71,7 @@ public class LuceneMysqlIndexer {
 	    doc = new Document();
 	    long postId = entity.getPostId();
 	    String title = entity.getTitle();
-	    String body = entity.getBody();
+	    String body = entity.getCleanText();
 	    long parentId = entity.getParentId();
 	    long userId = entity.getOwnerUserId();
 
@@ -83,6 +83,9 @@ public class LuceneMysqlIndexer {
 	    if (body != null && body.length() > 0) {
 		fullSearchableText.append(body);
 	    }
+
+	    // System.out.println("Searchable text ::" +
+	    // fullSearchableText.toString());
 
 	    doc.add(new StringField("postid", String.valueOf(postId), Field.Store.YES));
 	    doc.add(new StringField("parentid", String.valueOf(parentId), Field.Store.YES));

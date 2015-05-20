@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jsoup.Jsoup;
+
 /**
  * @author sathvik, sathvikmail@gmail.com
  * 
@@ -16,21 +18,22 @@ import java.util.regex.Pattern;
  *
  */
 public class StopWordRemover {
-    private String mText;
+    private String text;
     private String mFilePath;
 
     private Pattern stopWordsPattern;
+    private String lang;
 
     StringBuilder builder = new StringBuilder();
     String pattern = "\\b(?:%s)\\b";
 
-    public StopWordRemover(String text) {
-	mText = text;
+    public StopWordRemover(String text, String lang) {
+	this.text = text;
+	this.lang = lang;
     }
 
-    public StopWordRemover(String text, String filepath) {
-	mText = text;
-	mFilePath = filepath;
+    public StopWordRemover(String text) {
+	this(text, "en");
     }
 
     public String getPlainText() {
@@ -40,22 +43,30 @@ public class StopWordRemover {
 	    createPattern();
 	}
 
+	// Remove all html tags.
+	String stripped_text = Jsoup.parse(text).text();
 	// Remove punctuations.
-	String stripped_text = mText.replaceAll("\\W", " ");
-	Matcher matcher = stopWordsPattern.matcher(stripped_text);
-	String cleantext = matcher.replaceAll("");
+	stripped_text = stripped_text.replaceAll("\\W", " ");
 
-	return cleantext;
+	if (stopWordsPattern != null) {
+	    Matcher matcher = stopWordsPattern.matcher(stripped_text);
+	    stripped_text = matcher.replaceAll("");
+	}
+
+	return stripped_text;
     }
 
     private void createPattern() {
-	for (String word : StopWordList.lucene_stopwordlist) {
-	    builder.append(word);
-	    builder.append("|");
-	}
-	pattern = String.format(pattern, builder);
+	String[] stopwords = new StopWordList().getStopWords(lang);
+	if (stopwords != null) {
+	    for (String word : stopwords) {
+		builder.append(word);
+		builder.append("|");
+	    }
+	    pattern = String.format(pattern, builder);
 
-	stopWordsPattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
+	    stopWordsPattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
+	}
     }
 
     // TODO: Test this pattern.

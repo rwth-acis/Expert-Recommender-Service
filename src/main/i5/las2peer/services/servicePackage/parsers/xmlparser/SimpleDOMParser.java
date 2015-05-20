@@ -1,4 +1,4 @@
-package i5.las2peer.services.servicePackage.parsers;
+package i5.las2peer.services.servicePackage.parsers.xmlparser;
 
 import java.io.IOException;
 import java.io.StringReader;

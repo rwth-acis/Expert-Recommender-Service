@@ -28,11 +28,9 @@ import i5.las2peer.services.servicePackage.indexer.DbTextIndexer;
 import i5.las2peer.services.servicePackage.indexer.LuceneMysqlIndexer;
 import i5.las2peer.services.servicePackage.metrics.EvaluationMeasure;
 import i5.las2peer.services.servicePackage.ocd.OCD;
-import i5.las2peer.services.servicePackage.parsers.CommunityCoverMatrixParser;
-import i5.las2peer.services.servicePackage.parsers.Post;
-import i5.las2peer.services.servicePackage.parsers.Posts;
-import i5.las2peer.services.servicePackage.parsers.User;
-import i5.las2peer.services.servicePackage.parsers.Users;
+import i5.las2peer.services.servicePackage.parsers.ERSCSVParser;
+import i5.las2peer.services.servicePackage.parsers.ERSXmlParser;
+import i5.las2peer.services.servicePackage.parsers.xmlparser.CommunityCoverMatrixParser;
 import i5.las2peer.services.servicePackage.scorer.CommunityAwareHITSStrategy;
 import i5.las2peer.services.servicePackage.scorer.CommunityAwarePageRankStrategy;
 import i5.las2peer.services.servicePackage.scorer.HITSStrategy;
@@ -50,7 +48,6 @@ import i5.las2peer.services.servicePackage.utils.UserMapSingleton;
 import i5.las2peer.services.servicePackage.visualization.Visualizer;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -59,10 +56,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -219,7 +212,7 @@ public class ExpertRecommenderService extends Service {
     @Path("stopword_remover")
     public HttpResponse removeStopWords(@ContentParam String text) {
 	// TODO: handle any exceptions.
-	StopWordRemover remover = new StopWordRemover(text);
+	StopWordRemover remover = new StopWordRemover(text, "en");
 
 	HttpResponse res = new HttpResponse(remover.getPlainText());
 	res.setStatus(200);
@@ -535,7 +528,7 @@ public class ExpertRecommenderService extends Service {
 		// timer = Stopwatch.createStarted();
 		// TODO: Semantic analysis of the text.
 		System.out.println("Stop word remover..");
-		remover = new StopWordRemover(query);
+		remover = new StopWordRemover(query, "en");
 		cleanstr = remover.getPlainText();
 
 		System.out.println("Getting tokens...");
@@ -585,8 +578,7 @@ public class ExpertRecommenderService extends Service {
      */
     @POST
     @Path("indexer")
-    public HttpResponse prepareData(@ContentParam String dataset_name) {
-	System.out.println("Indexer called...");
+    public HttpResponse prepareData(@ContentParam String dataset_name, @QueryParam(name = "inputFormat", defaultValue = "xml") String inputType) {
 	DatabaseHandler dbHandler = new DatabaseHandler(dataset_name, "root", "");
 	ConnectionSource connectionSrc;
 	HttpResponse res = null;
@@ -602,29 +594,24 @@ public class ExpertRecommenderService extends Service {
 	    TableUtils.createTableIfNotExists(connectionSrc, ExpertEntity.class);
 
 	    String dirPath = "datasets/" + dataset_name;
-	    JAXBContext context = JAXBContext.newInstance(Posts.class);
-	    Unmarshaller um = context.createUnmarshaller();
-	    File file = new File(dirPath + "/posts.xml");
 
-	    Posts posts = (Posts) um.unmarshal(file);
-	    List<Post> posts_list = (ArrayList) posts.getResources();
-	    // Add posts details into data table
-	    dbHandler.addPosts(posts_list);
-
-	    // Add user details into table
-	    context = JAXBContext.newInstance(Users.class);
-	    File users_file = new File(dirPath + "/users.xml");
-	    Unmarshaller um1 = context.createUnmarshaller();
-	    Users users = (Users) um1.unmarshal(users_file);
-	    List<User> user_list = (ArrayList) users.getUsersList();
-	    dbHandler.addUsers(user_list);
+	    if (inputType.equalsIgnoreCase("xml")) {
+		ERSXmlParser xmlparser = new ERSXmlParser(dirPath);
+		dbHandler.addPosts(xmlparser.getPosts());
+		dbHandler.addUsers(xmlparser.getUsers());
+	    } else {
+		System.out.println("CSV Parser started...");
+		ERSCSVParser csvparser = new ERSCSVParser(dirPath);
+		dbHandler.addPosts(csvparser.getPosts());
+		// dbHandler.addUsers(csvparser.getUsers());
+	    }
 
 	    // Add semantics tag.
 	    // dbHandler.addSemanticTags();
 
 	    dbHandler.markExpertsForEvaluation(connectionSrc);
 
-	    System.out.println("Database operations completed...");
+	    // System.out.println("Database operations completed...");
 
 	    LuceneMysqlIndexer indexer = new LuceneMysqlIndexer(dbHandler.getConnectionSource(), dataset_name + "_index");
 	    indexer.buildIndex();
@@ -633,16 +620,13 @@ public class ExpertRecommenderService extends Service {
 	    res.setStatus(200);
 
 	} catch (SQLException e) {
+	    System.out.println("SQL EXCEPTION......" + e);
 	    e.printStackTrace();
 	    res = new HttpResponse("SQL Exception");
 	    res.setStatus(500);
 	} catch (IOException e) {
 	    e.printStackTrace();
 	    res = new HttpResponse("IO Exception");
-	    res.setStatus(500);
-	} catch (JAXBException e) {
-	    e.printStackTrace();
-	    res = new HttpResponse("JAXB Exception");
 	    res.setStatus(500);
 	}
 
