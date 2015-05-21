@@ -76,7 +76,7 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	    data = new DataEntity();
 	    // boolean idExists = false;
 
-	    System.out.println(res.getPostId());
+	    // System.out.println(res.getPostId());
 	    if (res.getPostId() != null) {
 		Long postid = Long.parseLong(res.getPostId());
 		data.setPostId(postid);

@@ -60,8 +60,10 @@ public class EvaluationMeasure {
     }
 
     private void computeNormalDiscountedCumilativeGain() {
-	// ndcg = new NormalizedDiscountedCumulativeGain(relevance_scores);
+	ndcg = new NormalizedDiscountedCumulativeGain(userId2Score, userId2userObj, collectionSize);
+	ndcg.compute();
     }
+
 
     public void computePrecision() {
 	precision = new Precision(userId2Score, userId2userObj, collectionSize);
@@ -98,17 +100,13 @@ public class EvaluationMeasure {
 	// epap.save();
     }
 
-    public void computeNDCG() {
-
-    }
-
     public void computeMAP() {
 
     }
 
     public void computeMRR() {
-	rr = new ReciprocalRank(userId2userObj);
-	rr.compute(userId2Score);
+	rr = new ReciprocalRank(userId2Score, userId2userObj, collectionSize);
+	rr.compute();
     }
 
     public void save(long queryId, ConnectionSource connSrc) throws JsonIOException, JsonSyntaxException, IOException {
@@ -155,12 +153,13 @@ public class EvaluationMeasure {
 	JsonPrimitive precisionElement = new JsonPrimitive(precision.getValue());
 	JsonPrimitive recallElement = new JsonPrimitive(recall.getValue());
 	JsonPrimitive rrElement = new JsonPrimitive(rr.getValue());
+	JsonPrimitive ndcgElement = new JsonPrimitive(ndcg.getValue());
 
 	metricsObj.add("avgPrecision", precisionElement);
 	metricsObj.add("avgRecall", recallElement);
 	metricsObj.add("11-ptIAP", IAPObject);
 	metricsObj.add("reciprocalRank", rrElement);
-	metricsObj.add("ndcg", new JsonPrimitive("12"));
+	metricsObj.add("ndcg", ndcgElement);
 
 	JsonObject containerObj = new JsonObject();
 	containerObj.addProperty("id", queryId);

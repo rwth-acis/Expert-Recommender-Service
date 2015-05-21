@@ -12,6 +12,7 @@ import i5.las2peer.services.servicePackage.metrics.NormalizedDiscountedCumulativ
 import i5.las2peer.services.servicePackage.ocd.OCD;
 import i5.las2peer.services.servicePackage.parsers.xmlparser.CommunityCoverMatrixParser;
 import i5.las2peer.services.servicePackage.searcher.LuceneSearcher;
+import i5.las2peer.services.servicePackage.utils.Application;
 import i5.las2peer.services.servicePackage.utils.LocalFileManager;
 import i5.las2peer.testing.MockAgentFactory;
 import i5.las2peer.webConnector.WebConnector;
@@ -22,6 +23,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Random;
 
@@ -209,15 +211,26 @@ public class ServiceTest {
 
     @Test
     public void testNDCG() {
-	int[] relevance_mock_val = { 2, 1, 2, 0 };
-	NormalizedDiscountedCumulativeGain ndcg = new NormalizedDiscountedCumulativeGain(relevance_mock_val);
-	float dcg = ndcg.getDCG();
-	// assertEquals(4.26, Global.round(dcg, 2), 1e-15);
-	//
-	// float idealNdcgVal = ndcg.getIdealDCG();
-	// assertEquals(4.63, Global.round(idealNdcgVal, 2), 1e-15);
-	//
-	// assertEquals(0.92, Global.round(ndcg.getValue(), 2), 1e-15);
+	// int[] relevance_mock_val = { 2, 1, 2, 0 };
+	ArrayList<Integer> relevances = new ArrayList<Integer>();
+	relevances.add(2);
+	relevances.add(1);
+	relevances.add(2);
+	relevances.add(0);
+
+	NormalizedDiscountedCumulativeGain ndcg = new NormalizedDiscountedCumulativeGain(null, null, 0);
+	float ndcgVal = ndcg.getDiscountedCumulativeGain(relevances);
+
+	assertEquals(4.26, Application.round(ndcgVal, 2), 1e-15);
+
+	ArrayList<Integer> idealRelevances = new ArrayList<Integer>();
+	idealRelevances.add(2);
+	idealRelevances.add(2);
+	idealRelevances.add(1);
+	idealRelevances.add(0);
+
+	float idealNdcgVal = ndcg.getDiscountedCumulativeGain(idealRelevances);
+	assertEquals(4.63, Application.round(idealNdcgVal, 2), 1e-15);
 
     }
 

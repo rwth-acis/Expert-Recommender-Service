@@ -12,10 +12,6 @@ import java.util.Map;
  *
  */
 public class PrecisionRecall {
-    // public static final String precision_filepath = "precision_list.txt";
-    // public static final String recall_filepath = "recall_list.txt";
-    // public static final String precision_recall_filepath =
-    // "precision_recall_list.txt";
 
     // Used to insert standard recall points and default precision value.
     ArrayList<Double> recall_values = new ArrayList<Double>();

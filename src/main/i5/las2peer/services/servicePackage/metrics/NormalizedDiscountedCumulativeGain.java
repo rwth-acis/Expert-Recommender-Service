@@ -3,67 +3,129 @@
  */
 package i5.las2peer.services.servicePackage.metrics;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Arrays;
+import i5.las2peer.services.servicePackage.entities.UserEntity;
+import i5.las2peer.services.servicePackage.statistics.Stats;
 
-import org.apache.commons.lang3.ArrayUtils;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author sathvik
  *
  */
-public class NormalizedDiscountedCumulativeGain {
-	public static final String normDisCumGainFilepath = "ndcg.txt";
-	int[] relevanceScores;
-	int[] idealRelevanceScores;
-	float ndcg;
+public class NormalizedDiscountedCumulativeGain implements IEvaluator<Float> {
 
-	public NormalizedDiscountedCumulativeGain(int[] relevance_scores) {
-		relevanceScores = relevance_scores;
-		idealRelevanceScores = relevanceScores.clone();
+    private float ndcg;
 
-		// Sort in descending order.
-		Arrays.sort(idealRelevanceScores);
-		ArrayUtils.reverse(idealRelevanceScores);
+    private Map<Long, UserEntity> userId2userObj;
+    private LinkedHashMap<String, Double> userId2score;
 
+    private int windowSize;
+
+    /**
+     * 
+     * @param userId2score
+     * @param userId2userObj
+     * @param count
+     */
+    public NormalizedDiscountedCumulativeGain(LinkedHashMap<String, Double> userId2score, Map<Long, UserEntity> userId2userObj, int count) {
+	this.userId2score = userId2score;
+	this.userId2userObj = userId2userObj;
+	this.windowSize = count;
+    }
+
+    /**
+     * Computes the relevance score, Discounted cumulative gain(dcg) and finally
+     * normalized dcg.
+     */
+    public void compute() {
+
+	if (userId2userObj != null && userId2score != null) {
+	    ArrayList<Integer> relevanceScores = new ArrayList<Integer>();
+	    // Calculate the distribution of reputation values in the dataset.
+	    Iterator<Long> it = userId2userObj.keySet().iterator();
+	    ArrayList<Long> reputationList = new ArrayList<Long>();
+	    while (it.hasNext()) {
+		long key = (long) it.next();
+		UserEntity entity = userId2userObj.get(key);
+		long groundTruth = entity.getReputation();
+		reputationList.add(groundTruth);
+	    }
+	    Stats stats = new Stats(reputationList);
+
+	    Iterator<String> userScoreIt = userId2score.keySet().iterator();
+	    int count = 0;
+
+	    // Use the distribution in the dataset to calculate the relevance
+	    // value of the reputation scores.
+	    while (userScoreIt.hasNext() && count < windowSize) {
+		String key = (String) userScoreIt.next();
+		UserEntity entity = userId2userObj.get(Long.parseLong(key));
+		long score = entity.getReputation();
+		relevanceScores.add(stats.getRelevanceScore((long) score));
+
+		count++;
+	    }
+
+	    System.out.println("RELEVANCE SCORES:: " + relevanceScores);
+	    float dcg = getDiscountedCumulativeGain(relevanceScores);
+	    float idealDcg = getDiscountedCumulativeGain(getIdealRelevanceScore(relevanceScores));
+
+	    System.out.println("DCG:: " + dcg);
+	    System.out.println("NDCG:: " + idealDcg);
+
+	    ndcg = dcg / idealDcg;
 	}
 
-	public float getIdealDCG() {
-		DiscountedCumilativeGain idealDisCumGain = new DiscountedCumilativeGain(
-				idealRelevanceScores);
-		return idealDisCumGain.getDiscountedCumilativeGain();
+    }
+
+    /**
+     * @return Float ndcg value.
+     */
+    public Float getValue() {
+	return ndcg;
+    }
+
+    /**
+     * 
+     * @return ArrayList of Integer, returns the ideal relevance score after
+     *         sorting the available scores.
+     * 
+     */
+    private ArrayList<Integer> getIdealRelevanceScore(ArrayList<Integer> relevanceScores) {
+	ArrayList<Integer> idealRelevanceScores = (ArrayList<Integer>) relevanceScores.clone();
+
+	Collections.sort(idealRelevanceScores);
+	Collections.reverse(idealRelevanceScores);
+
+	return idealRelevanceScores;
+    }
+
+    /**
+     * 
+     * @param relevanceScores
+     *            List of integers containing relevance score of the users
+     * @return float, A discounted cumulative gain value.
+     */
+    public float getDiscountedCumulativeGain(ArrayList<Integer> relevanceScores) {
+
+	ArrayList<Float> dcgains = new ArrayList<Float>();
+	if (relevanceScores != null && relevanceScores.size() > 1) {
+	    dcgains.add((float) relevanceScores.get(0));
+
+	    for (int i = 1; i < relevanceScores.size(); i++) {
+		float dcgVal = (float) (((float) relevanceScores.get(i) / Math.log(i + 1)) * Math.log(2));
+		dcgains.add(dcgains.get(i - 1) + dcgVal);
+	    }
+	    return dcgains.get(dcgains.size() - 1);
+	} else if (relevanceScores != null && relevanceScores.size() == 1) {
+	    dcgains.get(0);
 	}
 
-	public float[] getDCGValues() {
-		DiscountedCumilativeGain dcg = new DiscountedCumilativeGain(
-				relevanceScores);
-		dcg.getDiscountedCumilativeGain();
-		return dcg.getDCGValues();
-	}
+	return 0;
+    }
 
-	public float getDCG() {
-		DiscountedCumilativeGain dcg = new DiscountedCumilativeGain(
-				relevanceScores);
-		float dcgVal = dcg.getDiscountedCumilativeGain();
-		dcg.save(); // Optional.
-		return dcgVal;
-	}
-
-	public float getValue() {
-		ndcg = getDCG() / getIdealDCG();
-		return ndcg;
-	}
-
-	public void save() {
-		try (PrintWriter out = new PrintWriter(new BufferedWriter(
-				new FileWriter(normDisCumGainFilepath, false)))) {
-			out.println("NDCG::" + ndcg);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 }
-

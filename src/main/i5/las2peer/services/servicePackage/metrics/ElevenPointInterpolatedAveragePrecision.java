@@ -10,7 +10,6 @@ import java.util.LinkedHashMap;
  *
  */
 public class ElevenPointInterpolatedAveragePrecision {
-    public static final String eleven_pt_filepath = "eleven_pt_inter_precision.txt";
     private double[] standard_recall_values;
     private double[] inter_prec_values;
     private LinkedHashMap<Double, Double> recall2InterPolatedPrecision;
@@ -72,17 +71,4 @@ public class ElevenPointInterpolatedAveragePrecision {
 	return recall2InterPolatedPrecision;
     }
 
-    // public void save() {
-    // try (PrintWriter out = new PrintWriter(new BufferedWriter(new
-    // FileWriter(eleven_pt_filepath, false)))) {
-    //
-    // for (int i = 0; i < inter_prec_values.length && i <
-    // standard_recall_values.length; i++) {
-    // out.println(standard_recall_values[i] + "," + inter_prec_values[i]);
-    // }
-    //
-    // } catch (IOException e) {
-    // e.printStackTrace();
-    // }
-    // }
 }

@@ -17,7 +17,7 @@ import org.apache.commons.lang3.ArrayUtils;
  * @author sathvik
  *
  */
-public class Recall {
+public class Recall implements IEvaluator<Double> {
     private LinkedHashMap<String, Double> userId2score;
     private int count; // To calculate R@count
     private double recallScore = 0;
@@ -69,7 +69,7 @@ public class Recall {
      * 
      * @return Double value indicating the average recall value.
      */
-    public double getValue() {
+    public Double getValue() {
 	return recallScore * 100;
     }
 

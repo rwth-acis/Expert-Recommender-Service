@@ -93,4 +93,16 @@ public class Stats {
     public void saveMetrics(String filepath) {
 
     }
+
+    public int getRelevanceScore(long groundTruthValue) {
+
+	if (groundTruthValue > stats.getPercentile(90)) {
+	    return 3;
+	} else if (groundTruthValue > stats.getPercentile(75)) {
+	    return 2;
+	} else if (groundTruthValue > stats.getPercentile(55)) {
+	    return 1;
+	}
+	return 0;
+    }
 }
