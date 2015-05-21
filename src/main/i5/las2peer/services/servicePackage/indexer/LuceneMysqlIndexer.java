@@ -74,6 +74,7 @@ public class LuceneMysqlIndexer {
 	    String body = entity.getCleanText();
 	    long parentId = entity.getParentId();
 	    long userId = entity.getOwnerUserId();
+	    String creationDate = entity.getCreationDate();
 
 	    fullSearchableText = new StringBuffer();
 	    if (title != null && title.length() > 0) {
@@ -89,6 +90,7 @@ public class LuceneMysqlIndexer {
 
 	    doc.add(new StringField("postid", String.valueOf(postId), Field.Store.YES));
 	    doc.add(new StringField("parentid", String.valueOf(parentId), Field.Store.YES));
+	    doc.add(new StringField("creationDate", creationDate, Field.Store.YES));
 	    doc.add(new StringField("userid", String.valueOf(userId), Field.Store.YES));
 	    doc.add(new TextField("searchableText", fullSearchableText.toString(), Field.Store.YES));
 

@@ -53,7 +53,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -381,16 +384,34 @@ public class ExpertRecommenderService extends Service {
 	connectionSource = dbHandler.getConnectionSource();
 	long queryId = qAnalyzer.getId(connectionSource);
 
+	Map<Long, UserEntity> usermap = null;
+
+	try {
+	    usermap = UserMapSingleton.getInstance().getUserMap(connectionSource);
+	} catch (SQLException e1) {
+	    e1.printStackTrace();
+	}
+
 	JUNGGraphCreator jcreator = null;
 	LuceneSearcher searcher = null;
 	GraphWriter graphWriter = null;
+
+	// TODO: Give QueryParam optin for the client.
+	String inputStr = "2011-12-08"; // 2011-06-08T18:35:50.450
+	DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
+	Date dateFilter = null;
+	try {
+	    dateFilter = dateFormat.parse(inputStr);
+	} catch (java.text.ParseException e1) {
+	    e1.printStackTrace();
+	}
 
 	try {
 	    // System.out.println("Performing search...");
 
 	    searcher = new LuceneSearcher(qAnalyzer.getText(), databaseName + "_index");
 	    TopDocs docs = searcher.performSearch(qAnalyzer.getText(), Integer.MAX_VALUE);
-	    searcher.buildQnAMap(docs);
+	    searcher.buildQnAMap(docs, dateFilter);
 
 	    jcreator = new JUNGGraphCreator();
 	    jcreator.createGraph(searcher.getQnAMap(), searcher.getPostId2UserIdMap());
@@ -407,13 +428,7 @@ public class ExpertRecommenderService extends Service {
 	    res.setStatus(200);
 	}
 
-	Map<Long, UserEntity> usermap = null;
 
-	try {
-	    usermap = UserMapSingleton.getInstance().getUserMap(connectionSource);
-	} catch (SQLException e1) {
-	    e1.printStackTrace();
-	}
 
 	if (usermap == null) {
 	    // TODO: Throw custom exception.

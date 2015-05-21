@@ -14,6 +14,9 @@ public class PostCSV implements IPost {
     @MapToColumn(column = 0)
     String postid;
 
+    @MapToColumn(column = 4)
+    String date;
+
     @MapToColumn(column = 7)
     String body;
 
@@ -47,8 +50,7 @@ public class PostCSV implements IPost {
      */
     @Override
     public String getCreationDate() {
-	// TODO Auto-generated method stub
-	return null;
+	return date;
     }
 
     /*

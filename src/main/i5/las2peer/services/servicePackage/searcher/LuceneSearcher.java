@@ -7,8 +7,11 @@ import i5.las2peer.services.servicePackage.models.Token;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -85,14 +88,27 @@ public class LuceneSearcher {
      * @param docs
      * @throws IOException
      */
-    public void buildQnAMap(TopDocs docs) throws IOException {
+    public void buildQnAMap(TopDocs docs, Date date) throws IOException {
 	Token token = null;
+	DateFormat format = new SimpleDateFormat("yyyy-mm-dd");
+	Date fmtCreationDate = null;
+
 	for (ScoreDoc scoreDoc : docs.scoreDocs) {
 	    Document doc = searcher.doc(scoreDoc.doc);
 
 	    long postId = doc.get("postid") != null ? Long.parseLong(doc.get("postid")) : -1;
 	    long parentId = doc.get("parentid") != null ? Long.parseLong(doc.get("parentid")) : -1;
 	    long userId = doc.get("userid") != null ? Long.parseLong(doc.get("userid")) : -1;
+
+	    String creationDate = doc.get("creationDate");
+
+	    if (creationDate != null) {
+		try {
+		    fmtCreationDate = format.parse(creationDate);
+		} catch (java.text.ParseException e) {
+		    e.printStackTrace();
+		}
+	    }
 
 	    String text = doc.get("searchableText");
 	    // System.out.println(postId + " :: " + parentId);
@@ -103,7 +119,10 @@ public class LuceneSearcher {
 	    }
 
 	    postid2Tokens.put(postId, token);
-	    if (parentId > 0) {
+
+	    // If parentId is present and the post was created before the
+	    // requested date add the value to the map.
+	    if (parentId > 0 && fmtCreationDate != null && fmtCreationDate.before(date)) {
 		parentId2postIds.put(parentId, postId);
 	    }
 

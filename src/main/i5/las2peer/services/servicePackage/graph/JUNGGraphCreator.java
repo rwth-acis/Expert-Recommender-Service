@@ -90,7 +90,7 @@ public class JUNGGraphCreator {
 
 		// System.out.println("Key::" + key);
 		if (postId2userId.containsKey(key)) {
-		    long q_user_id = postId2userId.get(key);
+		    long qUserId = postId2userId.get(key);
 		    // UserEntity user =
 		    // Application.userId2userObj.get(q_user_id);
 		    // if (q_user_id > 0 && user != null) {
@@ -104,16 +104,16 @@ public class JUNGGraphCreator {
 		    // }
 		    // }
 
-		    if (q_user_id > 0) {
+		    if (qUserId > 0) {
 			// System.out.println("post " + key + " userid " +
 			// q_user_id);
-			graph.addVertex(String.valueOf(q_user_id));
+			graph.addVertex(String.valueOf(qUserId));
 			Set<Long> values = (Set<Long>) qus2ans.get(key);
 
 			for (Long value : values) {
-			    Long a_user_id = postId2userId.get(value);
+			    Long aUserId = postId2userId.get(value);
 			    // user = Application.userId2userObj.get(a_user_id);
-			    if (a_user_id != null) {
+			    if (aUserId != null) {
 				// if
 				// (Application.userId2userObj1.get(a_user_id)
 				// !=
@@ -130,8 +130,8 @@ public class JUNGGraphCreator {
 				// user.setTitle("Title is empty");
 				// }
 				// }
-				createVertex(String.valueOf(a_user_id));
-				createEdge(String.valueOf(q_user_id), String.valueOf(a_user_id), String.valueOf(value));
+				createVertex(String.valueOf(aUserId));
+				createEdge(String.valueOf(qUserId), String.valueOf(aUserId), String.valueOf(value));
 			    }
 			}
 		    }
