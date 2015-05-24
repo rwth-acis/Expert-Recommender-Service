@@ -64,6 +64,6 @@ public class ReciprocalRank implements IEvaluator<Double> {
 	    long max = Collections.max(reputations);
 	    return 1.0 / (reputations.indexOf(max) + 1);
 	}
-	return -1;
+	return 0;
     }
 }

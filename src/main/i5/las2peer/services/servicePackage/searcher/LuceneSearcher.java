@@ -140,16 +140,17 @@ public class LuceneSearcher {
 
 	    // If parentId is present and the post was created before the
 	    // requested date add the value to the map.
-	    // if (parentId > 0 && fmtCreationDate != null &&
-	    // fmtCreationDate.before(date)) {
-	    if (parentId > 0) {
-		parentId2postIds.put(parentId, postId);
-	    }
+	     if (parentId > 0 && fmtCreationDate != null &&
+	     fmtCreationDate.before(date)) {
+		if (parentId > 0) {
+		    parentId2postIds.put(parentId, postId);
+		}
 
-	    // System.out.println("USERID::" + userId);
-	    if (userId > 0) {
-		postId2userId.put(postId, userId);
-	    }
+		// System.out.println("USERID::" + userId);
+		if (userId > 0) {
+		    postId2userId.put(postId, userId);
+		}
+	     }
 
 	}
 

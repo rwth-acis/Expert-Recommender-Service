@@ -359,7 +359,8 @@ public class ExpertRecommenderService extends Service {
     @Path("datasets/{datasetId}/algorithms/{algorithmName}")
     public HttpResponse applyPageRank(@PathParam("datasetId") String datasetId, @PathParam("algorithmName") String algorithmName,
 	    @ContentParam String query, @QueryParam(name = "evaluation", defaultValue = "false") boolean isEvaluation,
-	    @QueryParam(name = "visualization", defaultValue = "false") boolean isVisualization) {
+	    @QueryParam(name = "visualization", defaultValue = "false") boolean isVisualization,
+	    @QueryParam(name = "dateBefore", defaultValue = "2011-01-31") String dateBefore) {
 
 	if (query == null) {
 	    // TODO: Throw custom exception.
@@ -401,12 +402,10 @@ public class ExpertRecommenderService extends Service {
 	LuceneSearcher searcher = null;
 	GraphWriter graphWriter = null;
 
-	// TODO: Give QueryParam optin for the client.
-	String inputStr = "2011-12-08"; // 2011-06-08T18:35:50.450
 	DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
 	Date dateFilter = null;
 	try {
-	    dateFilter = dateFormat.parse(inputStr);
+	    dateFilter = dateFormat.parse(dateBefore);
 	} catch (java.text.ParseException e1) {
 	    e1.printStackTrace();
 	}
@@ -512,6 +511,8 @@ public class ExpertRecommenderService extends Service {
 	jObj.addProperty("expertsId", expertsId);
 	jObj.addProperty("evaluationId", eMeasureId);
 	jObj.addProperty("visualizationId", visId);
+
+	dbHandler.close();
 
 	// System.out.println("Total time " + timer.stop());
 	HttpResponse res = new HttpResponse(jObj.toString());

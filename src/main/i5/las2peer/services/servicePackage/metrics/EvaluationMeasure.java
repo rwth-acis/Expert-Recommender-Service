@@ -5,6 +5,7 @@ package i5.las2peer.services.servicePackage.metrics;
 
 import i5.las2peer.services.servicePackage.entities.EvaluationMetricsEntity;
 import i5.las2peer.services.servicePackage.entities.UserEntity;
+import i5.las2peer.services.servicePackage.utils.Application;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -175,7 +176,8 @@ public class EvaluationMeasure {
 
 	JsonPrimitive precisionElement = new JsonPrimitive(String.format("%.3f", precision.getValue()));
 	JsonPrimitive recallElement = new JsonPrimitive(String.format("%.3f", recall.getValue()));
-	JsonPrimitive rrElement = new JsonPrimitive(String.format("%.3f", rr.getValue()));
+	System.out.println("REC RANK:: " + rr.getValue());
+	JsonPrimitive rrElement = new JsonPrimitive(Application.round(rr.getValue(), 3));
 	JsonPrimitive ndcgElement = new JsonPrimitive(String.format("%.3f", ndcg.getValue()));
 
 	metricsObj.add("avgPrecision", precisionElement);

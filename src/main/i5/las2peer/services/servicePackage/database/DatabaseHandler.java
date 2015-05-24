@@ -408,4 +408,12 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	return null;
     }
 
+    public void close() {
+	try {
+	    super.close();
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+    }
+
 }

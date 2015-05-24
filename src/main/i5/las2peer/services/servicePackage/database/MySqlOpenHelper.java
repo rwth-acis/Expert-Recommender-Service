@@ -3,6 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.database;
 
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
@@ -24,6 +25,8 @@ public abstract class MySqlOpenHelper {
     private String mPassword;
     private String mDbName;
     private ConnectionSource mConnectionSource;
+    private JdbcDatabaseConnection mJdbConnection;
+    private Connection sqlConnection;
 
     public MySqlOpenHelper(String dbName, String username, String password) {
 	mDbName = dbName;
@@ -32,13 +35,16 @@ public abstract class MySqlOpenHelper {
     }
 
     private void createDatabase() throws SQLException {
-	JdbcDatabaseConnection connection = new JdbcDatabaseConnection(DriverManager.getConnection(DB_URL, mUserName, mPassword));
-	connection.executeStatement("CREATE DATABASE IF NOT EXISTS " + mDbName, -1);
+	close();
+
+	sqlConnection = DriverManager.getConnection(DB_URL, mUserName, mPassword);
+	mJdbConnection = new JdbcDatabaseConnection(sqlConnection);
+	mJdbConnection.executeStatement("CREATE DATABASE IF NOT EXISTS " + mDbName, -1);
     }
 
     public ConnectionSource getConnectionSource() {
 	try {
-	    createDatabase();
+
 	    mConnectionSource = new JdbcConnectionSource(DB_URL + mDbName);
 	} catch (SQLException e) {
 	    e.printStackTrace();
@@ -48,7 +54,15 @@ public abstract class MySqlOpenHelper {
 	return mConnectionSource;
     }
 
-    public void close() {
-
+    public void close() throws SQLException {
+	if (sqlConnection != null) {
+	    sqlConnection.close();
+	}
+	if (mJdbConnection != null) {
+	    mJdbConnection.close();
+	}
+	if (mConnectionSource != null) {
+	    mConnectionSource.close();
+	}
     }
 }
