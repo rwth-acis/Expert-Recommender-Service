@@ -9,6 +9,7 @@ import i5.las2peer.services.servicePackage.utils.Application;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -20,7 +21,8 @@ import org.apache.commons.lang3.ArrayUtils;
 public class Precision {
     private LinkedHashMap<String, Double> userId2score;
     private int count; // To calculate P@count
-    private double precisions[];
+    // private double precisions[];
+    private List<Double> precisions;
     private double avgPrecision = 0;
 
     private Map<Long, UserEntity> userId2userObj;
@@ -36,7 +38,9 @@ public class Precision {
     }
 
     public void compute() {
-	precisions = new double[this.userId2score.size()];
+	System.out.println("Computing Precision::" + userId2score.size());
+	// precisions = new double[this.userId2score.size()];
+	precisions = new ArrayList<Double>();
 	double cumulativePrecision = 0;
 
 	Iterator<String> iterator = this.userId2score.keySet().iterator();
@@ -48,20 +52,34 @@ public class Precision {
 	    UserEntity userEntity = userId2userObj.get(Long.valueOf(userId));
 
 	    // Calculate precision value only at relevant experts.
+	    double precision = 0;
 	    if (userEntity.isProbableExpert()) {
 		noRelevantExperts++;
-		precisions[i] = (double) noRelevantExperts / (i + 1);
-	    } else {
-		precisions[i] = 0;
+		// precisions[i] = (double) noRelevantExperts / (i + 1);
+		precision = (double) noRelevantExperts / (i + 1);
 	    }
+	    precisions.add(precision);
+	    // System.out.println(" PRECISION:: " + precision);
 	    i++;
 	}
 
-	for (int j = 0; j < this.count; j++) {
-	    cumulativePrecision += precisions[j];
+	// for (int j = 0; j < this.count && j < this.userId2score.size(); j++)
+	// {
+	// cumulativePrecision += precisions[j];
+	// }
+	// System.out.println("Cum Precision Completed...");
+
+	for (int j = 0; j < precisions.size() && j < this.count; j++) {
+	    cumulativePrecision += precisions.get(j);
 	}
 
-	avgPrecision = (double) cumulativePrecision / noRelevantExperts;
+	System.out.println("CUM PRECISION:: " + cumulativePrecision);
+
+	if (noRelevantExperts > 0) {
+	    avgPrecision = (double) cumulativePrecision / noRelevantExperts;
+	} else {
+	    avgPrecision = 0;
+	}
 
     }
 
@@ -73,8 +91,12 @@ public class Precision {
     public double[] getRoundedPrecisionValues() {
 	ArrayList<Double> roundedPrecisionValues = new ArrayList<Double>();
 
-	for (int i = 0; i < precisions.length && i < count; i++) {
-	    roundedPrecisionValues.add(Application.round(precisions[i], 2));
+	// for (int i = 0; i < precisions.length && i < count; i++) {
+	// roundedPrecisionValues.add(Application.round(precisions[i], 2));
+	// }
+
+	for (int i = 0; i < precisions.size() && i < count; i++) {
+	    roundedPrecisionValues.add(Application.round(precisions.get(i), 2));
 	}
 
 	Double[] values = roundedPrecisionValues.toArray(new Double[roundedPrecisionValues.size()]);

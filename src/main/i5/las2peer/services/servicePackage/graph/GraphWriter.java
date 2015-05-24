@@ -93,7 +93,7 @@ public class GraphWriter {
 	    graphEntity.setCreateDate(new Date());
 	    graphEntity.setGraph(getGraphAsString("graph_jung.graphml"));
 
-	    graphDao.createIfNotExists(graphEntity);
+	    // graphDao.createIfNotExists(graphEntity);
 
 	} catch (SQLException e) {
 	    e.printStackTrace();

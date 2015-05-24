@@ -64,7 +64,6 @@ public class EvaluationMeasure {
 	ndcg.compute();
     }
 
-
     public void computePrecision() {
 	precision = new Precision(userId2Score, userId2userObj, collectionSize);
 	precision.compute();
@@ -137,7 +136,8 @@ public class EvaluationMeasure {
 	    JsonPrimitive standardRecallPts = new JsonPrimitive((double) pair.getKey());
 	    JsonPrimitive ipPrecision = new JsonPrimitive((double) pair.getValue());
 
-	    System.out.println((double) pair.getKey() + " :: " + (double) pair.getValue());
+	    // System.out.println((double) pair.getKey() + " :: " + (double)
+	    // pair.getValue());
 
 	    entrySetIterator.remove(); // To avoid
 				       // concurrentModificationException
@@ -150,13 +150,37 @@ public class EvaluationMeasure {
 	IAPObject.add("recall", jIARecallPts);
 	IAPObject.add("precision", jIAPrecisionPts);
 
-	JsonPrimitive precisionElement = new JsonPrimitive(precision.getValue());
-	JsonPrimitive recallElement = new JsonPrimitive(recall.getValue());
-	JsonPrimitive rrElement = new JsonPrimitive(rr.getValue());
-	JsonPrimitive ndcgElement = new JsonPrimitive(ndcg.getValue());
+	Iterator prIterator = precision_recall.getRecallPrecisionMap().entrySet().iterator();
+	JsonArray jRecalls = new JsonArray();
+	JsonArray jPrecisions = new JsonArray();
+
+	System.out.println("Iterating precision recall...");
+	while (prIterator.hasNext()) {
+	    Map.Entry pair = (Map.Entry) prIterator.next();
+
+	    System.out.println((double) pair.getKey() + " :: " + (double) pair.getValue());
+
+	    JsonPrimitive recalls = new JsonPrimitive((double) pair.getKey());
+	    JsonPrimitive precision = new JsonPrimitive((double) pair.getValue());
+
+	    prIterator.remove(); // To avoid concurrentModificationException
+
+	    jRecalls.add(recalls);
+	    jPrecisions.add(precision);
+	}
+
+	JsonObject precRecallObj = new JsonObject();
+	precRecallObj.add("recall", jRecalls);
+	precRecallObj.add("precision", jPrecisions);
+
+	JsonPrimitive precisionElement = new JsonPrimitive(String.format("%.3f", precision.getValue()));
+	JsonPrimitive recallElement = new JsonPrimitive(String.format("%.3f", recall.getValue()));
+	JsonPrimitive rrElement = new JsonPrimitive(String.format("%.3f", rr.getValue()));
+	JsonPrimitive ndcgElement = new JsonPrimitive(String.format("%.3f", ndcg.getValue()));
 
 	metricsObj.add("avgPrecision", precisionElement);
 	metricsObj.add("avgRecall", recallElement);
+	metricsObj.add("precisionRecalls", precRecallObj);
 	metricsObj.add("11-ptIAP", IAPObject);
 	metricsObj.add("reciprocalRank", rrElement);
 	metricsObj.add("ndcg", ndcgElement);

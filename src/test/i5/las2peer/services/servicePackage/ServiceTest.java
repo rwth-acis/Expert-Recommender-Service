@@ -10,6 +10,7 @@ import i5.las2peer.services.servicePackage.database.DatabaseHandler;
 import i5.las2peer.services.servicePackage.indexer.LuceneMysqlIndexer;
 import i5.las2peer.services.servicePackage.metrics.NormalizedDiscountedCumulativeGain;
 import i5.las2peer.services.servicePackage.ocd.OCD;
+import i5.las2peer.services.servicePackage.parsers.csvparser.EvaluationCSVWriter;
 import i5.las2peer.services.servicePackage.parsers.xmlparser.CommunityCoverMatrixParser;
 import i5.las2peer.services.servicePackage.searcher.LuceneSearcher;
 import i5.las2peer.services.servicePackage.utils.Application;
@@ -19,11 +20,15 @@ import i5.las2peer.webConnector.WebConnector;
 import i5.las2peer.webConnector.client.ClientResponse;
 import i5.las2peer.webConnector.client.MiniClient;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Random;
 
@@ -155,6 +160,94 @@ public class ServiceTest {
 
     }
 
+    @Ignore
+    @Test
+    public void testEvaluationCSVWriter() {
+
+	DatabaseHandler dbHandler = new DatabaseHandler("healthcare3", "root", "");
+
+	String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+
+	EvaluationCSVWriter writer = new EvaluationCSVWriter();
+	writer.extractResultsfromDb(dbHandler.getConnectionSource());
+	writer.write("evaluationResults/" + timeStamp + "_eval.csv");
+    }
+
+
+    @Test
+    public void testQuerySet() {
+	MiniClient c = new MiniClient();
+	c.setAddressPort(HTTP_ADDRESS, HTTP_PORT);
+
+	DatabaseHandler dbHandler = new DatabaseHandler("healthcare3", "root", "");
+
+	try {
+	    c.setLogin(Long.toString(testAgent.getId()), testPass);
+
+	    String filepath = "testQueries/query_tiny.txt";
+	    try (BufferedReader br = new BufferedReader(new FileReader(filepath))) {
+		for (String line; (line = br.readLine()) != null;) {
+		    // System.out.println("Query::" + line);
+		    String query = line;
+		    String url = mainPath + "datasets/2/algorithms/pagerank?evaluation=true";
+		    ClientResponse result = c.sendRequest("POST", url, query);
+		    assertEquals(200, result.getHttpCode());
+
+		}
+
+	    }
+
+	    testEvaluationCSVWriter();
+
+
+	    // String url = mainPath +
+	    // "datasets/2/algorithms/communityAwarePagerank?evaluation=true";
+	    // ClientResponse result = c.sendRequest("POST", url, "weight");
+	    // assertEquals(200, result.getHttpCode());
+
+	    // assertEquals(200, result.getHttpCode());
+	    // assertTrue(result.getResponse().trim().contains("testInput"));
+	    // //"testInput" name is part of response
+	} catch (Exception e) {
+	    e.printStackTrace();
+	    fail("Exception: " + e);
+	}
+
+    }
+
+    @Ignore
+    @Test
+    public void testQuerySetForModelingTechnique() {
+	MiniClient c = new MiniClient();
+	c.setAddressPort(HTTP_ADDRESS, HTTP_PORT);
+
+	DatabaseHandler dbHandler = new DatabaseHandler("healthcare3", "root", "");
+
+	try {
+	    c.setLogin(Long.toString(testAgent.getId()), testPass);
+
+	    String filepath = "testQueries/query_small.txt";
+
+	    try (BufferedReader br = new BufferedReader(new FileReader(filepath))) {
+		for (String line; (line = br.readLine()) != null;) {
+		    // System.out.println("Query::" + line);
+		    String query = line;
+		    String url = mainPath + "datasets/2/algorithms/datamodeling";
+		    ClientResponse result = c.sendRequest("POST", url, query);
+		    assertEquals(200, result.getHttpCode());
+		}
+	    }
+
+	} catch (Exception e) {
+	    e.printStackTrace();
+	    fail("Exception: " + e);
+	}
+
+	testEvaluationCSVWriter();
+
+    }
+
+    @Ignore
     @Test
     public void testIndexerCSV() {
 	MiniClient c = new MiniClient();
@@ -179,7 +272,7 @@ public class ServiceTest {
 
 	try {
 	    c.setLogin(Long.toString(testAgent.getId()), testPass);
-	    ClientResponse result = c.sendRequest("POST", mainPath + "indexer?inputFormat=xml", "construction");
+	    ClientResponse result = c.sendRequest("POST", mainPath + "indexer?inputFormat=xml", "healthcare3");
 	    assertEquals(200, result.getHttpCode());
 	} catch (Exception e) {
 	    e.printStackTrace();
@@ -188,6 +281,7 @@ public class ServiceTest {
 
     }
 
+    @Ignore
     @Test
     public void testStemmerMethod() {
 	MiniClient c = new MiniClient();
@@ -209,6 +303,7 @@ public class ServiceTest {
 
     }
 
+    @Ignore
     @Test
     public void testNDCG() {
 	// int[] relevance_mock_val = { 2, 1, 2, 0 };
@@ -234,6 +329,7 @@ public class ServiceTest {
 
     }
 
+    @Ignore
     @Test
     public void testEvaluationMetrics() throws IOException {
 	LinkedHashMap<String, Double> userId2Score = new LinkedHashMap<String, Double>();
@@ -262,7 +358,6 @@ public class ServiceTest {
 	CommunityCoverMatrixParser parser = new CommunityCoverMatrixParser("slpa_fitness.txt");
 	parser.parse();
     }
-
 
     @Ignore
     @Test

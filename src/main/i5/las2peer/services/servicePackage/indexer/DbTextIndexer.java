@@ -33,157 +33,145 @@ import com.j256.ormlite.support.ConnectionSource;
  */
 public class DbTextIndexer {
 
-	private String mQueryString = null;
-	private HashMultiset queryTerms;
+    private String mQueryString = null;
+    private HashMultiset queryTerms;
 
-	private HashMap<Object, Integer> word2freq;
-	private HashMap<Long, Long> postId2userId;
-	private Map<Long, UserEntity> userId2userObj = new HashMap<Long, UserEntity>();
+    private HashMap<Object, Integer> word2freq;
+    private HashMap<Long, Long> postId2userId;
+    private Map<Long, UserEntity> userId2userObj = new HashMap<Long, UserEntity>();
 
-	private Map<Long, Double> postid2tfirf;
+    private Map<Long, Double> postid2tfirf;
 
-	private HashMultimap<Long, Long> parentId2postIds;
+    private HashMultimap<Long, Long> parentId2postIds;
 
-	private HashMultimap<Long, Token> postid2Tokens = HashMultimap.create();
+    private HashMultimap<Long, Token> postid2Tokens = HashMultimap.create();
 
-	private final int THRESHOLD_WORD_FREQ = 0;
-	private ConnectionSource mConnectionSrc;
+    private final int THRESHOLD_WORD_FREQ = 0;
+    private ConnectionSource mConnectionSrc;
 
-	/** Creates a new instance of SearchEngine */
-	public DbTextIndexer(ConnectionSource connectionSrc) throws IOException {
+    /** Creates a new instance of SearchEngine */
+    public DbTextIndexer(ConnectionSource connectionSrc) throws IOException {
 
-		mConnectionSrc = connectionSrc;
+	mConnectionSrc = connectionSrc;
 
-		word2freq = new HashMap<Object, Integer>();
-		postId2userId = new HashMap<Long, Long>();
-		postid2tfirf = new HashMap<Long, Double>();
+	word2freq = new HashMap<Object, Integer>();
+	postId2userId = new HashMap<Long, Long>();
+	postid2tfirf = new HashMap<Long, Double>();
 
-		userId2userObj = new HashMap<Long, UserEntity>();
+	userId2userObj = new HashMap<Long, UserEntity>();
 
-		postid2Tokens = HashMultimap.create();
-		parentId2postIds = HashMultimap.create();
+	postid2Tokens = HashMultimap.create();
+	parentId2postIds = HashMultimap.create();
 
+    }
+
+    public HashMap<Long, Long> getPostId2UserIdMap() {
+	return postId2userId;
+    }
+
+    public Map<Long, Collection<Long>> getQnAMap() {
+	return (Map<Long, Collection<Long>>) parentId2postIds.asMap();
+    }
+
+    public Map<Long, UserEntity> getUserMap() {
+	return userId2userObj;
+    }
+
+    public Map<Long, Double> getTfIrfMap() {
+	return postid2tfirf;
+    }
+
+    public HashMultimap<Long, Token> getTokenMap() {
+	return postid2Tokens;
+    }
+
+    public void buildIndex(String queryString) throws IOException, ParseException, SQLException {
+	try {
+	    mQueryString = queryString;
+	    queryTerms = HashMultiset.create(Splitter.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(queryString));
+
+	    Dao<DataEntity, Long> postsDao = DaoManager.createDao(mConnectionSrc, DataEntity.class);
+	    List<DataEntity> data_entites = postsDao.queryForAll();
+	    Application.totalNoOfResources = data_entites.size();
+
+	    for (DataEntity entity : data_entites) {
+		addTokenFreqMap(entity.getPostId(), entity.getCleanText(), entity.getParentId(), entity.getOwnerUserId());
+	    }
+
+	    Dao<UserEntity, Long> userDao = DaoManager.createDao(mConnectionSrc, UserEntity.class);
+	    List<UserEntity> user_entites = userDao.queryForAll();
+	    for (UserEntity entity : user_entites) {
+		// Application.userId2userObj.put(entity.getUserId(), entity);
+		updateUserMap(entity);
+	    }
+	} catch (Exception e) {
+	    e.printStackTrace();
+	    System.out.println(" Exception while building index..." + e);
 	}
 
-	public HashMap<Long, Long> getPostId2UserIdMap() {
-		return postId2userId;
-	}
+	createInverseResFreqMap();
+    }
 
-	public Map<Long, Collection<Long>> getQnAMap() {
-		return (Map<Long, Collection<Long>>) parentId2postIds.asMap();
-	}
+    private void addTokenFreqMap(long postid, String text, long parentId, long userId) {
+	Multiset<String> bagOfWords = HashMultiset.create(Splitter.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(text));
+	int totalcount = 0;
 
-	public Map<Long, UserEntity> getUserMap() {
-		return userId2userObj;
-	}
+	Token token;
+	int count = 0;
+	// Iterate the Query terms.
+	// Ignore if freq is too less.
+	for (Object word : queryTerms.elementSet()) {
+	    count = bagOfWords.count(word);
 
-	public Map<Long, Double> getTfIrfMap() {
-		return postid2tfirf;
-	}
+	    totalcount = word2freq.get((String) word) != null ? word2freq.get((String) word) + count : 0;
+	    word2freq.put((String) word, totalcount);
+	    // System.out.println("THRESHOLD FREQ TEST " + count);
+	    if (count > THRESHOLD_WORD_FREQ) {
+		token = new Token(postid, text);
+		token.setFrequnecy(count);
+		token.setName((String) word);
 
-	public HashMultimap<Long, Token> getTokenMap() {
-		return postid2Tokens;
-	}
-
-	public void buildIndex(String queryString) throws IOException,
-			ParseException, SQLException {
-		try {
-			mQueryString = queryString;
-			queryTerms = HashMultiset.create(Splitter
-					.on(CharMatcher.WHITESPACE).omitEmptyStrings()
-					.split(queryString));
-
-			Dao<DataEntity, Long> postsDao = DaoManager.createDao(
-					mConnectionSrc, DataEntity.class);
-			List<DataEntity> data_entites = postsDao.queryForAll();
-			Application.totalNoOfResources = data_entites.size();
-
-			for (DataEntity entity : data_entites) {
-				addTokenFreqMap(entity.getPostId(), entity.getBody(),
-						entity.getParentId(), entity.getOwnerUserId());
-			}
-
-			Dao<UserEntity, Long> userDao = DaoManager.createDao(
-					mConnectionSrc, UserEntity.class);
-			List<UserEntity> user_entites = userDao.queryForAll();
-			for (UserEntity entity : user_entites) {
-				// Application.userId2userObj.put(entity.getUserId(), entity);
-				updateUserMap(entity);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("" + e);
+		postid2Tokens.put(postid, token);
+		if (parentId > 0) {
+		    parentId2postIds.put(parentId, postid);
 		}
 
-		createInverseResFreqMap();
-	}
-
-	private void addTokenFreqMap(long postid, String text, long parentId,
-			long userId) {
-		Multiset<String> bagOfWords = HashMultiset.create(Splitter
-				.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(text));
-
-		int totalcount = 0;
-
-		Token token;
-		int count = 0;
-		// Iterate the Query terms.
-		// Ignore if freq is too less.
-		for (Object word : queryTerms.elementSet()) {
-			count = bagOfWords.count(word);
-
-			totalcount = word2freq.get((String) word) != null ? word2freq
-					.get((String) word) + count : 0;
-			word2freq.put((String) word, totalcount);
-
-			if (count > THRESHOLD_WORD_FREQ) {
-				token = new Token(postid, text);
-				token.setFrequnecy(count);
-				token.setName((String) word);
-
-				postid2Tokens.put(postid, token);
-				if (parentId > 0) {
-					parentId2postIds.put(parentId, postid);
-				}
-
-				// System.out.println("USERID::" + userId);
-				if (userId > 0) {
-					postId2userId.put(postid, userId);
-				}
-			}
+		// System.out.println("USERID::" + userId);
+		if (userId > 0) {
+		    postId2userId.put(postid, userId);
 		}
-
+	    }
 	}
 
-	public void updateUserMap(UserEntity entity) throws SQLException {
-		userId2userObj.put(entity.getUserId(), entity);
-	}
+    }
 
-	private void createInverseResFreqMap() {
-		System.out.println("Creating Inverse Freq Map...");
-		try {
-			for (Map.Entry entry : postid2Tokens.entries()) {
-				Long postid = (Long) entry.getKey();
-				Set<Token> tokens = postid2Tokens.get(postid);
-				double sum_tfirf = 0; // TFIRF of individual token combined for
-										// entire post.
-				for (Token token : tokens) {
-					int termFreq = token.getFreq();
+    public void updateUserMap(UserEntity entity) throws SQLException {
+	userId2userObj.put(entity.getUserId(), entity);
+    }
 
-					double irfweight = Application.round(
-							(double) Math.log(Application.totalNoOfResources
-									/ word2freq.get(token.getName())), 2);
-					sum_tfirf = sum_tfirf + (termFreq * irfweight);
+    private void createInverseResFreqMap() {
+	// System.out.println("Creating Inverse Freq Map...");
+	try {
+	    for (Map.Entry entry : postid2Tokens.entries()) {
+		Long postid = (Long) entry.getKey();
+		Set<Token> tokens = postid2Tokens.get(postid);
+		double sum_tfirf = 0; // TFIRF of individual token combined for
+				      // entire post.
+		for (Token token : tokens) {
+		    int termFreq = token.getFreq();
 
-					token.setTfIrf(termFreq * irfweight);
-				}
-				postid2tfirf.put(postid, sum_tfirf);
+		    double irfweight = Application.round((double) Math.log(Application.totalNoOfResources / word2freq.get(token.getName())), 2);
+		    sum_tfirf = sum_tfirf + (termFreq * irfweight);
 
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
+		    token.setTfIrf(termFreq * irfweight);
 		}
-		System.out.println("Creating Inverse Freq Map completed...");
+		postid2tfirf.put(postid, sum_tfirf);
+
+	    }
+	} catch (Exception e) {
+	    e.printStackTrace();
 	}
+	// System.out.println("Creating Inverse Freq Map completed...");
+    }
 
 }

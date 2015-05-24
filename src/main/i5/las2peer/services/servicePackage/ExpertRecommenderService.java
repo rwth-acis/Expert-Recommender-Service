@@ -28,13 +28,11 @@ import i5.las2peer.services.servicePackage.indexer.DbTextIndexer;
 import i5.las2peer.services.servicePackage.indexer.LuceneMysqlIndexer;
 import i5.las2peer.services.servicePackage.metrics.EvaluationMeasure;
 import i5.las2peer.services.servicePackage.ocd.OCD;
-import i5.las2peer.services.servicePackage.parsers.ERSCSVParser;
-import i5.las2peer.services.servicePackage.parsers.ERSXmlParser;
 import i5.las2peer.services.servicePackage.parsers.xmlparser.CommunityCoverMatrixParser;
 import i5.las2peer.services.servicePackage.scorer.CommunityAwareHITSStrategy;
 import i5.las2peer.services.servicePackage.scorer.CommunityAwarePageRankStrategy;
+import i5.las2peer.services.servicePackage.scorer.DataModelingStrategy;
 import i5.las2peer.services.servicePackage.scorer.HITSStrategy;
-import i5.las2peer.services.servicePackage.scorer.ModelingStrategy1;
 import i5.las2peer.services.servicePackage.scorer.PageRankStrategy;
 import i5.las2peer.services.servicePackage.scorer.ScoreStrategy;
 import i5.las2peer.services.servicePackage.scorer.ScoringContext;
@@ -265,14 +263,18 @@ public class ExpertRecommenderService extends Service {
     }
 
     @POST
-    @Path("modeling")
-    public HttpResponse modelExperts(@ContentParam String text) {
+    @Path("datasets/{datasetId}/algorithms/datamodeling")
+    public HttpResponse modelExperts(@PathParam("datasetId") String datasetId, @ContentParam String query) {
 
-	Application.algoName = "modeling1";
-	String query = text;
+	if (query == null) {
+	    // TODO: Throw custom exception.
+	}
 
-	// Stopwatch timer = Stopwatch.createStarted();
-	// TODO: Semantic analysis of the text.
+	if (query != null && query.length() < 0) {
+	    // TODO: Throw custom exception.
+	}
+
+	String expert_posts = "{}";
 	QueryAnalyzer qAnalyzer = null;
 	try {
 	    qAnalyzer = new QueryAnalyzer(query);
@@ -280,14 +282,17 @@ public class ExpertRecommenderService extends Service {
 	    e.printStackTrace();
 	}
 
+	String databaseName = getDatabaseName(datasetId);
+	if (databaseName == null) {
+	    // Throw custom exception.
+	}
+
 	DatabaseHandler dbHandler = null;
-	dbHandler = new DatabaseHandler("healthcare", "root", "");
+	dbHandler = new DatabaseHandler(databaseName, "root", "");
 
 	ConnectionSource connectionSource = null;
 	connectionSource = dbHandler.getConnectionSource();
 	long queryId = qAnalyzer.getId(connectionSource);
-
-	String expert_posts = "{}";
 
 	DbTextIndexer dbTextIndexer = null;
 	DbSematicsIndexer dbSemanticsIndexer = null;
@@ -300,13 +305,13 @@ public class ExpertRecommenderService extends Service {
 	    dbSemanticsIndexer = new DbSematicsIndexer(dbHandler.getConnectionSource());
 	    dbSemanticsIndexer.buildIndex(qAnalyzer.getText());
 
-	    ScoringContext scontext = new ScoringContext(new ModelingStrategy1(dbTextIndexer, dbSemanticsIndexer));
+	    ScoringContext scontext = new ScoringContext(new DataModelingStrategy(dbTextIndexer, dbSemanticsIndexer));
 	    scontext.executeStrategy();
 	    expert_posts = scontext.getExperts();
 
 	    System.out.println("Evaluating modeling technique");
 
-	    EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), dbTextIndexer.getUserMap(), "Modeling1");
+	    EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), dbTextIndexer.getUserMap(), "datamodeling");
 
 	    // Compute Evaluation Measures.
 	    try {
@@ -610,25 +615,25 @@ public class ExpertRecommenderService extends Service {
 
 	    String dirPath = "datasets/" + dataset_name;
 
-	    if (inputType.equalsIgnoreCase("xml")) {
-		ERSXmlParser xmlparser = new ERSXmlParser(dirPath);
-		dbHandler.addPosts(xmlparser.getPosts());
-		dbHandler.addUsers(xmlparser.getUsers());
-	    } else {
-		System.out.println("CSV Parser started...");
-		ERSCSVParser csvparser = new ERSCSVParser(dirPath);
-		dbHandler.addPosts(csvparser.getPosts());
-		// dbHandler.addUsers(csvparser.getUsers());
-	    }
-
-	    // Add semantics tag.
+	    // if (inputType.equalsIgnoreCase("xml")) {
+	    // ERSXmlParser xmlparser = new ERSXmlParser(dirPath);
+	    // dbHandler.addPosts(xmlparser.getPosts());
+	    // dbHandler.addUsers(xmlparser.getUsers());
+	    // } else {
+	    // System.out.println("CSV Parser started...");
+	    // ERSCSVParser csvparser = new ERSCSVParser(dirPath);
+	    // dbHandler.addPosts(csvparser.getPosts());
+	    // // dbHandler.addUsers(csvparser.getUsers());
+	    // }
+	    //
+	    // // Add semantics tag.
 	    // dbHandler.addSemanticTags();
-
-	    dbHandler.markExpertsForEvaluation(connectionSrc);
+	    // dbHandler.markExpertsForEvaluation(connectionSrc);
 
 	    // System.out.println("Database operations completed...");
 
 	    LuceneMysqlIndexer indexer = new LuceneMysqlIndexer(dbHandler.getConnectionSource(), dataset_name + "_index");
+	    System.out.println("Building index...");
 	    indexer.buildIndex();
 
 	    res = new HttpResponse("Indexer finished successfully");
@@ -641,6 +646,7 @@ public class ExpertRecommenderService extends Service {
 	    res.setStatus(500);
 	} catch (IOException e) {
 	    e.printStackTrace();
+	    System.out.println("IO exception " + e);
 	    res = new HttpResponse("IO Exception");
 	    res.setStatus(500);
 	}

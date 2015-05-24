@@ -38,7 +38,7 @@ public class Recall implements IEvaluator<Double> {
     }
 
     public void compute() {
-
+	System.out.println("Computing Recall...");
 	Iterator<String> iterator = this.userId2score.keySet().iterator();
 	int noRelevantExperts = 0;
 	int i = 0;

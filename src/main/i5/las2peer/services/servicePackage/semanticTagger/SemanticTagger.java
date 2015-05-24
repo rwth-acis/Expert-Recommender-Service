@@ -85,9 +85,6 @@ public class SemanticTagger {
 		HttpEntity entity = response.getEntity();
 		String responseString = EntityUtils.toString(entity, "UTF-8");
 
-		// System.out.println(mText);
-		// System.out.println(responseString);
-
 		JsonParser parser = new JsonParser();
 		JsonElement jelement = parser.parse(responseString);
 		JsonObject jobject = jelement.getAsJsonObject();
@@ -112,7 +109,7 @@ public class SemanticTagger {
 			    for (JsonElement jelem : categories) {
 				if (jelem != null) {
 				    tags.append(jelem.getAsString());
-				    tags.append(",");
+				    tags.append(" , ");
 				}
 			    }
 			}
@@ -125,20 +122,6 @@ public class SemanticTagger {
 		if (annotations != null && tags != null) {
 		    annotationObj = new SemanticData(annotations.toString(), tags.toString());
 		}
-
-		// Gson gson = new GsonBuilder().registerTypeAdapter(
-		// TagMePOJO.class, new TagMeAdapter()).create();
-		//
-		// TagMePOJOContainer tagMe = gson.fromJson(responseString,
-		// TagMePOJOContainer.class);
-		//
-		// for (TagMePOJO tagpojo : tagMe.getAnnotations()) {
-		// if (tagpojo != null) {
-		// tagmeObjs.add(tagpojo);
-		// // Utils.println("TAG OBJ ::" + new
-		// // Gson().toJson(tagpojo));
-		// }
-		// }
 
 		// Release all the underlying resource.
 		EntityUtils.consume(entity);

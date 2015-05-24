@@ -70,7 +70,6 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	DataEntity data = null;
 	StopWordRemover remover = null;
 
-	System.out.println("SIZE:::::::::::::::: " + posts.size());
 	for (IPost res : posts) {
 
 	    data = new DataEntity();
@@ -229,17 +228,23 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	SemanticTagEntity tagEntity = null;
 	SemanticTagger tagger = null;
 	for (DataEntity entity : data_entites) {
-	    tagger = new SemanticTagger(entity.getBody());
-	    if (tagger != null && tagger.getSemanticData() != null) {
-		String tags = tagger.getSemanticData().getTags();
-		String annotations = tagger.getSemanticData().getAnnotation();
+	    SemanticTagEntity tEntity = SemanticDao.queryForId(entity.getPostId());
+	    // If particular Id is not present in the semantic table then
+	    // proceed with extraction of tag
+	    if (tEntity == null) {
 
-		tagEntity = new SemanticTagEntity();
-		tagEntity.setPostId(entity.getPostId());
-		tagEntity.setAnnotations(annotations);
-		tagEntity.setTags(tags);
+		tagger = new SemanticTagger(entity.getBody());
+		if (tagger != null && tagger.getSemanticData() != null) {
+		    String tags = tagger.getSemanticData().getTags();
+		    String annotations = tagger.getSemanticData().getAnnotation();
 
-		SemanticDao.createIfNotExists(tagEntity);
+		    tagEntity = new SemanticTagEntity();
+		    tagEntity.setPostId(entity.getPostId());
+		    tagEntity.setAnnotations(annotations);
+		    tagEntity.setTags(tags);
+
+		    SemanticDao.createIfNotExists(tagEntity);
+		}
 	    }
 	}
     }

@@ -15,7 +15,7 @@ import net.minidev.json.JSONArray;
  * @author sathvik
  */
 
-public class ModelingStrategy1 implements ScoreStrategy {
+public class DataModelingStrategy implements ScoreStrategy {
     double alpha = 0.5;
     private Map<Long, Double> userId2score = new HashMap<Long, Double>();
     LinkedHashMap<Long, Double> expert2score;
@@ -28,16 +28,10 @@ public class ModelingStrategy1 implements ScoreStrategy {
      * @param textIndexer
      * @param semanticsIndexer
      */
-    public ModelingStrategy1(DbTextIndexer textIndexer, DbSematicsIndexer semanticsIndexer) {
-
+    public DataModelingStrategy(DbTextIndexer textIndexer, DbSematicsIndexer semanticsIndexer) {
 	mTextIndexer = textIndexer;
 	mSemanticsIndexer = semanticsIndexer;
-
     }
-
-    // TODO:get rid of this.
-    // public static HashMultimap<Long, Resource> postid2Resource = HashMultimap
-    // .create();
 
     @Override
     public void executeAlgorithm() {
@@ -45,7 +39,6 @@ public class ModelingStrategy1 implements ScoreStrategy {
 	try {
 	    for (Map.Entry entry : mTextIndexer.getTokenMap().entries()) {
 		long postid = (Long) entry.getKey();
-
 		// Set the title of the post that is associated with the user.
 		if (mTextIndexer.getPostId2UserIdMap().containsKey(postid)) {
 		    long userid = mTextIndexer.getPostId2UserIdMap().get(postid);
@@ -74,7 +67,6 @@ public class ModelingStrategy1 implements ScoreStrategy {
 
 		    // Scoring rule.
 		    sum = (alpha) * termFreq_inverseResFreq + (1 - alpha) * entityFreq_inverseResFreq;
-
 		    userId2score.put(userid, sum);
 		}
 	    }

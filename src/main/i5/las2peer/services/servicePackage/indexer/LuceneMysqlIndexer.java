@@ -4,6 +4,7 @@
 package i5.las2peer.services.servicePackage.indexer;
 
 import i5.las2peer.services.servicePackage.entities.DataEntity;
+import i5.las2peer.services.servicePackage.entities.SemanticTagEntity;
 import i5.las2peer.services.servicePackage.utils.Application;
 
 import java.io.File;
@@ -32,20 +33,22 @@ import com.j256.ormlite.support.ConnectionSource;
 public class LuceneMysqlIndexer {
     private ConnectionSource connSrc;
     private IndexWriter indexWriter;
-
-    private static String indexBasePath = "luceneIndex/";
+    private String indexDirectoryPath;
+    private static String dataIndexBasePath = "luceneIndex/%s/data/";
+    private static String semanticsIndexBasePath = "luceneIndex/%s/semantics/";
 
     /**
      * 
      * @param connectionSrc
+     *            A database connection, used to retrieve fields to index
      * @param indexDirectoryPath
+     *            A local path to store the index
      * @throws IOException
+     *             Exception is thrown if files cannot be created or opened.
      */
     public LuceneMysqlIndexer(ConnectionSource connectionSrc, String indexDirectoryPath) throws IOException {
 	connSrc = connectionSrc;
-	Directory indexDir = FSDirectory.open(new File(indexBasePath + indexDirectoryPath).toPath());
-	IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
-	indexWriter = new IndexWriter(indexDir, config);
+	this.indexDirectoryPath = indexDirectoryPath;
     }
 
     /**
@@ -55,20 +58,28 @@ public class LuceneMysqlIndexer {
      */
     public void buildIndex() throws SQLException, IOException {
 
+	System.out.println("Building index...");
+
+	Directory dataIndexDir = FSDirectory.open(new File(String.format(dataIndexBasePath, indexDirectoryPath)).toPath());
+	IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
+	indexWriter = new IndexWriter(dataIndexDir, config);
+
 	// If index already exists. Delete all.
 	if (indexWriter != null) {
 	    indexWriter.deleteAll();
 	}
 
-	Document doc;
+	Document dataDoc;
 
 	Dao<DataEntity, Long> postsDao = DaoManager.createDao(connSrc, DataEntity.class);
+
 	List<DataEntity> data_entites = postsDao.queryForAll();
 	Application.totalNoOfResources = data_entites.size();
 	StringBuffer fullSearchableText;
 
 	for (DataEntity entity : data_entites) {
-	    doc = new Document();
+	    dataDoc = new Document();
+
 	    long postId = entity.getPostId();
 	    String title = entity.getTitle();
 	    String body = entity.getCleanText();
@@ -88,13 +99,13 @@ public class LuceneMysqlIndexer {
 	    // System.out.println("Searchable text ::" +
 	    // fullSearchableText.toString());
 
-	    doc.add(new StringField("postid", String.valueOf(postId), Field.Store.YES));
-	    doc.add(new StringField("parentid", String.valueOf(parentId), Field.Store.YES));
-	    doc.add(new StringField("creationDate", creationDate, Field.Store.YES));
-	    doc.add(new StringField("userid", String.valueOf(userId), Field.Store.YES));
-	    doc.add(new TextField("searchableText", fullSearchableText.toString(), Field.Store.YES));
+	    dataDoc.add(new StringField("postid", String.valueOf(postId), Field.Store.YES));
+	    dataDoc.add(new StringField("parentid", String.valueOf(parentId), Field.Store.YES));
+	    dataDoc.add(new StringField("creationDate", creationDate, Field.Store.YES));
+	    dataDoc.add(new StringField("userid", String.valueOf(userId), Field.Store.YES));
+	    dataDoc.add(new TextField("searchableText", fullSearchableText.toString(), Field.Store.YES));
 
-	    indexWriter.addDocument(doc);
+	    indexWriter.addDocument(dataDoc);
 	}
 
 	if (indexWriter != null) {
@@ -103,5 +114,63 @@ public class LuceneMysqlIndexer {
 	    indexWriter.close();
 	}
 
+	updateSemanticsIndex();
+	System.out.println("Building index completed...");
+
+    }
+
+    /**
+     * 
+     * @throws IOException
+     * @throws SQLException
+     */
+    private void updateSemanticsIndex() throws IOException, SQLException {
+
+	IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
+	Directory semanticsIndexDir = FSDirectory.open(new File(String.format(semanticsIndexBasePath, indexDirectoryPath)).toPath());
+
+	indexWriter = new IndexWriter(semanticsIndexDir, config);
+
+	// If index already exists. Delete all.
+	if (indexWriter != null) {
+	    indexWriter.deleteAll();
+	}
+
+	Document semanticDataDoc = new Document();
+
+	Dao<DataEntity, Long> postsDao = DaoManager.createDao(connSrc, DataEntity.class);
+	Dao<SemanticTagEntity, Long> semanticsDao = DaoManager.createDao(connSrc, SemanticTagEntity.class);
+
+	List<DataEntity> dataEntites = postsDao.queryForAll();
+
+	for (DataEntity entity : dataEntites) {
+	    semanticDataDoc = new Document();
+
+	    long postId = entity.getPostId();
+	    long parentId = entity.getParentId();
+	    long userId = entity.getOwnerUserId();
+	    String creationDate = entity.getCreationDate();
+
+	    SemanticTagEntity semanticEntity = semanticsDao.queryForId(postId);
+	    StringBuffer fullSearchableText = new StringBuffer();
+
+	    if (semanticEntity != null) {
+		fullSearchableText.append(semanticEntity.getTags());
+
+		semanticDataDoc.add(new StringField("postid", String.valueOf(postId), Field.Store.YES));
+		semanticDataDoc.add(new StringField("parentid", String.valueOf(parentId), Field.Store.YES));
+		semanticDataDoc.add(new StringField("creationDate", creationDate, Field.Store.YES));
+		semanticDataDoc.add(new StringField("userid", String.valueOf(userId), Field.Store.YES));
+		semanticDataDoc.add(new TextField("searchableText", fullSearchableText.toString(), Field.Store.YES));
+	    }
+
+	    indexWriter.addDocument(semanticDataDoc);
+	}
+
+	if (indexWriter != null) {
+	    // TODO: Add relative path of the the index directory to the
+	    // datainfo table.
+	    indexWriter.close();
+	}
     }
 }
