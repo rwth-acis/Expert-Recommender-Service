@@ -9,6 +9,7 @@ import i5.las2peer.services.servicePackage.utils.Application;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -21,7 +22,7 @@ public class Recall implements IEvaluator<Double> {
     private LinkedHashMap<String, Double> userId2score;
     private int count; // To calculate R@count
     private double recallScore = 0;
-    private double[] recall_values;
+    private List<Double> recalls = new ArrayList<Double>();
     private static final int collectionSize = 50;
     private Map<Long, UserEntity> userId2userObj;
 
@@ -34,7 +35,7 @@ public class Recall implements IEvaluator<Double> {
 
 	this.userId2score = userId2score;
 	this.userId2userObj = userId2userObj;
-	recall_values = new double[collectionSize];
+
     }
 
     public void compute() {
@@ -56,13 +57,18 @@ public class Recall implements IEvaluator<Double> {
 	    }
 
 	    // Calculate Recall value at each position and store them.
-	    recall_values[i] = (double) noRelevantExperts / totalExpert;
+	    recalls.add((double) noRelevantExperts / totalExpert);
 
 	    i++;
 	}
-	System.out.println("No of relevant expert:: " + noRelevantExperts);
+	// System.out.println("No of relevant expert:: " + noRelevantExperts);
 
-	recallScore = (double) noRelevantExperts / totalExpert;
+	double cumulativeRecallScore = 0;
+	for (int j = 0; j < recalls.size(); j++) {
+	    cumulativeRecallScore += recalls.get(j);
+	}
+
+	recallScore = (double) cumulativeRecallScore / collectionSize;
     }
 
     /**
@@ -77,16 +83,16 @@ public class Recall implements IEvaluator<Double> {
      * 
      * @return double array, recall at every position.
      */
-    public double[] getValues() {
-	return recall_values;
+    public Double[] getValues() {
+	return recalls.toArray(new Double[recalls.size()]);
     }
 
     public double[] getRoundedValues() {
 
 	ArrayList<Double> rounded_recall_values = new ArrayList<Double>();
 
-	for (int i = 0; i < recall_values.length && i < count; i++) {
-	    rounded_recall_values.add(Application.round(recall_values[i], 2));
+	for (int i = 0; i < recalls.size() && i < count; i++) {
+	    rounded_recall_values.add(Application.round(recalls.get(i), 2));
 	}
 
 	Double[] values = rounded_recall_values.toArray(new Double[rounded_recall_values.size()]);

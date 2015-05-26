@@ -54,11 +54,13 @@ public class Precision {
 	    // Calculate precision value only at relevant experts.
 	    double precision = 0;
 	    if (userEntity.isProbableExpert()) {
-		System.out.println("An expert..." + userEntity.getReputation());
+		// System.out.println("An expert..." +
+		// userEntity.getReputation());
 		noRelevantExperts++;
 		// precisions[i] = (double) noRelevantExperts / (i + 1);
 	    } else {
-		System.out.println("Not an expert..." + userEntity.getReputation());
+		// System.out.println("Not an expert..." +
+		// userEntity.getReputation());
 	    }
 	    precision = (double) noRelevantExperts / (i + 1);
 	    System.out.println("Precision..." + precision);
