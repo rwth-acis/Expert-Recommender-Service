@@ -5,7 +5,6 @@ package i5.las2peer.services.servicePackage.indexer;
 
 import i5.las2peer.services.servicePackage.entities.DataEntity;
 import i5.las2peer.services.servicePackage.entities.SemanticTagEntity;
-import i5.las2peer.services.servicePackage.utils.Application;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,7 +73,7 @@ public class LuceneMysqlIndexer {
 	Dao<DataEntity, Long> postsDao = DaoManager.createDao(connSrc, DataEntity.class);
 
 	List<DataEntity> data_entites = postsDao.queryForAll();
-	Application.totalNoOfResources = data_entites.size();
+	// Application.totalNoOfResources = data_entites.size();
 	StringBuffer fullSearchableText;
 
 	for (DataEntity entity : data_entites) {

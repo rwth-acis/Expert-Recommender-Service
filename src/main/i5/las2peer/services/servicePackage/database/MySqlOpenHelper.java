@@ -32,25 +32,41 @@ public abstract class MySqlOpenHelper {
 	mDbName = dbName;
 	mUserName = username;
 	mPassword = password;
+
+	createDatabase();
     }
 
-    private void createDatabase() throws SQLException {
-	close();
+    private void createDatabase() {
+	try {
+	    close();
+	    sqlConnection = DriverManager.getConnection(DB_URL, mUserName, mPassword);
+	    mJdbConnection = new JdbcDatabaseConnection(sqlConnection);
+	    mJdbConnection.executeStatement("CREATE DATABASE IF NOT EXISTS " + mDbName, -1);
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	} finally {
+	    try {
+		close();
+	    } catch (SQLException e) {
+		e.printStackTrace();
+	    }
+	}
 
-	sqlConnection = DriverManager.getConnection(DB_URL, mUserName, mPassword);
-	mJdbConnection = new JdbcDatabaseConnection(sqlConnection);
-	mJdbConnection.executeStatement("CREATE DATABASE IF NOT EXISTS " + mDbName, -1);
     }
 
     public ConnectionSource getConnectionSource() {
 	try {
-
-	    mConnectionSource = new JdbcConnectionSource(DB_URL + mDbName);
+	    if (mConnectionSource != null && mConnectionSource.isOpen()) {
+		return mConnectionSource;
+	    } else {
+		mConnectionSource = new JdbcConnectionSource(DB_URL + mDbName);
+		((JdbcConnectionSource) mConnectionSource).setUsername(mUserName);
+		((JdbcConnectionSource) mConnectionSource).setPassword(mPassword);
+	    }
 	} catch (SQLException e) {
 	    e.printStackTrace();
 	}
-	((JdbcConnectionSource) mConnectionSource).setUsername(mUserName);
-	((JdbcConnectionSource) mConnectionSource).setPassword(mPassword);
+
 	return mConnectionSource;
     }
 

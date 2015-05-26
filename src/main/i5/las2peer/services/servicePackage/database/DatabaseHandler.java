@@ -297,11 +297,14 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	UpdateBuilder updateBuilder = userDao.updateBuilder();
 	for (UserEntity entity : user_entites) {
 	    long reputation = entity.getReputation();
-	    if (reputation >= stats.getPercentileAbove(98)) {
-		updateBuilder.where().eq("userId", entity.getUserId());
+	    updateBuilder.where().eq("userId", entity.getUserId());
+	    System.out.println(reputation + ":::" + stats.getPercentileAbove(99.7));
+	    if (reputation >= stats.getPercentileAbove(99.7)) {
 		updateBuilder.updateColumnValue("probable_expert", true);
-		updateBuilder.update();
+	    } else {
+		updateBuilder.updateColumnValue("probable_expert", false);
 	    }
+	    updateBuilder.update();
 	}
 
     }
@@ -406,6 +409,17 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	}
 
 	return null;
+    }
+
+    public void truncateEvaluationTable() {
+	Dao<EvaluationMetricsEntity, Long> evaluationDao = null;
+	try {
+	    evaluationDao = DaoManager.createDao(super.getConnectionSource(), EvaluationMetricsEntity.class);
+	    evaluationDao.delete(evaluationDao.queryForAll());
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+
     }
 
     public void close() {

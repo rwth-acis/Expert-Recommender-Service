@@ -20,29 +20,31 @@ public class DataModelingStrategy implements ScoreStrategy {
     private Map<Long, Double> userId2score = new HashMap<Long, Double>();
     LinkedHashMap<Long, Double> expert2score;
     // private Map<Long, UserEntity> mUserId2userObj;
-    DbTextIndexer mTextIndexer;
-    DbSematicsIndexer mSemanticsIndexer;
+    private DbTextIndexer mTextIndexer;
+    private DbSematicsIndexer mSemanticsIndexer;
+    private Map<Long, UserEntity> userId2userObj;
 
     /**
      * 
      * @param textIndexer
      * @param semanticsIndexer
      */
-    public DataModelingStrategy(DbTextIndexer textIndexer, DbSematicsIndexer semanticsIndexer) {
+    public DataModelingStrategy(DbTextIndexer textIndexer, DbSematicsIndexer semanticsIndexer, Map<Long, UserEntity> userId2userObj) {
 	mTextIndexer = textIndexer;
 	mSemanticsIndexer = semanticsIndexer;
+	this.userId2userObj = userId2userObj;
     }
 
     @Override
     public void executeAlgorithm() {
-	System.out.println("Ranking the res..");
+	System.out.println("Ranking the res.." + mTextIndexer.getTokenMap().entries().size());
 	try {
 	    for (Map.Entry entry : mTextIndexer.getTokenMap().entries()) {
 		long postid = (Long) entry.getKey();
 		// Set the title of the post that is associated with the user.
 		if (mTextIndexer.getPostId2UserIdMap().containsKey(postid)) {
 		    long userid = mTextIndexer.getPostId2UserIdMap().get(postid);
-		    UserEntity user = mTextIndexer.getUserMap().get(userid);
+		    UserEntity user = userId2userObj.get(userid);
 		    if (userid > 0 && user != null) {
 			// user.setRelatedPost(postid);
 			// Set termObjs = TERM_FREQ_MAP.get(postid);
@@ -88,7 +90,7 @@ public class DataModelingStrategy implements ScoreStrategy {
 
 		// Restrict result to 10 items for now.
 		if (i < 10) {
-		    UserEntity user = mTextIndexer.getUserMap().get(userid);
+		    UserEntity user = userId2userObj.get(userid);
 		    user.setScore(userId2score.get(userid));
 		    if (user != null) {
 			jsonArray.add(user);

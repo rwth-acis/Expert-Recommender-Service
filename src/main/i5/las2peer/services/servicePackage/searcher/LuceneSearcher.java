@@ -95,10 +95,13 @@ public class LuceneSearcher {
 	Query query = dataParser.parse(queryString);
 	TopDocs dataDocs = dataSearcher.search(query, n);
 	System.out.println("No of HITS:: " + dataDocs.totalHits);
-
 	maxNoOfResults = n;
 
 	return dataDocs;
+    }
+
+    public int getTotalNumberOfDocs() {
+	return dataSearcher.getIndexReader().numDocs();
     }
 
     /**
@@ -140,17 +143,13 @@ public class LuceneSearcher {
 
 	    // If parentId is present and the post was created before the
 	    // requested date add the value to the map.
-	     if (parentId > 0 && fmtCreationDate != null &&
-	     fmtCreationDate.before(date)) {
-		if (parentId > 0) {
-		    parentId2postIds.put(parentId, postId);
-		}
-
-		// System.out.println("USERID::" + userId);
-		if (userId > 0) {
-		    postId2userId.put(postId, userId);
-		}
-	     }
+	    if (parentId > 0 && fmtCreationDate != null && fmtCreationDate.before(date)) {
+		parentId2postIds.put(parentId, postId);
+	    }
+	    // System.out.println("USERID::" + userId);
+	    if (userId > 0) {
+		postId2userId.put(postId, userId);
+	    }
 
 	}
 

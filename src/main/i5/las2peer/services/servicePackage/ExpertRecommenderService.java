@@ -2,14 +2,17 @@ package i5.las2peer.services.servicePackage;
 
 import i5.las2peer.api.Service;
 import i5.las2peer.restMapper.HttpResponse;
+import i5.las2peer.restMapper.MediaType;
 import i5.las2peer.restMapper.RESTMapper;
 import i5.las2peer.restMapper.annotations.ContentParam;
 import i5.las2peer.restMapper.annotations.GET;
 import i5.las2peer.restMapper.annotations.POST;
 import i5.las2peer.restMapper.annotations.Path;
 import i5.las2peer.restMapper.annotations.PathParam;
+import i5.las2peer.restMapper.annotations.Produces;
 import i5.las2peer.restMapper.annotations.QueryParam;
 import i5.las2peer.restMapper.annotations.Version;
+import i5.las2peer.restMapper.annotations.swagger.ApiInfo;
 import i5.las2peer.restMapper.tools.ValidationResult;
 import i5.las2peer.restMapper.tools.XMLCheck;
 import i5.las2peer.services.servicePackage.database.DatabaseHandler;
@@ -40,7 +43,6 @@ import i5.las2peer.services.servicePackage.searcher.LuceneSearcher;
 import i5.las2peer.services.servicePackage.textProcessor.PorterStemmer;
 import i5.las2peer.services.servicePackage.textProcessor.QueryAnalyzer;
 import i5.las2peer.services.servicePackage.textProcessor.StopWordRemover;
-import i5.las2peer.services.servicePackage.utils.Application;
 import i5.las2peer.services.servicePackage.utils.LocalFileManager;
 import i5.las2peer.services.servicePackage.utils.UserMapSingleton;
 import i5.las2peer.services.servicePackage.visualization.Visualizer;
@@ -77,6 +79,8 @@ import com.j256.ormlite.table.TableUtils;
 
 @Path("ers")
 @Version("0.1")
+@ApiInfo(title = "Expert Recommender Service", description = "A RESTful expert recommender service",
+ termsOfServiceUrl = "sample-tos.io", contact = "sathvik.parekodi@rwth-aachen.de", license = "Apache License 2", licenseUrl = "http://www.apache.org/licenses/LICENSE-2.0")
 public class ExpertRecommenderService extends Service {
 
     public ExpertRecommenderService() {
@@ -264,7 +268,8 @@ public class ExpertRecommenderService extends Service {
 
     @POST
     @Path("datasets/{datasetId}/algorithms/datamodeling")
-    public HttpResponse modelExperts(@PathParam("datasetId") String datasetId, @ContentParam String query) {
+    public HttpResponse modelExperts(@PathParam("datasetId") String datasetId, @ContentParam String query,
+	    @QueryParam(name = "dateBefore", defaultValue = "2011-01-31") String dateBefore) {
 
 	if (query == null) {
 	    // TODO: Throw custom exception.
@@ -274,7 +279,7 @@ public class ExpertRecommenderService extends Service {
 	    // TODO: Throw custom exception.
 	}
 
-	String expert_posts = "{}";
+	String expertPosts = "{}";
 	QueryAnalyzer qAnalyzer = null;
 	try {
 	    qAnalyzer = new QueryAnalyzer(query);
@@ -287,36 +292,60 @@ public class ExpertRecommenderService extends Service {
 	    // Throw custom exception.
 	}
 
-	DatabaseHandler dbHandler = null;
-	dbHandler = new DatabaseHandler(databaseName, "root", "");
+	DatabaseHandler dbHandler = new DatabaseHandler(databaseName, "root", "");
 
-	ConnectionSource connectionSource = null;
-	connectionSource = dbHandler.getConnectionSource();
+	DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
+	Date dateFilter = null;
+	try {
+	    dateFilter = dateFormat.parse(dateBefore);
+	} catch (java.text.ParseException e1) {
+	    e1.printStackTrace();
+	}
+
+	ConnectionSource connectionSource = dbHandler.getConnectionSource();
 	long queryId = qAnalyzer.getId(connectionSource);
 
 	DbTextIndexer dbTextIndexer = null;
 	DbSematicsIndexer dbSemanticsIndexer = null;
 
+	Map<Long, UserEntity> usermap = null;
+
+	try {
+	    usermap = UserMapSingleton.getInstance().getUserMap(connectionSource);
+	} catch (SQLException e1) {
+	    e1.printStackTrace();
+	}
+
+	long expertsId = -1;
+	long eMeasureId = -1;
+
 	try {
 
-	    dbTextIndexer = new DbTextIndexer(dbHandler.getConnectionSource());
-	    dbTextIndexer.buildIndex(qAnalyzer.getText());
+	    LuceneSearcher searcher = new LuceneSearcher(qAnalyzer.getText(), databaseName + "_index");
+	    TopDocs docs = searcher.performSearch(qAnalyzer.getText(), Integer.MAX_VALUE);
+
+	    dbTextIndexer = new DbTextIndexer(searcher.getTotalNumberOfDocs());
+	    // dbTextIndexer.buildIndex(qAnalyzer.getText(), dateFilter);
+	    dbTextIndexer.buildIndex(docs, qAnalyzer.getText(), dateFilter, databaseName + "_index");
 
 	    dbSemanticsIndexer = new DbSematicsIndexer(dbHandler.getConnectionSource());
 	    dbSemanticsIndexer.buildIndex(qAnalyzer.getText());
 
-	    ScoringContext scontext = new ScoringContext(new DataModelingStrategy(dbTextIndexer, dbSemanticsIndexer));
+	    ScoringContext scontext = new ScoringContext(new DataModelingStrategy(dbTextIndexer, dbSemanticsIndexer, usermap));
 	    scontext.executeStrategy();
-	    expert_posts = scontext.getExperts();
+	    expertPosts = scontext.getExperts();
+
+	    expertsId = dbHandler.addExperts(queryId, expertPosts);
 
 	    System.out.println("Evaluating modeling technique");
 
-	    EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), dbTextIndexer.getUserMap(), "datamodeling");
+	    EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), usermap, "datamodeling");
 
 	    // Compute Evaluation Measures.
 	    try {
 		eMeasure.computeAll();
 		eMeasure.save(queryId, connectionSource);
+		eMeasureId = eMeasure.getId();
 	    } catch (IOException e) {
 		e.printStackTrace();
 	    }
@@ -333,7 +362,13 @@ public class ExpertRecommenderService extends Service {
 	    e.printStackTrace();
 	}
 
-	HttpResponse res = new HttpResponse(expert_posts);
+	dbHandler.close();
+
+	JsonObject jObj = new JsonObject();
+	jObj.addProperty("expertsId", expertsId);
+	jObj.addProperty("evaluationId", eMeasureId);
+
+	HttpResponse res = new HttpResponse(jObj.toString());
 	res.setStatus(200);
 	return res;
     }
@@ -360,6 +395,7 @@ public class ExpertRecommenderService extends Service {
     public HttpResponse applyPageRank(@PathParam("datasetId") String datasetId, @PathParam("algorithmName") String algorithmName,
 	    @ContentParam String query, @QueryParam(name = "evaluation", defaultValue = "false") boolean isEvaluation,
 	    @QueryParam(name = "visualization", defaultValue = "false") boolean isVisualization,
+	    @QueryParam(name = "alpha", defaultValue = "0.15d") String alpha,
 	    @QueryParam(name = "dateBefore", defaultValue = "2011-01-31") String dateBefore) {
 
 	if (query == null) {
@@ -370,7 +406,7 @@ public class ExpertRecommenderService extends Service {
 	    // TODO: Throw custom exception.
 	}
 
-	String expert_posts = "{}";
+	String expertPosts = "{}";
 	QueryAnalyzer qAnalyzer = null;
 	try {
 	    qAnalyzer = new QueryAnalyzer(query);
@@ -432,8 +468,6 @@ public class ExpertRecommenderService extends Service {
 	    res.setStatus(200);
 	}
 
-
-
 	if (usermap == null) {
 	    // TODO: Throw custom exception.
 	}
@@ -442,7 +476,7 @@ public class ExpertRecommenderService extends Service {
 	switch (algorithmName) {
 	case "pagerank":
 	    // System.out.println("Applying page rank strategy...");
-	    strategy = new PageRankStrategy(jcreator.getGraph(), usermap);
+	    strategy = new PageRankStrategy(jcreator.getGraph(), usermap, Double.parseDouble(alpha));
 	    break;
 	case "hits":
 	    System.out.println("Applying HITS strategy...");
@@ -473,9 +507,9 @@ public class ExpertRecommenderService extends Service {
 
 	ScoringContext scontext = new ScoringContext(strategy);
 	scontext.executeStrategy();
-	expert_posts = scontext.getExperts();
+	expertPosts = scontext.getExperts();
 
-	long expertsId = dbHandler.addExperts(queryId, expert_posts);
+	long expertsId = dbHandler.addExperts(queryId, expertPosts);
 
 	// If evaluation is requested.
 	long eMeasureId = -1;
@@ -541,7 +575,6 @@ public class ExpertRecommenderService extends Service {
 	// Read the file and populate queries;
 	for (String query : queries) {
 	    System.out.println("Query:: " + query);
-	    Application.reset();
 	    StopWordRemover remover = null;
 	    String cleanstr = null;
 	    // Stopwatch timer = null;
@@ -715,6 +748,26 @@ public class ExpertRecommenderService extends Service {
 	handler.close();
 
 	return databaseName;
+    }
+
+    // ////////////////////////////////////////////////////////////////
+    // /////// SWAGGER
+    // ////////////////////////////////////////////////////////////////
+
+    @GET
+    @Path("api-docs")
+    @Produces(MediaType.APPLICATION_JSON)
+    public HttpResponse getSwaggerResourceListing() {
+	return RESTMapper.getSwaggerResourceListing(this.getClass());
+    }
+
+    @GET
+    @Path("api-docs/{tlr}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public HttpResponse getSwaggerApiDeclaration(@PathParam("tlr") String tlr) {
+	// return RESTMapper.getSwaggerApiDeclaration(this.getClass(), tlr,
+	// "http://127.0.0.1:8080/ocd/");
+	return RESTMapper.getSwaggerApiDeclaration(this.getClass(), tlr, "https://api.learning-layers.eu/ocd/");
     }
 
 }

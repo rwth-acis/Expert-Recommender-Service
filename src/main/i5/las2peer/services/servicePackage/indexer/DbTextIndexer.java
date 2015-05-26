@@ -3,29 +3,32 @@
  */
 package i5.las2peer.services.servicePackage.indexer;
 
-import i5.las2peer.services.servicePackage.entities.DataEntity;
-import i5.las2peer.services.servicePackage.entities.UserEntity;
 import i5.las2peer.services.servicePackage.models.Token;
 import i5.las2peer.services.servicePackage.utils.Application;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Collection;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.store.FSDirectory;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.DaoManager;
-import com.j256.ormlite.support.ConnectionSource;
 
 /**
  * @author sathvik
@@ -33,12 +36,12 @@ import com.j256.ormlite.support.ConnectionSource;
  */
 public class DbTextIndexer {
 
-    private String mQueryString = null;
     private HashMultiset queryTerms;
 
     private HashMap<Object, Integer> word2freq;
     private HashMap<Long, Long> postId2userId;
-    private Map<Long, UserEntity> userId2userObj = new HashMap<Long, UserEntity>();
+    // private Map<Long, UserEntity> userId2userObj = new HashMap<Long,
+    // UserEntity>();
 
     private Map<Long, Double> postid2tfirf;
 
@@ -47,34 +50,29 @@ public class DbTextIndexer {
     private HashMultimap<Long, Token> postid2Tokens = HashMultimap.create();
 
     private final int THRESHOLD_WORD_FREQ = 0;
-    private ConnectionSource mConnectionSrc;
+    // private ConnectionSource mConnectionSrc;
+    private int noOfDocs;
+
+    private static String dataIndexBasePath = "luceneIndex/%s/data";
 
     /** Creates a new instance of SearchEngine */
-    public DbTextIndexer(ConnectionSource connectionSrc) throws IOException {
+    public DbTextIndexer(int noOfDocs) throws IOException {
 
-	mConnectionSrc = connectionSrc;
+	clear();
 
 	word2freq = new HashMap<Object, Integer>();
 	postId2userId = new HashMap<Long, Long>();
 	postid2tfirf = new HashMap<Long, Double>();
 
-	userId2userObj = new HashMap<Long, UserEntity>();
-
 	postid2Tokens = HashMultimap.create();
 	parentId2postIds = HashMultimap.create();
+
+	this.noOfDocs = noOfDocs;
 
     }
 
     public HashMap<Long, Long> getPostId2UserIdMap() {
 	return postId2userId;
-    }
-
-    public Map<Long, Collection<Long>> getQnAMap() {
-	return (Map<Long, Collection<Long>>) parentId2postIds.asMap();
-    }
-
-    public Map<Long, UserEntity> getUserMap() {
-	return userId2userObj;
     }
 
     public Map<Long, Double> getTfIrfMap() {
@@ -85,69 +83,162 @@ public class DbTextIndexer {
 	return postid2Tokens;
     }
 
-    public void buildIndex(String queryString) throws IOException, ParseException, SQLException {
-	try {
-	    mQueryString = queryString;
-	    queryTerms = HashMultiset.create(Splitter.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(queryString));
+    // public void buildIndex(String queryString, Date date) throws IOException,
+    // ParseException, SQLException {
+    // try {
+    // mQueryString = queryString;
+    // queryTerms =
+    // HashMultiset.create(Splitter.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(queryString));
+    //
+    // Dao<DataEntity, Long> postsDao = DaoManager.createDao(mConnectionSrc,
+    // DataEntity.class);
+    // List<DataEntity> data_entites = postsDao.queryForAll();
+    // Application.totalNoOfResources = data_entites.size();
+    //
+    // for (DataEntity entity : data_entites) {
+    // addTokenFreqMap(entity, date);
+    // }
+    //
+    // Dao<UserEntity, Long> userDao = DaoManager.createDao(mConnectionSrc,
+    // UserEntity.class);
+    // List<UserEntity> user_entites = userDao.queryForAll();
+    // for (UserEntity entity : user_entites) {
+    // // Application.userId2userObj.put(entity.getUserId(), entity);
+    // updateUserMap(entity);
+    // }
+    // } catch (Exception e) {
+    // e.printStackTrace();
+    // System.out.println(" Exception while building index..." + e);
+    // }
+    //
+    // createInverseResFreqMap();
+    // }
 
-	    Dao<DataEntity, Long> postsDao = DaoManager.createDao(mConnectionSrc, DataEntity.class);
-	    List<DataEntity> data_entites = postsDao.queryForAll();
-	    Application.totalNoOfResources = data_entites.size();
+    public void buildIndex(TopDocs docs, String queryString, Date date, String filepath) throws IOException, ParseException, SQLException {
 
-	    for (DataEntity entity : data_entites) {
-		addTokenFreqMap(entity.getPostId(), entity.getCleanText(), entity.getParentId(), entity.getOwnerUserId());
-	    }
+	queryTerms = HashMultiset.create(Splitter.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(queryString));
 
-	    Dao<UserEntity, Long> userDao = DaoManager.createDao(mConnectionSrc, UserEntity.class);
-	    List<UserEntity> user_entites = userDao.queryForAll();
-	    for (UserEntity entity : user_entites) {
-		// Application.userId2userObj.put(entity.getUserId(), entity);
-		updateUserMap(entity);
-	    }
-	} catch (Exception e) {
-	    e.printStackTrace();
-	    System.out.println(" Exception while building index..." + e);
-	}
+	addTokenFreqMap(docs, date, filepath);
+	// updateUserMap(entity);
 
 	createInverseResFreqMap();
     }
 
-    private void addTokenFreqMap(long postid, String text, long parentId, long userId) {
-	Multiset<String> bagOfWords = HashMultiset.create(Splitter.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(text));
-	int totalcount = 0;
+    private void addTokenFreqMap(TopDocs docs, Date date, String filepath) throws IOException {
 
-	Token token;
-	int count = 0;
-	// Iterate the Query terms.
-	// Ignore if freq is too less.
-	for (Object word : queryTerms.elementSet()) {
-	    count = bagOfWords.count(word);
+	DateFormat format = new SimpleDateFormat("yyyy-mm-dd");
+	Date fmtCreationDate = null;
+	IndexSearcher dataSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(String.format(dataIndexBasePath,
+		filepath)).toPath())));
 
-	    totalcount = word2freq.get((String) word) != null ? word2freq.get((String) word) + count : 0;
-	    word2freq.put((String) word, totalcount);
-	    // System.out.println("THRESHOLD FREQ TEST " + count);
-	    if (count > THRESHOLD_WORD_FREQ) {
-		token = new Token(postid, text);
-		token.setFrequnecy(count);
-		token.setName((String) word);
+	for (ScoreDoc scoreDoc : docs.scoreDocs) {
+	    Document doc = dataSearcher.doc(scoreDoc.doc);
 
-		postid2Tokens.put(postid, token);
-		if (parentId > 0) {
-		    parentId2postIds.put(parentId, postid);
-		}
+	    long postId = doc.get("postid") != null ? Long.parseLong(doc.get("postid")) : -1;
+	    long parentId = doc.get("parentid") != null ? Long.parseLong(doc.get("parentid")) : -1;
+	    long userId = doc.get("userid") != null ? Long.parseLong(doc.get("userid")) : -1;
 
-		// System.out.println("USERID::" + userId);
-		if (userId > 0) {
-		    postId2userId.put(postid, userId);
+	    String creationDate = doc.get("creationDate");
+
+	    if (creationDate != null) {
+		try {
+		    fmtCreationDate = format.parse(creationDate);
+		} catch (java.text.ParseException e) {
+		    e.printStackTrace();
 		}
 	    }
+
+	    String text = doc.get("searchableText");
+
+	    Multiset<String> bagOfWords = HashMultiset.create(Splitter.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(text));
+	    int totalcount = 0;
+
+	    Token token;
+	    int count = 0;
+	    // Iterate the Query terms.
+	    // Ignore if freq is too less.
+	    for (Object word : queryTerms.elementSet()) {
+		count = bagOfWords.count(word);
+
+		totalcount = word2freq.get((String) word) != null ? word2freq.get((String) word) + count : 0;
+		word2freq.put((String) word, totalcount);
+		// System.out.println("THRESHOLD FREQ TEST " + count);
+		// if (fmtCreationDate != null && fmtCreationDate.before(date))
+		// {
+		    token = new Token(postId, text);
+		    token.setFrequnecy(count);
+		    token.setName((String) word);
+
+		    if (parentId > 0) {
+			postid2Tokens.put(postId, token);
+			parentId2postIds.put(parentId, postId);
+		    }
+		// }
+		// System.out.println("USERID::" + userId);
+		if (userId > 0) {
+		    postId2userId.put(postId, userId);
+		}
+	    }
+
 	}
 
     }
 
-    public void updateUserMap(UserEntity entity) throws SQLException {
-	userId2userObj.put(entity.getUserId(), entity);
-    }
+    // private void addTokenFreqMap(DataEntity entity, Date date) {
+    //
+    // long postid = entity.getPostId();
+    // String text = entity.getCleanText();
+    // long parentId = entity.getParentId();
+    // long userId = entity.getOwnerUserId();
+    //
+    // String creationDate = entity.getCreationDate();
+    // Date fmtCreationDate = null;
+    // DateFormat format = new SimpleDateFormat("yyyy-mm-dd");
+    // if (creationDate != null) {
+    // try {
+    // fmtCreationDate = format.parse(creationDate);
+    // } catch (java.text.ParseException e) {
+    // e.printStackTrace();
+    // }
+    // }
+    //
+    // Multiset<String> bagOfWords =
+    // HashMultiset.create(Splitter.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(text));
+    // int totalcount = 0;
+    //
+    // Token token;
+    // int count = 0;
+    // // Iterate the Query terms.
+    // // Ignore if freq is too less.
+    // for (Object word : queryTerms.elementSet()) {
+    // count = bagOfWords.count(word);
+    //
+    // totalcount = word2freq.get((String) word) != null ?
+    // word2freq.get((String) word) + count : 0;
+    // word2freq.put((String) word, totalcount);
+    // // System.out.println("THRESHOLD FREQ TEST " + count);
+    // if (count > THRESHOLD_WORD_FREQ && fmtCreationDate != null &&
+    // fmtCreationDate.before(date)) {
+    // token = new Token(postid, text);
+    // token.setFrequnecy(count);
+    // token.setName((String) word);
+    //
+    // if (parentId > 0) {
+    // postid2Tokens.put(postid, token);
+    // parentId2postIds.put(parentId, postid);
+    // }
+    // }
+    // // System.out.println("USERID::" + userId);
+    // if (userId > 0) {
+    // postId2userId.put(postid, userId);
+    // }
+    // }
+    //
+    // }
+
+    // public void updateUserMap(UserEntity entity) throws SQLException {
+    // userId2userObj.put(entity.getUserId(), entity);
+    // }
 
     private void createInverseResFreqMap() {
 	// System.out.println("Creating Inverse Freq Map...");
@@ -160,11 +251,14 @@ public class DbTextIndexer {
 		for (Token token : tokens) {
 		    int termFreq = token.getFreq();
 
-		    double irfweight = Application.round((double) Math.log(Application.totalNoOfResources / word2freq.get(token.getName())), 2);
+		    System.out.println("word2freq.get(token.getName())" + word2freq.get(token.getName()));
+
+		    double irfweight = Application.round((double) Math.log(noOfDocs / word2freq.get(token.getName())), 2);
 		    sum_tfirf = sum_tfirf + (termFreq * irfweight);
 
 		    token.setTfIrf(termFreq * irfweight);
 		}
+		System.out.println("Inserting TFIRF...");
 		postid2tfirf.put(postid, sum_tfirf);
 
 	    }
@@ -174,4 +268,18 @@ public class DbTextIndexer {
 	// System.out.println("Creating Inverse Freq Map completed...");
     }
 
+    private void clear() {
+	if (word2freq != null && word2freq.isEmpty() == false)
+	    word2freq.clear();
+	if (postId2userId != null && postId2userId.isEmpty() == false)
+	    postId2userId.clear();
+	if (postid2tfirf != null && postid2tfirf.isEmpty() == false)
+	    postid2tfirf.clear();
+
+	if (postid2Tokens != null && postid2Tokens.isEmpty() == false)
+	    postid2Tokens.clear();
+	if (parentId2postIds != null && parentId2postIds.isEmpty() == false)
+	    parentId2postIds.clear();
+
+    }
 }

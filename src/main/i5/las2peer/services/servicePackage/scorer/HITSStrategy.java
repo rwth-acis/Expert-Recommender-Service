@@ -21,7 +21,6 @@ public class HITSStrategy implements ScoreStrategy {
 
     private int maxIterations = 30;
     private double tolerance = 0.0000001d;
-    private double alpha = 0d;
     private Graph<String, RelationshipEdge> graph;
     private LinkedHashMap<String, Double> expert2score;
     private Map<Long, UserEntity> userId2userObj;

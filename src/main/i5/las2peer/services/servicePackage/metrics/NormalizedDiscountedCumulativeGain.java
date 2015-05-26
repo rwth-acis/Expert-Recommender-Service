@@ -72,9 +72,9 @@ public class NormalizedDiscountedCumulativeGain implements IEvaluator<Float> {
 
 	    System.out.println("RELEVANCE SCORES:: " + relevanceScores);
 	    float dcg = getDiscountedCumulativeGain(relevanceScores);
-	    float idealDcg = getDiscountedCumulativeGain(getIdealRelevanceScore(relevanceScores));
-
 	    System.out.println("DCG:: " + dcg);
+
+	    float idealDcg = getDiscountedCumulativeGain(getIdealRelevanceScore(relevanceScores));
 	    System.out.println("NDCG:: " + idealDcg);
 
 	    ndcg = dcg / idealDcg;
@@ -111,21 +111,25 @@ public class NormalizedDiscountedCumulativeGain implements IEvaluator<Float> {
      * @return float, A discounted cumulative gain value.
      */
     public float getDiscountedCumulativeGain(ArrayList<Integer> relevanceScores) {
-
 	ArrayList<Float> dcgains = new ArrayList<Float>();
-	if (relevanceScores != null && relevanceScores.size() > 1) {
-	    dcgains.add((float) relevanceScores.get(0));
+	float dcgGainValue = 0;
+	try {
+	    if (relevanceScores != null && relevanceScores.size() > 1) {
+		dcgains.add((float) relevanceScores.get(0));
 
-	    for (int i = 1; i < relevanceScores.size(); i++) {
-		float dcgVal = (float) (((float) relevanceScores.get(i) / Math.log(i + 1)) * Math.log(2));
-		dcgains.add(dcgains.get(i - 1) + dcgVal);
+		for (int i = 1; i < relevanceScores.size(); i++) {
+		    float dcgVal = (float) (((float) relevanceScores.get(i) / Math.log(i + 1)) * Math.log(2));
+		    dcgains.add(dcgains.get(i - 1) + dcgVal);
+		}
+		dcgGainValue = dcgains.get(dcgains.size() - 1);
+
+	    } else if (relevanceScores != null && relevanceScores.size() == 1) {
+		dcgGainValue = relevanceScores.get(0);
 	    }
-	    return dcgains.get(dcgains.size() - 1);
-	} else if (relevanceScores != null && relevanceScores.size() == 1) {
-	    dcgains.get(0);
+	} catch (Exception e) {
+	    System.out.println("Exception.." + e.getMessage());
 	}
-
-	return 0;
+	return dcgGainValue;
     }
 
 }

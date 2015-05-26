@@ -15,7 +15,6 @@ import java.util.Map;
 
 public class Application {
 
-	public static double totalNoOfResources = 0;
 	public static String algoName = "";
 
 	public static <K, V extends Comparable<? super V>> LinkedHashMap<K, V> sortByValue(
@@ -44,8 +43,5 @@ public class Application {
 		return bd.doubleValue();
 	}
 
-	public static void reset() {
-		totalNoOfResources = 0;
-	}
 
 }

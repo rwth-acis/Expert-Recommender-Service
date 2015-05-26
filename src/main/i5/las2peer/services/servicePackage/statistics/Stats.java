@@ -61,7 +61,7 @@ public class Stats {
 	return stats.getPercentile(75);
     }
 
-    public double getPercentileAbove(int value) {
+    public double getPercentileAbove(double value) {
 	return stats.getPercentile(value);
     }
 

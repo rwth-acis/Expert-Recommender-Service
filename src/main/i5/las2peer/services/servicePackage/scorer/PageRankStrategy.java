@@ -31,9 +31,10 @@ public class PageRankStrategy implements ScoreStrategy {
      * @param graph
      * @param userId2userObj
      */
-    public PageRankStrategy(Graph<String, RelationshipEdge> graph, Map<Long, UserEntity> userId2userObj) {
+    public PageRankStrategy(Graph<String, RelationshipEdge> graph, Map<Long, UserEntity> userId2userObj, double alpha) {
 	this.graph = graph;
 	this.userId2userObj = userId2userObj;
+	this.alpha = alpha;
     }
 
     @Override
