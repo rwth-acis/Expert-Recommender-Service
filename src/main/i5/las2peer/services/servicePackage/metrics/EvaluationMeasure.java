@@ -42,7 +42,7 @@ public class EvaluationMeasure {
     private Map<Long, UserEntity> userId2userObj;
     private EvaluationMetricsEntity evaluationEntity;
 
-    private static int collectionSize = 10;
+    private static int collectionSize = 30;
 
     public EvaluationMeasure(LinkedHashMap<String, Double> id2Score, Map<Long, UserEntity> userId2userObj, String name) {
 	this.userId2Score = id2Score;

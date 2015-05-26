@@ -54,10 +54,14 @@ public class Precision {
 	    // Calculate precision value only at relevant experts.
 	    double precision = 0;
 	    if (userEntity.isProbableExpert()) {
+		System.out.println("An expert..." + userEntity.getReputation());
 		noRelevantExperts++;
 		// precisions[i] = (double) noRelevantExperts / (i + 1);
-		precision = (double) noRelevantExperts / (i + 1);
+	    } else {
+		System.out.println("Not an expert..." + userEntity.getReputation());
 	    }
+	    precision = (double) noRelevantExperts / (i + 1);
+	    System.out.println("Precision..." + precision);
 	    precisions.add(precision);
 	    // System.out.println(" PRECISION:: " + precision);
 	    i++;
@@ -75,8 +79,8 @@ public class Precision {
 
 	System.out.println("CUM PRECISION:: " + cumulativePrecision);
 
-	if (noRelevantExperts > 0) {
-	    avgPrecision = (double) cumulativePrecision / noRelevantExperts;
+	if (precisions.size() > 0) {
+	    avgPrecision = (double) cumulativePrecision / precisions.size();
 	} else {
 	    avgPrecision = 0;
 	}

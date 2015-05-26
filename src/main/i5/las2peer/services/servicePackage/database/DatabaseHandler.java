@@ -298,7 +298,8 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	for (UserEntity entity : user_entites) {
 	    long reputation = entity.getReputation();
 	    updateBuilder.where().eq("userId", entity.getUserId());
-	    System.out.println(reputation + ":::" + stats.getPercentileAbove(99.7));
+	    System.out.println(reputation + ":::" + stats.getPercentileAbove(99.9));
+	    //if (reputation >= stats.getPercentileAbove(99.7)) {
 	    if (reputation >= stats.getPercentileAbove(99.7)) {
 		updateBuilder.updateColumnValue("probable_expert", true);
 	    } else {

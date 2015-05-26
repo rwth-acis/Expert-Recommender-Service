@@ -54,13 +54,13 @@ public class PageRankStrategy implements ScoreStrategy {
     public String getExperts() {
 	expert2score = Application.sortByValue(node2pagescore);
 
-	int i = 0;
+	int count = 0;
 	JSONArray jsonArray = new JSONArray();
 
 	for (String userid : expert2score.keySet()) {
-	    i++;
-	    // Restrict result to 10 items for now.
-	    if (i < 10) {
+	    count++;
+	    // Restrict result to 30 items for now.
+	    if (count < 30) {
 		UserEntity user = userId2userObj.get(Long.parseLong(userid));
 		user.setScore(node2pagescore.get(userid));
 		if (user != null) {
