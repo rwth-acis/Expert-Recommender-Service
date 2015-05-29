@@ -173,6 +173,16 @@ public class ServiceTest {
 	writer.write("evaluationResults/" + timeStamp + "_eval.csv");
     }
 
+    @Ignore
+    @Test
+    public void testMarkExperts() {
+	DatabaseHandler dbHandler = new DatabaseHandler("healthcare3", "root", "");
+	try {
+	    dbHandler.markExpertsForEvaluation(dbHandler.getConnectionSource());
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+    }
 
     @Test
     public void testQuerySet() {
@@ -180,34 +190,36 @@ public class ServiceTest {
 	c.setAddressPort(HTTP_ADDRESS, HTTP_PORT);
 
 	DatabaseHandler dbHandler = new DatabaseHandler("healthcare3", "root", "");
+	dbHandler.truncateEvaluationTable();
 
 	try {
 	    c.setLogin(Long.toString(testAgent.getId()), testPass);
 
-	    String filepath = "testQueries/query_tiny.txt";
-	    try (BufferedReader br = new BufferedReader(new FileReader(filepath))) {
-		for (String line; (line = br.readLine()) != null;) {
-		    // System.out.println("Query::" + line);
-		    String query = line;
-		    String url = mainPath + "datasets/2/algorithms/pagerank?evaluation=true";
-		    ClientResponse result = c.sendRequest("POST", url, query);
-		    assertEquals(200, result.getHttpCode());
+	    // String[] dates = new String[] { "2010-06-31", "2011-06-31",
+	    // "2011-12-31", "2012-06-31", "2012-12-31", "2013-06-31",
+	    // "2013-12-31",
+	    // "2014-06-31" };
+
+	    String[] dates = new String[] { "2014-05-01" }; // 2012-06-31 is not
+							    // used for CAware
+	    String filepath = "testQueries/query_full.txt";
+
+	    for (int i = 0; i < dates.length; i++) {
+		try (BufferedReader br = new BufferedReader(new FileReader(filepath))) {
+		    for (String line; (line = br.readLine()) != null;) {
+			// System.out.println("Query::" + line);
+			// Thread.sleep(10000);
+			String query = line;
+			String url = mainPath + "datasets/2/algorithms/communityAwarePagerank?evaluation=true&dateBefore=" + dates[i];
+			ClientResponse result = c.sendRequest("POST", url, query);
+			assertEquals(200, result.getHttpCode());
+
+		    }
 
 		}
-
 	    }
-
 	    testEvaluationCSVWriter();
 
-
-	    // String url = mainPath +
-	    // "datasets/2/algorithms/communityAwarePagerank?evaluation=true";
-	    // ClientResponse result = c.sendRequest("POST", url, "weight");
-	    // assertEquals(200, result.getHttpCode());
-
-	    // assertEquals(200, result.getHttpCode());
-	    // assertTrue(result.getResponse().trim().contains("testInput"));
-	    // //"testInput" name is part of response
 	} catch (Exception e) {
 	    e.printStackTrace();
 	    fail("Exception: " + e);
@@ -232,7 +244,7 @@ public class ServiceTest {
 		for (String line; (line = br.readLine()) != null;) {
 		    // System.out.println("Query::" + line);
 		    String query = line;
-		    String url = mainPath + "datasets/2/algorithms/datamodeling";
+		    String url = mainPath + "datasets/2/algorithms/pagerank?evaluation=true";
 		    ClientResponse result = c.sendRequest("POST", url, query);
 		    assertEquals(200, result.getHttpCode());
 		}
@@ -243,6 +255,36 @@ public class ServiceTest {
 	    fail("Exception: " + e);
 	}
 
+	testEvaluationCSVWriter();
+
+    }
+
+    @Ignore
+    @Test
+    public void testSingleQuery() {
+	MiniClient c = new MiniClient();
+	c.setAddressPort(HTTP_ADDRESS, HTTP_PORT);
+
+	long startTime = System.nanoTime();
+
+	DatabaseHandler dbHandler = new DatabaseHandler("cs", "root", "");
+	dbHandler.truncateEvaluationTable();
+
+	try {
+	    c.setLogin(Long.toString(testAgent.getId()), testPass);
+	    String url = mainPath + "datasets/4/algorithms/pagerank?evaluation=true";
+	    ClientResponse result = c.sendRequest("POST", url, "logic programming");
+	    assertEquals(200, result.getHttpCode());
+
+	} catch (Exception e) {
+	    e.printStackTrace();
+	    fail("Exception: " + e);
+	}
+
+	long endTime = System.nanoTime();
+
+	long duration = (endTime - startTime);
+	System.out.println("Duration for the call :: " + (duration / 1000000));
 	testEvaluationCSVWriter();
 
     }
@@ -272,7 +314,7 @@ public class ServiceTest {
 
 	try {
 	    c.setLogin(Long.toString(testAgent.getId()), testPass);
-	    ClientResponse result = c.sendRequest("POST", mainPath + "indexer?inputFormat=xml", "healthcare3");
+	    ClientResponse result = c.sendRequest("POST", mainPath + "indexer?inputFormat=xml", "fitness");
 	    assertEquals(200, result.getHttpCode());
 	} catch (Exception e) {
 	    e.printStackTrace();
@@ -390,6 +432,22 @@ public class ServiceTest {
 	}
     }
 
+    @Ignore
+    @Test
+    public void testSavingReputation() {
+	DatabaseHandler dbHandler = new DatabaseHandler("healthcare3", "root", "");
+	dbHandler.saveReputationValues();
+
+    }
+
+    @Ignore
+    @Test
+    public void testNoOfRepliesByUsers() {
+	DatabaseHandler dbHandler = new DatabaseHandler("nature", "root", "");
+	dbHandler.saveNoOfRepliesByUser();
+
+    }
+
     /**
      * Test the ServiceClass for valid rest mapping.
      * Important for development.
@@ -399,4 +457,5 @@ public class ServiceTest {
 	ExpertRecommenderService cl = new ExpertRecommenderService();
 	assertTrue(cl.debugMapping());
     }
+
 }
