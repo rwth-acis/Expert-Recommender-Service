@@ -15,6 +15,10 @@ import i5.las2peer.services.servicePackage.semanticTagger.SemanticTagger;
 import i5.las2peer.services.servicePackage.statistics.Stats;
 import i5.las2peer.services.servicePackage.textProcessor.StopWordRemover;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,6 +27,8 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.stmt.PreparedQuery;
+import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.UpdateBuilder;
 import com.j256.ormlite.support.ConnectionSource;
 
@@ -108,7 +114,11 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	    }
 
 	    if (res.getParentId() != null) {
-		data.setParentId(Long.parseLong(res.getParentId()));
+		try {
+		    data.setParentId(Long.parseLong(res.getParentId()));
+		} catch (NumberFormatException e) {
+		    e.printStackTrace();
+		}
 	    }
 
 	    if (res.getPostId() != null) {
@@ -117,6 +127,18 @@ public class DatabaseHandler extends MySqlOpenHelper {
 
 	    if (res.getPostTypeId() != null) {
 		data.setPostTypeId(Integer.parseInt(res.getPostTypeId()));
+	    } else {
+		// If parent Id is not present, fallback, check if title is a
+		// reply by matching "Re:"
+		String text = res.getTitle();
+		if (text != null && text.startsWith("Re:")) {
+		    System.out.println("Ans:: " + text);
+		    data.setPostTypeId(2);
+		} else {
+		    System.out.println("Q:: " + text);
+		    data.setPostTypeId(1);
+		}
+
 	    }
 
 	    if (res.getScore() != null) {
@@ -183,7 +205,7 @@ public class DatabaseHandler extends MySqlOpenHelper {
 		entity.setUserAccId(Long.parseLong(user.getUserAccId()));
 	    }
 
-	    if (user.getUserAccId() != null) {
+	    if (user.getUserId() != null) {
 		entity.setUserId(Long.parseLong(user.getUserId()));
 	    }
 
@@ -194,7 +216,12 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	    entity.setCreationDate(user.getCreationDate());
 	    entity.setAbtMe(user.getAbtMe());
 	    entity.setLocation(user.getLocation());
-	    entity.setUserName(user.getUserName());
+
+	    if (user.getUserName() != null && user.getUserName().length() > 0) {
+		entity.setUserName(user.getUserName());
+	    } else {
+		entity.setUserName("anonymous");
+	    }
 	    entity.setWebsiteUrl(user.getWebsiteUrl());
 
 	    UserDao.createIfNotExists(entity);
@@ -299,8 +326,8 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	    long reputation = entity.getReputation();
 	    updateBuilder.where().eq("userId", entity.getUserId());
 	    System.out.println(reputation + ":::" + stats.getPercentileAbove(99.9));
-	    //if (reputation >= stats.getPercentileAbove(99.7)) {
-	    if (reputation >= stats.getPercentileAbove(99.7)) {
+	    // if (reputation >= stats.getPercentileAbove(99.7)) {
+	    if (reputation >= 2000) {
 		updateBuilder.updateColumnValue("probable_expert", true);
 	    } else {
 		updateBuilder.updateColumnValue("probable_expert", false);
@@ -418,6 +445,56 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	    evaluationDao = DaoManager.createDao(super.getConnectionSource(), EvaluationMetricsEntity.class);
 	    evaluationDao.delete(evaluationDao.queryForAll());
 	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+
+    }
+
+    public void saveReputationValues() {
+	ConnectionSource source = super.getConnectionSource();
+	try {
+	    Dao<UserEntity, Long> UserDao = DaoManager.createDao(source, UserEntity.class);
+	    List<UserEntity> userentities = UserDao.queryForAll();
+	    try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("reputations.txt", false)))) {
+		for (UserEntity entity : userentities) {
+		    double rep = entity.getReputation();
+		    out.println((int) rep);
+		}
+	    } catch (IOException e) {
+		// exception handling left as an exercise for the reader
+	    }
+
+	} catch (SQLException e) {
+
+	    e.printStackTrace();
+	}
+
+    }
+
+    public void saveNoOfRepliesByUser() {
+	ConnectionSource source = super.getConnectionSource();
+
+	try {
+	    Dao<UserEntity, Long> UserDao = DaoManager.createDao(source, UserEntity.class);
+	    Dao<DataEntity, Long> DataDao = DaoManager.createDao(source, DataEntity.class);
+
+	    QueryBuilder<DataEntity, Long> queryBuilder = DataDao.queryBuilder();
+
+	    List<UserEntity> userentities = UserDao.queryForAll();
+	    try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("reputations.txt", false)))) {
+		for (UserEntity entity : userentities) {
+		    double userId = entity.getUserId();
+		    queryBuilder.where().eq("owner_user_id", userId);
+		    PreparedQuery<DataEntity> preparedQuery = queryBuilder.prepare();
+		    int size = DataDao.query(preparedQuery).size();
+		    out.println(userId + "=" + size);
+		}
+	    } catch (IOException e) {
+		System.out.println("IO Exception " + e);
+	    }
+
+	} catch (SQLException e) {
+
 	    e.printStackTrace();
 	}
 

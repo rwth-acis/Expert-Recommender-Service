@@ -41,19 +41,19 @@ public class ERSXmlParser implements IParser<List<Post>, List<User>> {
     @Override
     public List<Post> getPosts() {
 
-	List<Post> posts_list = null;
+	List<Post> postsList = null;
 	File file = new File(postsFilePath);
 	try {
 
 	    context = JAXBContext.newInstance(Posts.class);
 	    Unmarshaller um = context.createUnmarshaller();
 	    Posts posts = (Posts) um.unmarshal(file);
-	    posts_list = (ArrayList) posts.getResources();
+	    postsList = (ArrayList) posts.getResources();
 
 	} catch (JAXBException e) {
 	    e.printStackTrace();
 	}
-	return posts_list;
+	return postsList;
     }
 
     /*

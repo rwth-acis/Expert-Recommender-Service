@@ -39,6 +39,7 @@ public abstract class MySqlOpenHelper {
     private void createDatabase() {
 	try {
 	    close();
+	    System.out.println("Creating database...");
 	    sqlConnection = DriverManager.getConnection(DB_URL, mUserName, mPassword);
 	    mJdbConnection = new JdbcDatabaseConnection(sqlConnection);
 	    mJdbConnection.executeStatement("CREATE DATABASE IF NOT EXISTS " + mDbName, -1);

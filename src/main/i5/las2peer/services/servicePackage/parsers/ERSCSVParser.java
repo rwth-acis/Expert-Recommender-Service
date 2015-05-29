@@ -64,17 +64,19 @@ public class ERSCSVParser implements IParser<List<PostCSV>, List<UserCSV>> {
      */
     @Override
     public List<UserCSV> getUsers() {
-	List<UserCSV> user_list = null;
+	List<UserCSV> userList = null;
 	try {
+	    reader = new FileReader(filePath);
 	    
 	    CSVEntryParser<UserCSV> entryUserParser = new AnnotationEntryParser<UserCSV>(UserCSV.class, provider);
-	    CSVReader<UserCSV> csvUserReader = new CSVReaderBuilder<UserCSV>(reader).entryParser(entryUserParser).build();
+	    CSVReader<UserCSV> csvUserReader = new CSVReaderBuilder<UserCSV>(reader)
+		    .entryParser(entryUserParser).build();
 
-	    user_list = csvUserReader.readAll();
+	    userList = csvUserReader.readAll();
 	} catch (IOException e) {
 	    e.printStackTrace();
 	}
-	return user_list;
+	return userList;
     }
 
 }

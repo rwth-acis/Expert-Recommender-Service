@@ -5,6 +5,9 @@ package i5.las2peer.services.servicePackage.parsers.csvparser;
 
 import i5.las2peer.services.servicePackage.entities.EvaluationMetricsEntity;
 import i5.las2peer.services.servicePackage.entities.QueryEntity;
+import i5.las2peer.services.servicePackage.ocd.OCD;
+import i5.las2peer.services.servicePackage.scorer.CAwarePageRank;
+import i5.las2peer.services.servicePackage.utils.Application;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -86,6 +89,7 @@ public class EvaluationCSVWriter {
 
 	    CSVWriter<EvaluationCSV> csvWriter = new CSVWriterBuilder<EvaluationCSV>(out).entryConverter(new EvaluationCSVConverter()).build();
 
+	    out.write(Application.dateInfo + ", alpha(intra weight) = " + CAwarePageRank.intraWeight + ", OCD Algo = " + OCD.ALGORITHM_LABEL + "\n");
 	    if (csvWriter != null && evaluationResults != null) {
 		csvWriter.writeAll(evaluationResults);
 		csvWriter.flush();

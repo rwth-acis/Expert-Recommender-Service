@@ -28,9 +28,11 @@ import i5.las2peer.services.servicePackage.graph.GraphWriter;
 import i5.las2peer.services.servicePackage.graph.JUNGGraphCreator;
 import i5.las2peer.services.servicePackage.indexer.DbSematicsIndexer;
 import i5.las2peer.services.servicePackage.indexer.DbTextIndexer;
-import i5.las2peer.services.servicePackage.indexer.LuceneMysqlIndexer;
 import i5.las2peer.services.servicePackage.metrics.EvaluationMeasure;
 import i5.las2peer.services.servicePackage.ocd.OCD;
+import i5.las2peer.services.servicePackage.parsers.ERSCSVParser;
+import i5.las2peer.services.servicePackage.parsers.ERSXmlParser;
+import i5.las2peer.services.servicePackage.parsers.csvparser.UserCSV;
 import i5.las2peer.services.servicePackage.parsers.xmlparser.CommunityCoverMatrixParser;
 import i5.las2peer.services.servicePackage.scorer.CommunityAwareHITSStrategy;
 import i5.las2peer.services.servicePackage.scorer.CommunityAwarePageRankStrategy;
@@ -43,6 +45,7 @@ import i5.las2peer.services.servicePackage.searcher.LuceneSearcher;
 import i5.las2peer.services.servicePackage.textProcessor.PorterStemmer;
 import i5.las2peer.services.servicePackage.textProcessor.QueryAnalyzer;
 import i5.las2peer.services.servicePackage.textProcessor.StopWordRemover;
+import i5.las2peer.services.servicePackage.utils.Application;
 import i5.las2peer.services.servicePackage.utils.LocalFileManager;
 import i5.las2peer.services.servicePackage.utils.UserMapSingleton;
 import i5.las2peer.services.servicePackage.visualization.Visualizer;
@@ -79,8 +82,7 @@ import com.j256.ormlite.table.TableUtils;
 
 @Path("ers")
 @Version("0.1")
-@ApiInfo(title = "Expert Recommender Service", description = "A RESTful expert recommender service",
- termsOfServiceUrl = "sample-tos.io", contact = "sathvik.parekodi@rwth-aachen.de", license = "Apache License 2", licenseUrl = "http://www.apache.org/licenses/LICENSE-2.0")
+@ApiInfo(title = "Expert Recommender Service", description = "A RESTful expert recommender service", termsOfServiceUrl = "sample-tos.io", contact = "sathvik.parekodi@rwth-aachen.de", license = "Apache License 2", licenseUrl = "http://www.apache.org/licenses/LICENSE-2.0")
 public class ExpertRecommenderService extends Service {
 
     public ExpertRecommenderService() {
@@ -406,6 +408,9 @@ public class ExpertRecommenderService extends Service {
 	    // TODO: Throw custom exception.
 	}
 
+	// TODO:Remove this.
+	Application.dateInfo = dateBefore;
+
 	String expertPosts = "{}";
 	QueryAnalyzer qAnalyzer = null;
 	try {
@@ -649,16 +654,22 @@ public class ExpertRecommenderService extends Service {
 
 	    String dirPath = "datasets/" + dataset_name;
 
-	    // if (inputType.equalsIgnoreCase("xml")) {
-	    // ERSXmlParser xmlparser = new ERSXmlParser(dirPath);
-	    // dbHandler.addPosts(xmlparser.getPosts());
-	    // dbHandler.addUsers(xmlparser.getUsers());
-	    // } else {
-	    // System.out.println("CSV Parser started...");
-	    // ERSCSVParser csvparser = new ERSCSVParser(dirPath);
-	    // dbHandler.addPosts(csvparser.getPosts());
-	    // // dbHandler.addUsers(csvparser.getUsers());
-	    // }
+	    if (inputType.equalsIgnoreCase("xml")) {
+		ERSXmlParser xmlparser = new ERSXmlParser(dirPath);
+		dbHandler.addPosts(xmlparser.getPosts());
+		dbHandler.addUsers(xmlparser.getUsers());
+	    } else {
+
+		ERSCSVParser csvparser = new ERSCSVParser(dirPath);
+
+		dbHandler.addPosts(csvparser.getPosts());
+		List<UserCSV> users = csvparser.getUsers();
+		System.out.println("CSV Parser started..." + users.size());
+
+		if (users != null && users.size() > 0) {
+		    dbHandler.addUsers(users);
+		}
+	    }
 	    //
 	    // // Add semantics tag.
 	    // dbHandler.addSemanticTags();
@@ -666,9 +677,11 @@ public class ExpertRecommenderService extends Service {
 
 	    // System.out.println("Database operations completed...");
 
-	    LuceneMysqlIndexer indexer = new LuceneMysqlIndexer(dbHandler.getConnectionSource(), dataset_name + "_index");
-	    System.out.println("Building index...");
-	    indexer.buildIndex();
+	    // LuceneMysqlIndexer indexer = new
+	    // LuceneMysqlIndexer(dbHandler.getConnectionSource(), dataset_name
+	    // + "_index");
+	    // System.out.println("Building index...");
+	    // indexer.buildIndex();
 
 	    res = new HttpResponse("Indexer finished successfully");
 	    res.setStatus(200);
@@ -678,11 +691,9 @@ public class ExpertRecommenderService extends Service {
 	    e.printStackTrace();
 	    res = new HttpResponse("SQL Exception");
 	    res.setStatus(500);
-	} catch (IOException e) {
+	} catch (Exception e) {
 	    e.printStackTrace();
 	    System.out.println("IO exception " + e);
-	    res = new HttpResponse("IO Exception");
-	    res.setStatus(500);
 	}
 
 	return res;

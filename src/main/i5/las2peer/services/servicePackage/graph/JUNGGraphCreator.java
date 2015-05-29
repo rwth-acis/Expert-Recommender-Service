@@ -142,7 +142,7 @@ public class JUNGGraphCreator {
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}
-	System.out.println("Graph created...");
+	System.out.println("Edge count:: " + graph.getEdgeCount() + " Node count:: " + graph.getVertexCount());
 	// System.out.println("Graph Creation Time... " + timer.stop());
 
 	// save2JungGraphML("fitness_graph_jung.graphml");

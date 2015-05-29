@@ -28,21 +28,25 @@ public class OCD {
     private String graphId;
     private String coverId;
 
-    private static final String BASE_PATH = "https://api.learning-layers.eu/ocd/";
+    // private static final String BASE_PATH =
+    // "https://api.learning-layers.eu/ocd/";
+    private static final String BASE_PATH = "http://localhost:9080/ocd/";
 
     private static final String UPLOAD_URL = BASE_PATH + "graphs?name=%s";
     private static final String IDENTIFY_COVERS_URL = BASE_PATH + "covers/graphs/%s/algorithms?algorithm=%s";
     private static final String GET_COVERS_URL = BASE_PATH + "covers/%s/graphs/%s";
 
     // Not exposed to the client.
-    private static final String ALGORITHM_LABEL = "SPEAKER_LISTENER_LABEL_PROPAGATION_ALGORITHM";
+    public static final String ALGORITHM_LABEL = "RANDOM_WALK_LABEL_PROPAGATION_ALGORITHM";
 
     public OCD() {
 
     }
 
     private String getBasicAuthEncodedString() {
-	byte[] encoding = Base64.encodeBase64("Sathvik:dzJODeM4l5OmQVh".getBytes());
+	// byte[] encoding =
+	// Base64.encodeBase64("Sathvik:dzJODeM4l5OmQVh".getBytes());
+	byte[] encoding = Base64.encodeBase64("User:user".getBytes());
 	return new String(encoding);
     }
 
@@ -64,7 +68,7 @@ public class OCD {
 	    httppost.addHeader("Authorization", "Basic " + getBasicAuthEncodedString());
 
 	    System.out.println("--------------GRAPH CONTENT-----------------------");
-	    System.out.println(new String(graphContent));
+	    // System.out.println(new String(graphContent));
 
 	    ArrayList<NameValuePair> postParameters = new ArrayList<NameValuePair>();
 	    postParameters.add(new BasicNameValuePair("name", "testing_graph_upload"));

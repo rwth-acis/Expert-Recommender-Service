@@ -40,48 +40,126 @@ public class UserCSV implements IUser {
 
     private String websiteUrl;
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see i5.las2peer.services.servicePackage.parsers.IUser#getUserAccId()
+     */
+    @Override
     public String getUserAccId() {
-	return accountId;
+	// TODO Auto-generated method stub
+	return null;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see i5.las2peer.services.servicePackage.parsers.IUser#getUserName()
+     */
+    @Override
     public String getUserName() {
+	// TODO Auto-generated method stub
 	return userName;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see i5.las2peer.services.servicePackage.parsers.IUser#getReputation()
+     */
+    @Override
     public String getReputation() {
-	return reputation;
+	// TODO Auto-generated method stub
+	return null;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see i5.las2peer.services.servicePackage.parsers.IUser#getCreationDate()
+     */
+    @Override
     public String getCreationDate() {
-	return creationDate;
+	// TODO Auto-generated method stub
+	return null;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see i5.las2peer.services.servicePackage.parsers.IUser#getLocation()
+     */
+    @Override
     public String getLocation() {
-	return location;
+	// TODO Auto-generated method stub
+	return null;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see i5.las2peer.services.servicePackage.parsers.IUser#getAbtMe()
+     */
+    @Override
     public String getAbtMe() {
-	return aboutme;
+	// TODO Auto-generated method stub
+	return null;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see i5.las2peer.services.servicePackage.parsers.IUser#getViews()
+     */
+    @Override
     public String getViews() {
-	return views;
+	// TODO Auto-generated method stub
+	return null;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see i5.las2peer.services.servicePackage.parsers.IUser#getUpVotes()
+     */
+    @Override
     public String getUpVotes() {
-	return upvotes;
+	// TODO Auto-generated method stub
+	return null;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see i5.las2peer.services.servicePackage.parsers.IUser#getDownVotes()
+     */
+    @Override
     public String getDownVotes() {
-	return downvotes;
+	// TODO Auto-generated method stub
+	return null;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see i5.las2peer.services.servicePackage.parsers.IUser#getUserId()
+     */
+    @Override
     public String getUserId() {
+	// TODO Auto-generated method stub
 	return userId;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see i5.las2peer.services.servicePackage.parsers.IUser#getWebsiteUrl()
+     */
+    @Override
     public String getWebsiteUrl() {
-	return websiteUrl;
+	// TODO Auto-generated method stub
+	return null;
     }
+
 
 }

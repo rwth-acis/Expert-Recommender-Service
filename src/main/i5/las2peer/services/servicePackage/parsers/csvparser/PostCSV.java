@@ -20,6 +20,15 @@ public class PostCSV implements IPost {
     @MapToColumn(column = 7)
     String body;
 
+    @MapToColumn(column = 3)
+    String userId;
+
+    @MapToColumn(column = 1)
+    String parentId;
+
+    @MapToColumn(column = 6)
+    String title;
+
     public PostCSV() {
 
     }
@@ -35,12 +44,11 @@ public class PostCSV implements IPost {
     /*
      * (non-Javadoc)
      * 
-     * @see i5.las2peer.services.servicePackage.parsers.IPost#getAccAnsId()
+     * @see i5.las2peer.services.servicePackage.parsers.IPost#getOwnerUserId()
      */
     @Override
-    public String getAccAnsId() {
-	// TODO Auto-generated method stub
-	return null;
+    public String getOwnerUserId() {
+	return this.userId;
     }
 
     /*
@@ -52,6 +60,18 @@ public class PostCSV implements IPost {
     public String getCreationDate() {
 	return date;
     }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see i5.las2peer.services.servicePackage.parsers.IPost#getAccAnsId()
+     */
+    @Override
+    public String getAccAnsId() {
+	// TODO Auto-generated method stub
+	return null;
+    }
+
 
     /*
      * (non-Javadoc)
@@ -75,16 +95,7 @@ public class PostCSV implements IPost {
 	return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see i5.las2peer.services.servicePackage.parsers.IPost#getOwnerUserId()
-     */
-    @Override
-    public String getOwnerUserId() {
-	// TODO Auto-generated method stub
-	return null;
-    }
+
 
     /*
      * (non-Javadoc)
@@ -117,8 +128,7 @@ public class PostCSV implements IPost {
      */
     @Override
     public String getTitle() {
-	// TODO Auto-generated method stub
-	return null;
+	return title;
     }
 
     /*
@@ -194,8 +204,9 @@ public class PostCSV implements IPost {
      */
     @Override
     public String getParentId() {
-	// TODO Auto-generated method stub
-	return null;
+	return parentId;
     }
+
+
 
 }
