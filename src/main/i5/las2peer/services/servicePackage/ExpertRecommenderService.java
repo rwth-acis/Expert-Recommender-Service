@@ -32,8 +32,8 @@ import i5.las2peer.services.servicePackage.database.entities.UserAccEntity;
 import i5.las2peer.services.servicePackage.database.entities.UserClickDetails;
 import i5.las2peer.services.servicePackage.database.entities.UserEntity;
 import i5.las2peer.services.servicePackage.exceptions.ERSException;
-import i5.las2peer.services.servicePackage.lucene.indexer.DbSematicsIndexer;
-import i5.las2peer.services.servicePackage.lucene.indexer.DbTextIndexer;
+import i5.las2peer.services.servicePackage.lucene.indexer.SematicsIndexer;
+import i5.las2peer.services.servicePackage.lucene.indexer.TextIndexer;
 import i5.las2peer.services.servicePackage.lucene.indexer.LuceneMysqlIndexer;
 import i5.las2peer.services.servicePackage.lucene.searcher.LuceneSearcher;
 import i5.las2peer.services.servicePackage.metrics.EvaluationMeasure;
@@ -289,8 +289,8 @@ public class ExpertRecommenderService extends Service {
 	ConnectionSource connectionSource = dbHandler.getConnectionSource();
 	long queryId = qAnalyzer.getId(connectionSource);
 
-	DbTextIndexer dbTextIndexer = null;
-	DbSematicsIndexer dbSemanticsIndexer = null;
+	TextIndexer dbTextIndexer = null;
+	SematicsIndexer dbSemanticsIndexer = null;
 
 	Map<Long, UserEntity> usermap = null;
 
@@ -308,10 +308,10 @@ public class ExpertRecommenderService extends Service {
 	    LuceneSearcher searcher = new LuceneSearcher(qAnalyzer.getText(), databaseName + "_index");
 	    TopDocs docs = searcher.performSearch(qAnalyzer.getText(), Integer.MAX_VALUE);
 
-	    dbTextIndexer = new DbTextIndexer(searcher.getTotalNumberOfDocs());
-	    dbTextIndexer.buildIndex(docs, qAnalyzer.getText(), databaseName + "_index");
+	    dbTextIndexer = new TextIndexer(searcher.getTotalNumberOfDocs());
+	    dbTextIndexer.buildMaps(docs, qAnalyzer.getText(), databaseName + "_index");
 
-	    dbSemanticsIndexer = new DbSematicsIndexer(dbHandler.getConnectionSource());
+	    dbSemanticsIndexer = new SematicsIndexer(dbHandler.getConnectionSource());
 	    TopDocs semanticDocs = searcher.performSemanticSearch();
 	    dbSemanticsIndexer.buildIndex(semanticDocs, qAnalyzer.getText(), databaseName + "_index");
 
@@ -334,12 +334,6 @@ public class ExpertRecommenderService extends Service {
 		e.printStackTrace();
 	    }
 
-	} catch (SQLException e) {
-
-	    e.printStackTrace();
-	    HttpResponse res = new HttpResponse("Some error occured on the server, Please contact the developer..." + e);
-	    res.setStatus(404);
-	    return res;
 	} catch (IOException e) {
 	    e.printStackTrace();
 	} catch (ParseException e) {

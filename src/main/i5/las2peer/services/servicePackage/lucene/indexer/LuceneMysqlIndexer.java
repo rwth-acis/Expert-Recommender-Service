@@ -62,7 +62,7 @@ public class LuceneMysqlIndexer {
      */
     public void buildIndex() throws SQLException, IOException {
 
-	log.info("Building index...");
+	System.out.println("Building index...");
 
 	Directory dataIndexDir = FSDirectory.open(new File(String.format(dataIndexBasePath, indexDirectoryPath)).toPath());
 	IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
@@ -96,7 +96,7 @@ public class LuceneMysqlIndexer {
 
 		StopWordRemover stopWordRemover = new StopWordRemover(entity.getBody());
 		body = stopWordRemover.getPlainText();
-		log.info("Clean text " + body);
+		System.out.println("Clean text " + body);
 	    } else {
 		body = entity.getCleanText();
 	    }
@@ -119,7 +119,7 @@ public class LuceneMysqlIndexer {
 		fullSearchableText.append(" ");
 	    }
 
-	    // log.info("Searchable text ::" +
+	    // System.out.println("Searchable text ::" +
 	    // fullSearchableText.toString());
 
 	    if (fullSearchableText != null && creationDate != null) {
@@ -144,7 +144,7 @@ public class LuceneMysqlIndexer {
 	}
 
 	updateSemanticsIndex();
-	log.info("Building index completed...");
+	System.out.println("Building index completed...");
 
     }
 
@@ -184,7 +184,7 @@ public class LuceneMysqlIndexer {
 	    StringBuffer fullSearchableText = new StringBuffer();
 
 	    if (semanticEntity != null) {
-		// log.info("SEMANTIC TAGS :: " +
+		// System.out.println("SEMANTIC TAGS :: " +
 		// semanticEntity.getTags());
 		fullSearchableText.append(semanticEntity.getTags().replaceAll(",", " "));
 

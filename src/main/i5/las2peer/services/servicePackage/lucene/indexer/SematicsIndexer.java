@@ -34,21 +34,20 @@ import com.j256.ormlite.support.ConnectionSource;
  * @author sathvik
  *
  */
-public class DbSematicsIndexer {
+public class SematicsIndexer {
     HashMultiset<String> mEntities;
     HashMultiset<String> mQueryEntities;
 
     private HashMultimap<Long, SemanticToken> postId2EntityToken;
-    // private HashMultimap<Long, EntityToken> postId2InverseSemanticEntity;
     private Map<Long, Double> postId2efirf;
     private HashMap<String, Integer> totalEntityFreq;
 
     private long totalNoResources = 0;
     private ConnectionSource mConnectionSource;
 
-    private static String dataIndexBasePath = "luceneIndex/%s/data";
+    private static String semanticsIndexBasePath = "luceneIndex/%s/semantics";
 
-    public DbSematicsIndexer(ConnectionSource connectionSrc) {
+    public SematicsIndexer(ConnectionSource connectionSrc) {
 	mConnectionSource = connectionSrc;
 
 	postId2EntityToken = HashMultimap.create();
@@ -62,7 +61,8 @@ public class DbSematicsIndexer {
 	mQueryEntities = tagger.getTokens();
 
 	try {
-	    IndexSearcher dataSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(String.format(dataIndexBasePath, filepath))
+	    IndexSearcher dataSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(String.format(semanticsIndexBasePath,
+		    filepath))
 		    .toPath())));
 
 	    Dao<SemanticTagEntity, Long> tagDao = DaoManager.createDao(mConnectionSource, SemanticTagEntity.class);

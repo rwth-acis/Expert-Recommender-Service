@@ -1,8 +1,8 @@
 package i5.las2peer.services.servicePackage.scorer;
 
 import i5.las2peer.services.servicePackage.database.entities.UserEntity;
-import i5.las2peer.services.servicePackage.lucene.indexer.DbSematicsIndexer;
-import i5.las2peer.services.servicePackage.lucene.indexer.DbTextIndexer;
+import i5.las2peer.services.servicePackage.lucene.indexer.SematicsIndexer;
+import i5.las2peer.services.servicePackage.lucene.indexer.TextIndexer;
 import i5.las2peer.services.servicePackage.utils.Application;
 
 import java.util.ArrayList;
@@ -23,8 +23,8 @@ public class DataModelingStrategy implements ScoreStrategy {
     private Map<Long, Double> userId2score = new HashMap<Long, Double>();
     LinkedHashMap<Long, Double> expert2score;
     // private Map<Long, UserEntity> mUserId2userObj;
-    private DbTextIndexer mTextIndexer;
-    private DbSematicsIndexer mSemanticsIndexer;
+    private TextIndexer mTextIndexer;
+    private SematicsIndexer mSemanticsIndexer;
     private Map<Long, UserEntity> userId2userObj;
     private HashMultimap userId2postIds;
 
@@ -33,7 +33,7 @@ public class DataModelingStrategy implements ScoreStrategy {
      * @param textIndexer
      * @param semanticsIndexer
      */
-    public DataModelingStrategy(DbTextIndexer textIndexer, DbSematicsIndexer semanticsIndexer, Map<Long, UserEntity> userId2userObj, double alpha) {
+    public DataModelingStrategy(TextIndexer textIndexer, SematicsIndexer semanticsIndexer, Map<Long, UserEntity> userId2userObj, double alpha) {
 	this.alpha = alpha;
 	mTextIndexer = textIndexer;
 	mSemanticsIndexer = semanticsIndexer;

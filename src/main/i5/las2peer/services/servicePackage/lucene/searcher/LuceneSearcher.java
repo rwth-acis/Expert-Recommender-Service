@@ -11,21 +11,16 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiFields;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
@@ -83,6 +78,7 @@ public class LuceneSearcher {
 	queryString = query;
 
 	postId2userId = new HashMap<Long, Long>();
+
     }
 
     /**
@@ -219,6 +215,7 @@ public class LuceneSearcher {
 	Document doc = null;
 	Token token = null;
 
+
 	Bits liveDocs = MultiFields.getLiveDocs(reader);
 	for (int i = 0; i < reader.maxDoc(); i++) {
 	    if (liveDocs != null && !liveDocs.get(i))
@@ -297,26 +294,6 @@ public class LuceneSearcher {
 
     public Map<Long, Collection<Long>> getQnAMap() {
 	return (Map<Long, Collection<Long>>) parentId2postIds.asMap();
-    }
-
-    private ArrayList<String> getQueryTermsAsStrings() throws ParseException {
-	Set<Term> terms = new HashSet<Term>();
-	if (queryString != null) {
-	    Query query = dataParser.parse(queryString);
-	    query.extractTerms(terms);
-	}
-
-	ArrayList<String> qTerms = new ArrayList<String>();
-	if (terms != null && terms.size() > 0) {
-	    Iterator<Term> it = terms.iterator();
-	    while (it.hasNext()) {
-		qTerms.add(it.next().toString());
-	    }
-
-	    return qTerms;
-	}
-
-	return null;
     }
 
     public Document getDocument(int docId) throws IOException {
