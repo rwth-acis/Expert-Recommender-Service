@@ -61,9 +61,6 @@ public class LuceneMysqlIndexer {
      * @throws IOException
      */
     public void buildIndex() throws SQLException, IOException {
-
-	System.out.println("Building index...");
-
 	Directory dataIndexDir = FSDirectory.open(new File(String.format(dataIndexBasePath, indexDirectoryPath)).toPath());
 	IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
 	indexWriter = new IndexWriter(dataIndexDir, config);

@@ -32,11 +32,14 @@ import i5.las2peer.services.servicePackage.database.entities.UserAccEntity;
 import i5.las2peer.services.servicePackage.database.entities.UserClickDetails;
 import i5.las2peer.services.servicePackage.database.entities.UserEntity;
 import i5.las2peer.services.servicePackage.exceptions.ERSException;
-import i5.las2peer.services.servicePackage.lucene.indexer.SematicsIndexer;
-import i5.las2peer.services.servicePackage.lucene.indexer.TextIndexer;
 import i5.las2peer.services.servicePackage.lucene.indexer.LuceneMysqlIndexer;
 import i5.las2peer.services.servicePackage.lucene.searcher.LuceneSearcher;
+import i5.las2peer.services.servicePackage.mapper.SematicsMapper;
+import i5.las2peer.services.servicePackage.mapper.TextMapper;
 import i5.las2peer.services.servicePackage.metrics.EvaluationMeasure;
+import i5.las2peer.services.servicePackage.parsers.ERSCSVParser;
+import i5.las2peer.services.servicePackage.parsers.ERSXmlParser;
+import i5.las2peer.services.servicePackage.parsers.csvparser.UserCSV;
 import i5.las2peer.services.servicePackage.scorer.CommunityAwareHITSStrategy;
 import i5.las2peer.services.servicePackage.scorer.CommunityAwarePageRankStrategy;
 import i5.las2peer.services.servicePackage.scorer.DataModelingStrategy;
@@ -59,10 +62,12 @@ import i5.las2peer.services.servicePackage.utils.semanticTagger.TagExtractor;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -72,6 +77,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
+import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
@@ -244,12 +250,10 @@ public class ExpertRecommenderService extends Service {
 
     @POST
     @Path("datasets/{datasetId}/algorithms/datamodeling")
-
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Success") })
     @Summary("Returns the id of the expert collection.")
-
     public HttpResponse modelExperts(@PathParam("datasetId") String datasetId, @ContentParam String query,
 	    @QueryParam(name = "dateBefore", defaultValue = "2025-12-31") String dateBefore,
 	    @QueryParam(name = "alpha", defaultValue = "0.5") double alpha) {
@@ -289,8 +293,8 @@ public class ExpertRecommenderService extends Service {
 	ConnectionSource connectionSource = dbHandler.getConnectionSource();
 	long queryId = qAnalyzer.getId(connectionSource);
 
-	TextIndexer dbTextIndexer = null;
-	SematicsIndexer dbSemanticsIndexer = null;
+	TextMapper dbTextIndexer = null;
+	SematicsMapper dbSemanticsIndexer = null;
 
 	Map<Long, UserEntity> usermap = null;
 
@@ -308,10 +312,10 @@ public class ExpertRecommenderService extends Service {
 	    LuceneSearcher searcher = new LuceneSearcher(qAnalyzer.getText(), databaseName + "_index");
 	    TopDocs docs = searcher.performSearch(qAnalyzer.getText(), Integer.MAX_VALUE);
 
-	    dbTextIndexer = new TextIndexer(searcher.getTotalNumberOfDocs());
+	    dbTextIndexer = new TextMapper(searcher.getTotalNumberOfDocs());
 	    dbTextIndexer.buildMaps(docs, qAnalyzer.getText(), databaseName + "_index");
 
-	    dbSemanticsIndexer = new SematicsIndexer(dbHandler.getConnectionSource());
+	    dbSemanticsIndexer = new SematicsMapper(dbHandler.getConnectionSource());
 	    TopDocs semanticDocs = searcher.performSemanticSearch();
 	    dbSemanticsIndexer.buildIndex(semanticDocs, qAnalyzer.getText(), databaseName + "_index");
 
@@ -370,12 +374,10 @@ public class ExpertRecommenderService extends Service {
      */
     @POST
     @Path("datasets/{datasetId}/algorithms/{algorithmName}")
-
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Success") })
     @Summary("Returns the id of the expert collection, id of evaluation metrics and id of the visualization")
-
     public HttpResponse applyAlgorithm(@PathParam("datasetId") String datasetId, @PathParam("algorithmName") String algorithmName,
 	    @ContentParam String query, @QueryParam(name = "evaluation", defaultValue = "false") boolean isEvaluation,
 	    @QueryParam(name = "visualization", defaultValue = "true") boolean isVisualization,
@@ -462,12 +464,10 @@ public class ExpertRecommenderService extends Service {
 
     @GET
     @Path("datasets/{datasetId}/experts/{expertsCollectionId}/expert/{expertId}/posts")
-
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Success") })
     @Summary("Returns the related posts of the expert user.")
-
     public HttpResponse getPosts(@PathParam("datasetId") String datasetId, @PathParam("expertsCollectionId") String expertCollectionId,
 	    @PathParam("expertId") String expertId) {
 
@@ -513,12 +513,10 @@ public class ExpertRecommenderService extends Service {
 
     @POST
     @Path("datasets/{datasetId}/semantics")
-
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.TEXT_PLAIN)
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Success") })
     @Summary("Adds semantic tags to the text.")
-
     public HttpResponse addSemantics(@PathParam(value = "datasetId") String datasetId) {
 
 	String dbName = getDatabaseName(datasetId);
@@ -538,27 +536,63 @@ public class ExpertRecommenderService extends Service {
     }
 
     /**
-     * This method is called only once when the new dataset is added. Currently,
-     * it is invoked from the test case.
      * 
-     * @param dataset_name
-     *            Name of the dataset, whose data has to be indexed. Dataset is
-     *            present in datasets directory.
-     * @return 200 response code, if database operations and indexing succeeds.
-     *         500 response code, if exception occurs.
+     * @param databaseName
+     *            Name of the database to store corresponding to dataset.
+     * @param displayName
+     *            Display Name of the dataset. Useful for the web client.
+     * @return
      */
     @POST
-    @Path("indexer")
+    @Path("datasets/{databaseName}/prepare")
+    public HttpResponse prepareDataset(@PathParam("databaseName") String databaseName, @ContentParam String displayName) {
 
-    @Produces(MediaType.TEXT_PLAIN)
-    @Consumes(MediaType.TEXT_PLAIN)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success") })
-    @Summary("Indexes the text retrieved from the database.")
+	if (databaseName == null || StringUtils.isAlphanumeric(databaseName) == false) {
+	    try {
+		throw new ERSException("dataset name is not valid");
+	    } catch (ERSException e) {
+		e.printStackTrace();
+		HttpResponse res = new HttpResponse(e.getMessage());
+		res.setStatus(200);
+	    }
+	}
 
-    public HttpResponse prepareData(@ContentParam String dataset_name, @QueryParam(name = "inputFormat", defaultValue = "xml") String inputType) {
-	DatabaseHandler dbHandler = new DatabaseHandler(dataset_name, "root", "");
+	// TODO: If dataset is not present in the path throw an exception.
+
+	DatabaseHandler handler = new DatabaseHandler("ersdb", "root", "");
+	DataInfoEntity entity = new DataInfoEntity();
+	try {
+	    Dao<DataInfoEntity, Long> DatasetInfoDao = DaoManager.createDao(handler.getConnectionSource(), DataInfoEntity.class);
+
+	    QueryBuilder<DataInfoEntity, Long> qb = DatasetInfoDao.queryBuilder();
+	    qb.where().eq("database_name", databaseName);
+	    List<DataInfoEntity> entities = qb.query();
+
+	    // If entry is present, return the id. Else create and insert the
+	    // entity.
+	    if (entities != null && entities.size() > 0) {
+		entity = entities.get(0);
+	    } else {
+		entity.setDatabase(databaseName);
+		if (displayName == null)
+		    displayName = databaseName;
+
+		entity.setDataset(displayName);
+
+		Calendar cal = Calendar.getInstance();
+		entity.setDate(cal.getTime());
+
+		entity.setFilepath(databaseName);
+		entity.setIndexFilepath(databaseName + "_index");
+		DatasetInfoDao.create(entity);
+	    }
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+
+	// Create database and necessary tables in the database.
+	DatabaseHandler dbHandler = new DatabaseHandler(databaseName, "root", "");
 	ConnectionSource connectionSrc;
-	HttpResponse res = null;
 	try {
 	    connectionSrc = dbHandler.getConnectionSource();
 	    // Create necessary tables.
@@ -569,49 +603,107 @@ public class ExpertRecommenderService extends Service {
 	    TableUtils.createTableIfNotExists(connectionSrc, EvaluationMetricsEntity.class);
 	    TableUtils.createTableIfNotExists(connectionSrc, GraphEntity.class);
 	    TableUtils.createTableIfNotExists(connectionSrc, ExpertEntity.class);
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
 
-	    String dirPath = "datasets/" + dataset_name;
+	HttpResponse res = new HttpResponse(String.valueOf(entity.getId()));
+	res.setStatus(200);
+	return res;
+    }
 
-	    // if (inputType.equalsIgnoreCase("xml")) {
-	    // ERSXmlParser xmlparser = new ERSXmlParser(dirPath);
-	    // dbHandler.addPosts(xmlparser.getPosts());
-	    // dbHandler.addUsers(xmlparser.getUsers());
-	    // } else {
-	    //
-	    // ERSCSVParser csvparser = new ERSCSVParser(dirPath);
-	    //
-	    // dbHandler.addPosts(csvparser.getPosts());
-	    // List<UserCSV> users = csvparser.getUsers();
-	    // log.info("CSV Parser started..." + users.size());
-	    //
-	    // if (users != null && users.size() > 0) {
-	    // dbHandler.addUsers(users);
-	    // }
-	    // }
-	    //
-	    // // Add semantics tag.
-	    // dbHandler.addSemanticTags();
-	    // dbHandler.markExpertsForEvaluation(connectionSrc);
+    /**
+     * 
+     * @param id
+     *            Id of the dataset corresponding to the database to update.
+     *            This is obtained while preparing the database.
+     * @param type
+     *            Input format of the dataset (xml, csv, json)
+     * @return A string representing if the update was success or failure.
+     */
+    @POST
+    @Path("datasets/{datasetId}/parse")
+    public HttpResponse parse(@PathParam("datasetId") String id, @QueryParam(name = "format", defaultValue = "xml") String type) {
 
-	    // log.info("Database operations completed...");
+	HttpResponse res = null;
 
-	    LuceneMysqlIndexer indexer = new LuceneMysqlIndexer(dbHandler.getConnectionSource(), dataset_name + "_index");
+	String databaseName = getDatabaseName(id);
+	if (databaseName == null) {
+	    try {
+		throw new ERSException("dataset name is null");
+	    } catch (ERSException e) {
+		e.printStackTrace();
+	    }
+	}
+
+	DatabaseHandler dbHandler = new DatabaseHandler(databaseName, "root", "");
+	String dirPath = "datasets/" + databaseName;
+	try {
+	    if (type.equalsIgnoreCase("xml")) {
+		log.info("XML Parser started...");
+		ERSXmlParser xmlparser = new ERSXmlParser(dirPath);
+		dbHandler.addPosts(xmlparser.getPosts());
+		dbHandler.addUsers(xmlparser.getUsers());
+	    } else {
+		log.info("CSV Parser started...");
+		ERSCSVParser csvparser = new ERSCSVParser(dirPath);
+		dbHandler.addPosts(csvparser.getPosts());
+		List<UserCSV> users = csvparser.getUsers();
+
+		if (users != null && users.size() > 0) {
+		    dbHandler.addUsers(users);
+		}
+	    }
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	    res = new HttpResponse("failure");
+	    res.setStatus(200);
+	    return res;
+	}
+
+	res = new HttpResponse("success");
+	res.setStatus(200);
+	return res;
+    }
+
+    /**
+     * 
+     * @param id
+     *            Id of the dataset returned in the first step while preparing
+     *            the database.
+     * @return A success or failure string.
+     */
+    @POST
+    @Path("datasets/{datasetId}/indexer")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.TEXT_PLAIN)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Indexing success") })
+    @Summary("Indexes the text stored in the database.")
+    public HttpResponse index(@PathParam("datasetId") String id) {
+
+	String databaseName = getDatabaseName(id);
+	String indexDir = getIndexDirectory(id);
+
+	DatabaseHandler dbHandler = new DatabaseHandler(databaseName, "root", "");
+	HttpResponse res = null;
+	try {
+	    LuceneMysqlIndexer indexer = new LuceneMysqlIndexer(dbHandler.getConnectionSource(), indexDir);
 	    log.info("Building index...");
 	    indexer.buildIndex();
 
-	    res = new HttpResponse("Indexer finished successfully");
-	    res.setStatus(200);
+	    res = new HttpResponse("Indexing success");
 
 	} catch (SQLException e) {
-	    log.info("SQL EXCEPTION......" + e);
 	    e.printStackTrace();
-	    res = new HttpResponse("SQL Exception");
-	    res.setStatus(500);
+	    res = new HttpResponse("Failed to perform database opertaion");
+	    log.info("SQL EXCEPTION" + e);
 	} catch (Exception e) {
 	    e.printStackTrace();
-	    log.info("IO exception " + e);
+	    res = new HttpResponse("Failed to perform indexing");
+	    log.info("Failed to perform indexing" + e);
 	}
 
+	res.setStatus(200);
 	return res;
     }
 
@@ -790,6 +882,23 @@ public class ExpertRecommenderService extends Service {
 	handler.close();
 
 	return databaseName;
+    }
+
+    private String getIndexDirectory(String datasetId) {
+	DatabaseHandler handler = new DatabaseHandler("ersdb", "root", "");
+	String filepath = null;
+	try {
+	    Dao<DataInfoEntity, Long> DatasetInfoDao = DaoManager.createDao(handler.getConnectionSource(), DataInfoEntity.class);
+	    DataInfoEntity datasetEntity = DatasetInfoDao.queryForId(Long.parseLong(datasetId));
+	    filepath = datasetEntity.getIndexFilepath();
+
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+
+	handler.close();
+
+	return filepath;
     }
 
     /**

@@ -307,6 +307,7 @@ public class ServiceTest {
 
     }
 
+    @Ignore
     @Test
     public void testIndexerXML() {
 	MiniClient c = new MiniClient();

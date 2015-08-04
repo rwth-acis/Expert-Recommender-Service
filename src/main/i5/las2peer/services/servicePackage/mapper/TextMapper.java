@@ -1,7 +1,7 @@
 /**
  * 
  */
-package i5.las2peer.services.servicePackage.lucene.indexer;
+package i5.las2peer.services.servicePackage.mapper;
 
 import i5.las2peer.services.servicePackage.models.Token;
 import i5.las2peer.services.servicePackage.utils.Application;
@@ -35,9 +35,9 @@ import com.google.common.collect.Multiset;
  *         frequency)TF-IRF map
  *
  */
-public class TextIndexer {
+public class TextMapper {
 
-    private Log log = LogFactory.getLog(TextIndexer.class);
+    private Log log = LogFactory.getLog(TextMapper.class);
 
     private HashMap<Object, Integer> word2totalFreq;
     private HashMap<Long, Long> postId2userId;
@@ -48,7 +48,7 @@ public class TextIndexer {
 
     private static String dataIndexBasePath = "luceneIndex/%s/data";
 
-    public TextIndexer(int docsCount) throws IOException {
+    public TextMapper(int docsCount) throws IOException {
 	clear();
 
 	word2totalFreq = new HashMap<Object, Integer>();

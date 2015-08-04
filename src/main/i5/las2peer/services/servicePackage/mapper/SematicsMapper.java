@@ -1,7 +1,7 @@
 /**
  * 
  */
-package i5.las2peer.services.servicePackage.lucene.indexer;
+package i5.las2peer.services.servicePackage.mapper;
 
 import i5.las2peer.services.servicePackage.database.entities.SemanticTagEntity;
 import i5.las2peer.services.servicePackage.models.SemanticToken;
@@ -34,7 +34,7 @@ import com.j256.ormlite.support.ConnectionSource;
  * @author sathvik
  *
  */
-public class SematicsIndexer {
+public class SematicsMapper {
     HashMultiset<String> mEntities;
     HashMultiset<String> mQueryEntities;
 
@@ -47,7 +47,7 @@ public class SematicsIndexer {
 
     private static String semanticsIndexBasePath = "luceneIndex/%s/semantics";
 
-    public SematicsIndexer(ConnectionSource connectionSrc) {
+    public SematicsMapper(ConnectionSource connectionSrc) {
 	mConnectionSource = connectionSrc;
 
 	postId2EntityToken = HashMultimap.create();
