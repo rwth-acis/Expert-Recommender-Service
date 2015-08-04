@@ -105,7 +105,7 @@ public class ExpertRecommenderService extends Service {
     @Path("datasets")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success") })
     @Summary("Returns the available dataset on the server.")
     public HttpResponse getAvailableDatasets() {
 
@@ -144,7 +144,7 @@ public class ExpertRecommenderService extends Service {
     @Path("datasets/{datasetId}/experts/{expertsId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success") })
     @Summary("Returns the collection of experts for the specific id. Id is retrieved after applying recommendetaion algorithm on the dataset")
     public HttpResponse getExperts(@PathParam("datasetId") String datasetId, @PathParam("expertsId") String expertsId) {
 	log.info("expertsId:: " + expertsId);
@@ -171,7 +171,7 @@ public class ExpertRecommenderService extends Service {
     @Path("datasets/{datasetId}/evaluations/{evaluationId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success") })
     @Summary("Returns the evaluation metrics computed if requested when applying algorithms. Evaluation Id is retrieved after applying algorithm on the dataset.")
     public HttpResponse getEvaluationResults(@PathParam("datasetId") String datasetId, @PathParam("evaluationId") String evaluationId) {
 
@@ -198,7 +198,7 @@ public class ExpertRecommenderService extends Service {
     @Path("datasets/{datasetId}/visualizations/{visualizationId}")
     @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.TEXT_PLAIN)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success") })
     @Summary("Returns the visualization graph to be consumed by the client such as sigmaJS")
     public HttpResponse getVisulaizationData(@PathParam("visualizationId") String visId) {
 
@@ -220,7 +220,7 @@ public class ExpertRecommenderService extends Service {
     @Path("datasets/{datasetId}/users/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success") })
     @Summary("Returns the details of the experts")
     public HttpResponse getUser(@PathParam("datasetId") String datasetId, @PathParam("userId") String userId) {
 
@@ -247,7 +247,7 @@ public class ExpertRecommenderService extends Service {
 
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success") })
     @Summary("Returns the id of the expert collection.")
 
     public HttpResponse modelExperts(@PathParam("datasetId") String datasetId, @ContentParam String query,
@@ -379,7 +379,7 @@ public class ExpertRecommenderService extends Service {
 
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success") })
     @Summary("Returns the id of the expert collection, id of evaluation metrics and id of the visualization")
 
     public HttpResponse applyAlgorithm(@PathParam("datasetId") String datasetId, @PathParam("algorithmName") String algorithmName,
@@ -471,7 +471,7 @@ public class ExpertRecommenderService extends Service {
 
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.TEXT_PLAIN)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success") })
     @Summary("Returns the related posts of the expert user.")
 
     public HttpResponse getPosts(@PathParam("datasetId") String datasetId, @PathParam("expertsCollectionId") String expertCollectionId,
@@ -522,7 +522,7 @@ public class ExpertRecommenderService extends Service {
 
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.TEXT_PLAIN)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success") })
     @Summary("Adds semantic tags to the text.")
 
     public HttpResponse addSemantics(@PathParam(value = "datasetId") String datasetId) {
@@ -558,7 +558,7 @@ public class ExpertRecommenderService extends Service {
 
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.TEXT_PLAIN)
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success") })
     @Summary("Indexes the text retrieved from the database.")
 
     public HttpResponse prepareData(@ContentParam String dataset_name, @QueryParam(name = "inputFormat", defaultValue = "xml") String inputType) {
