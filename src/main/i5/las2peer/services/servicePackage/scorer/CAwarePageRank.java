@@ -1,6 +1,6 @@
 package i5.las2peer.services.servicePackage.scorer;
 
-import i5.las2peer.services.servicePackage.ocd.NodeCoverManager;
+import i5.las2peer.services.servicePackage.ocd.NodeCoverParser;
 
 import java.util.HashMap;
 
@@ -16,8 +16,8 @@ import edu.uci.ics.jung.graph.Graph;
  */
 
 public class CAwarePageRank<V, E> extends PageRankWithPriors<V, E> {
-    private HashMap<Long, NodeCoverManager> nodeId2Covers;
-    public static final double intraWeight = 0.6;
+    private HashMap<Long, NodeCoverParser> nodeId2Covers;
+    public static double intraWeight = 0.8;
 
     /**
      * 
@@ -26,9 +26,10 @@ public class CAwarePageRank<V, E> extends PageRankWithPriors<V, E> {
      * @param alpha
      * @param nodeId2Covers
      */
-    public CAwarePageRank(Graph<V, E> g, Transformer<E, Double> edge_weights, double alpha, HashMap<Long, NodeCoverManager> nodeId2Covers) {
+    public CAwarePageRank(Graph<V, E> g, Transformer<E, Double> edge_weights, double alpha, HashMap<Long, NodeCoverParser> nodeId2Covers) {
 	super(g, edge_weights, ScoringUtils.getUniformRootPrior(g.getVertices()), alpha);
 	this.nodeId2Covers = nodeId2Covers;
+
     }
 
     /**
@@ -37,15 +38,16 @@ public class CAwarePageRank<V, E> extends PageRankWithPriors<V, E> {
      * @param alpha
      * @param nodeId2Covers
      */
-    public CAwarePageRank(Graph<V, E> g, double alpha, HashMap<Long, NodeCoverManager> nodeId2Covers) {
+    public CAwarePageRank(Graph<V, E> g, double alpha, HashMap<Long, NodeCoverParser> nodeId2Covers, double intraWeight) {
 	super(g, ScoringUtils.getUniformRootPrior(g.getVertices()), alpha);
 	this.nodeId2Covers = nodeId2Covers;
+	CAwarePageRank.intraWeight = intraWeight;
     }
 
     @Override
     public double update(V v) {
-	collectDisappearingPotential(v);
-	NodeCoverManager ncManager = nodeId2Covers.get(Long.parseLong(v.toString()));
+
+	NodeCoverParser ncManager = nodeId2Covers.get(Long.parseLong(v.toString()));
 
 	// If cannot find a cover, do a regular PageRank update.
 	if (ncManager == null) {
@@ -62,7 +64,7 @@ public class CAwarePageRank<V, E> extends PageRankWithPriors<V, E> {
 	for (E e : graph.getInEdges(v)) {
 	    int incident_count = getAdjustedIncidentCount(e);
 	    for (V w : graph.getIncidentVertices(e)) {
-		NodeCoverManager neighborNCManager = nodeId2Covers.get(Long.parseLong(w.toString()));
+		NodeCoverParser neighborNCManager = nodeId2Covers.get(Long.parseLong(w.toString()));
 		long neighbourCoverId = neighborNCManager.getDominantCover();
 
 		if (!w.equals(v) || hyperedges_are_self_loops) {
@@ -72,6 +74,8 @@ public class CAwarePageRank<V, E> extends PageRankWithPriors<V, E> {
 		    } else {
 			edgeWeight = edgeWeight * intraWeight;
 		    }
+
+		    // System.out.println("edgeWeight "+edgeWeight);
 		    v_input += (getCurrentValue(w) * edgeWeight / incident_count);
 		}
 	    }

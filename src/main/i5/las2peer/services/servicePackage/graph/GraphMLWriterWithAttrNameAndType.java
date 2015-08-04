@@ -25,31 +25,37 @@ import edu.uci.ics.jung.io.GraphMLWriter;
  *
  */
 public class GraphMLWriterWithAttrNameAndType<V, E> extends GraphMLWriter<V, E> {
-    private HashMap<String, String> attrName2attrVal;
+    // private HashMap<String, String> attrName2attrVal;
+    private HashMap<String, HashMap<String, String>> headers = new HashMap<String, HashMap<String, String>>();
 
     public GraphMLWriterWithAttrNameAndType() {
 
     }
 
-    public void setKeyAttributes(HashMap<String, String> key2val) {
-	this.attrName2attrVal = key2val;
+    // public void setKeyAttributes(HashMap<String, String> key2val) {
+    // this.attrName2attrVal = key2val;
+    // }
+
+    public void addHeader(String key, HashMap<String, String> key2val) {
+	headers.put(key, key2val);
     }
 
     /**
      * Overriding from the library, because default method does not add
-     * attr.name and attr.value
+     * attr.name and attr.value. These parameters are required for OCD service
+     * and for changing properties of the nodes such as color and size.
      * 
      * @see GraphMLWriter
      */
     public void writeKeySpecification(String key, String type, GraphMLMetadata<?> ds, BufferedWriter bw) throws IOException {
 	bw.write("<key id=\"" + key + "\" for=\"" + type + "\"");
 
-	if (type != null && type.equals("node") && attrName2attrVal != null) {
-	    for (Map.Entry<String, String> entry : attrName2attrVal.entrySet()) {
+	HashMap<String, String> header = headers.get(key);
+	if (type != null && type.equals("node") && header != null) {
+	    for (Map.Entry<String, String> entry : header.entrySet()) {
 		bw.write(" " + entry.getKey() + "=\"" + entry.getValue() + "\" ");
 	    }
 	}
-
 	boolean closed = false;
 	// write out description if any
 	String desc = ds.description;

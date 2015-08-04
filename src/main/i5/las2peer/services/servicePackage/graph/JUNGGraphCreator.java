@@ -1,7 +1,9 @@
 package i5.las2peer.services.servicePackage.graph;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -83,7 +85,7 @@ public class JUNGGraphCreator {
     // TODO: May have to pass entire indexer.
     public void createGraph(Map<Long, Collection<Long>> qus2ans, HashMap<Long, Long> postId2userId) {
 	// Stopwatch timer = Stopwatch.createStarted();
-	System.out.println("Creating graph...");
+	// System.out.println("Creating graph...");
 
 	try {
 	    for (Long key : qus2ans.keySet()) {
@@ -91,18 +93,6 @@ public class JUNGGraphCreator {
 		// System.out.println("Key::" + key);
 		if (postId2userId.containsKey(key)) {
 		    long qUserId = postId2userId.get(key);
-		    // UserEntity user =
-		    // Application.userId2userObj.get(q_user_id);
-		    // if (q_user_id > 0 && user != null) {
-		    // // user.setRelatedPost(key);
-		    // Set termObjs = postid2Resource1.get(key);
-		    // if (termObjs.size() > 0) {
-		    // Resource res = (Resource) termObjs.iterator().next();
-		    // user.setTitle(res.getText());
-		    // } else {
-		    // user.setTitle("Title is empty");
-		    // }
-		    // }
 
 		    if (qUserId > 0) {
 			// System.out.println("post " + key + " userid " +
@@ -114,22 +104,6 @@ public class JUNGGraphCreator {
 			    Long aUserId = postId2userId.get(value);
 			    // user = Application.userId2userObj.get(a_user_id);
 			    if (aUserId != null) {
-				// if
-				// (Application.userId2userObj1.get(a_user_id)
-				// !=
-				// null) {
-				// user.setRelatedPost(value);
-				//
-				// Set termObjs = TERM_FREQ_MAP.get(value);
-				// if (termObjs.size() > 0) {
-				// Resource res = (Resource) termObjs.iterator()
-				// .next();
-				// user.setTitle(res.getText());
-				//
-				// } else {
-				// user.setTitle("Title is empty");
-				// }
-				// }
 				createVertex(String.valueOf(aUserId));
 				createEdge(String.valueOf(qUserId), String.valueOf(aUserId), String.valueOf(value));
 			    }
@@ -142,9 +116,31 @@ public class JUNGGraphCreator {
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}
-	System.out.println("Edge count:: " + graph.getEdgeCount() + " Node count:: " + graph.getVertexCount());
-	// System.out.println("Graph Creation Time... " + timer.stop());
+	// System.out.println("Edge count:: " + graph.getEdgeCount() +
+	// " Node count:: " + graph.getVertexCount());
 
-	// save2JungGraphML("fitness_graph_jung.graphml");
     }
+
+    /**
+     * 
+     * @param currNodeId
+     *            Id of the node for which connected edge labels are needed.
+     * @return List of string containing the labels from the edges connecting
+     *         the current node.
+     */
+    public ArrayList<String> getConnectedLabels(String currNodeId) {
+	ArrayList<String> edgeLabelList = new ArrayList<String>();
+	if (graph != null) {
+
+	    Collection<RelationshipEdge> edges = graph.getInEdges(currNodeId);
+	    Iterator<RelationshipEdge> it = edges.iterator();
+	    while (it.hasNext()) {
+		RelationshipEdge edge = it.next();
+		edgeLabelList.add(edge.toString());
+	    }
+	}
+
+	return edgeLabelList;
+    }
+
 }

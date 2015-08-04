@@ -1,26 +1,20 @@
+![LAS2peer](https://github.com/rwth-acis/LAS2peer/blob/master/img/logo/bitmap/las2peer-logo-128x128.png)
+LAS2peer-Template-Project
 =======================
-## An Expert Recommender framework.
-### UNDER DEVELOPMENT.
 
-![alt text](https://github.com/rwth-acis/Recommendation-Service/blob/master/screenshot.png "Sample screenshot of a graph.")
+An Expert Recommender service.
+This is a RESTful web service for expert recommendation. This is mainly suited  for the dataset that are of the form of question and answer forums such as www.stackexchange.com.
 
-Red node is the main hub in the network. 
+This service is based on the LAS2peer Template Project and its underlying LAS2peer framework. For any information on these please refer to
 
-Blue and Violet nodes shows the differnce in two algorithms namely Community aware HITS and regular HITS.
-Motivation is to find not only hub nodes but to find useful nodes with awareness of community knowledge.
+https://github.com/rwth-acis/LAS2peer-Template-Project
 
-Test cases are failed currently as it is under modifications.
+and
 
-To build the project, clone the project and run "ant" command from the root directory of the project.
+https://github.com/rwth-acis/LAS2peer
 
-To start the LAS2Peer server, 
-Run
-sh bin/start_network.sh from the root of the project.
+![](https://github.com/github/123.png)
 
-Currently, Framework is under development and cannot be used directly. 
 
 Requirements:
-
-MySql - For storing data.
-
-Ant - For build system.
+MySql database - Used as relational database to store details about the dataset and experts in the dataset.

@@ -3,7 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.metrics;
 
-import i5.las2peer.services.servicePackage.entities.UserEntity;
+import i5.las2peer.services.servicePackage.database.entities.UserEntity;
 import i5.las2peer.services.servicePackage.utils.Application;
 
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ public class Recall implements IEvaluator<Double> {
     }
 
     public void compute() {
-	System.out.println("Computing Recall...");
+	//System.out.println("Computing Recall...");
 	Iterator<String> iterator = this.userId2score.keySet().iterator();
 	int noRelevantExperts = 0;
 	int i = 0;

@@ -14,20 +14,20 @@ public class PostCSV implements IPost {
     @MapToColumn(column = 0)
     String postid;
 
-    @MapToColumn(column = 4)
-    String date;
-
-    @MapToColumn(column = 7)
-    String body;
+    @MapToColumn(column = 1)
+    String parentId;
 
     @MapToColumn(column = 3)
     String userId;
 
-    @MapToColumn(column = 1)
-    String parentId;
+    @MapToColumn(column = 4)
+    String date;
 
     @MapToColumn(column = 6)
     String title;
+
+    @MapToColumn(column = 7)
+    String body;
 
     public PostCSV() {
 

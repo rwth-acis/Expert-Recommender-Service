@@ -1,6 +1,6 @@
 package i5.las2peer.services.servicePackage.models;
 
-import i5.las2peer.services.servicePackage.semanticTagger.SemanticTagger;
+import i5.las2peer.services.servicePackage.utils.semanticTagger.SemanticTagger;
 
 /**
  * Represents the semantic data that is retrieved by a web service.

@@ -3,7 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.utils;
 
-import i5.las2peer.services.servicePackage.entities.UserEntity;
+import i5.las2peer.services.servicePackage.database.entities.UserEntity;
 
 import java.sql.SQLException;
 import java.util.HashMap;

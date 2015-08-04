@@ -109,4 +109,65 @@ public class UserModelingStrategy implements ScoreStrategy {
 		return null;
 	}
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * i5.las2peer.services.servicePackage.scorer.ScoreStrategy#saveResults()
+     */
+    @Override
+    public void saveResults() {
+	// TODO Auto-generated method stub
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * i5.las2peer.services.servicePackage.scorer.ScoreStrategy#getExpertsId()
+     */
+    @Override
+    public long getExpertsId() {
+	// TODO Auto-generated method stub
+	return 0;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * i5.las2peer.services.servicePackage.scorer.ScoreStrategy#getEvaluationId
+     * ()
+     */
+    @Override
+    public long getEvaluationId() {
+	// TODO Auto-generated method stub
+	return 0;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * i5.las2peer.services.servicePackage.scorer.ScoreStrategy#getVisualizationId
+     * ()
+     */
+    @Override
+    public long getVisualizationId() {
+	// TODO Auto-generated method stub
+	return 0;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see i5.las2peer.services.servicePackage.scorer.ScoreStrategy#close()
+     */
+    @Override
+    public void close() {
+	// TODO Auto-generated method stub
+
+    }
+
 }

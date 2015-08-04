@@ -3,8 +3,8 @@
  */
 package i5.las2peer.services.servicePackage.metrics;
 
-import i5.las2peer.services.servicePackage.entities.EvaluationMetricsEntity;
-import i5.las2peer.services.servicePackage.entities.UserEntity;
+import i5.las2peer.services.servicePackage.database.entities.EvaluationMetricsEntity;
+import i5.las2peer.services.servicePackage.database.entities.UserEntity;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -75,7 +75,7 @@ public class EvaluationMeasure {
     }
 
     public void computePrecisionRecall() throws IOException {
-	System.out.println("PRECISION - RECALL ::");
+	//System.out.println("PRECISION - RECALL ::");
 	if (precision == null) {
 	    computePrecision();
 	}
@@ -90,7 +90,7 @@ public class EvaluationMeasure {
     }
 
     public void compute11ptIP() {
-	System.out.println("11 pt Interpolated precision ::");
+	//System.out.println("11 pt Interpolated precision ::");
 	epIAP = new ElevenPointInterpolatedAveragePrecision();
 	epIAP.compute(recall.getRoundedValues(), precision.getRoundedPrecisionValues());
 
@@ -154,11 +154,11 @@ public class EvaluationMeasure {
 	JsonArray jRecalls = new JsonArray();
 	JsonArray jPrecisions = new JsonArray();
 
-	System.out.println("Iterating precision recall...");
+	//System.out.println("Iterating precision recall...");
 	while (prIterator.hasNext()) {
 	    Map.Entry pair = (Map.Entry) prIterator.next();
 
-	    System.out.println((double) pair.getKey() + " :: " + (double) pair.getValue());
+	    //System.out.println((double) pair.getKey() + " :: " + (double) pair.getValue());
 
 	    JsonPrimitive recalls = new JsonPrimitive((double) pair.getKey());
 	    JsonPrimitive precision = new JsonPrimitive((double) pair.getValue());

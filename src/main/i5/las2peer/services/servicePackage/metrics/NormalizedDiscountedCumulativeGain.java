@@ -3,8 +3,8 @@
  */
 package i5.las2peer.services.servicePackage.metrics;
 
-import i5.las2peer.services.servicePackage.entities.UserEntity;
-import i5.las2peer.services.servicePackage.statistics.Stats;
+import i5.las2peer.services.servicePackage.database.entities.UserEntity;
+import i5.las2peer.services.servicePackage.utils.statistics.Stats;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,12 +70,12 @@ public class NormalizedDiscountedCumulativeGain implements IEvaluator<Float> {
 		count++;
 	    }
 
-	    System.out.println("RELEVANCE SCORES:: " + relevanceScores);
+	    //System.out.println("RELEVANCE SCORES:: " + relevanceScores);
 	    float dcg = getDiscountedCumulativeGain(relevanceScores);
-	    System.out.println("DCG:: " + dcg);
+	    //System.out.println("DCG:: " + dcg);
 
 	    float idealDcg = getDiscountedCumulativeGain(getIdealRelevanceScore(relevanceScores));
-	    System.out.println("NDCG:: " + idealDcg);
+	    //System.out.println("NDCG:: " + idealDcg);
 
 	    ndcg = dcg / idealDcg;
 	}

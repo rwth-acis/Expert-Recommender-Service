@@ -1,0 +1,1 @@
+Insert into nature.data (post_id, parent_id, creation_date, body, owner_user_id, title)  select post_id, topic_id, post_time, post_text, poster_id, post_subject from est_nature.phpbb_posts

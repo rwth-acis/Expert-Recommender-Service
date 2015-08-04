@@ -31,4 +31,35 @@ public interface ScoreStrategy {
      */
     public LinkedHashMap<String, Double> getExpertMap();
 
+    /**
+     * Saves the results obtained from the strategy to database
+     */
+    public void saveResults();
+
+    /**
+     * 
+     * @return
+     */
+    public long getExpertsId();
+
+    /**
+     * Gets the unique id from the database for the saved evaluation data.
+     * 
+     * @return A long value to identify the evaluation record in the database.
+     */
+    public long getEvaluationId();
+
+    /**
+     * Gets the unique id from the database for the saved visualization data.
+     * 
+     * @return A long value to identify the visualization record in the
+     *         database.
+     */
+    public long getVisualizationId();
+
+    /**
+     * Closes Database connection if open.
+     */
+    public void close();
+
 }

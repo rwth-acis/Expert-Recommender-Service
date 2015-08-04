@@ -3,7 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.metrics;
 
-import i5.las2peer.services.servicePackage.entities.UserEntity;
+import i5.las2peer.services.servicePackage.database.entities.UserEntity;
 import i5.las2peer.services.servicePackage.utils.Application;
 
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class Precision {
     }
 
     public void compute() {
-	System.out.println("Computing Precision::" + userId2score.size());
+	//System.out.println("Computing Precision::" + userId2score.size());
 	// precisions = new double[this.userId2score.size()];
 	precisions = new ArrayList<Double>();
 	double cumulativePrecision = 0;
@@ -79,7 +79,7 @@ public class Precision {
 	    cumulativePrecision += precisions.get(j);
 	}
 
-	System.out.println("CUM PRECISION:: " + cumulativePrecision);
+	//System.out.println("CUM PRECISION:: " + cumulativePrecision);
 
 	if (precisions.size() > 0) {
 	    avgPrecision = (double) cumulativePrecision / precisions.size();

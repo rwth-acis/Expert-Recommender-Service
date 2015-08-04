@@ -13,27 +13,30 @@ import i5.las2peer.restMapper.annotations.Produces;
 import i5.las2peer.restMapper.annotations.QueryParam;
 import i5.las2peer.restMapper.annotations.Version;
 import i5.las2peer.restMapper.annotations.swagger.ApiInfo;
+import i5.las2peer.restMapper.annotations.swagger.ApiResponse;
+import i5.las2peer.restMapper.annotations.swagger.ApiResponses;
+import i5.las2peer.restMapper.annotations.swagger.ResourceListApi;
+import i5.las2peer.restMapper.annotations.swagger.Summary;
 import i5.las2peer.restMapper.tools.ValidationResult;
 import i5.las2peer.restMapper.tools.XMLCheck;
 import i5.las2peer.services.servicePackage.database.DatabaseHandler;
-import i5.las2peer.services.servicePackage.entities.DataEntity;
-import i5.las2peer.services.servicePackage.entities.DataInfoEntity;
-import i5.las2peer.services.servicePackage.entities.EvaluationMetricsEntity;
-import i5.las2peer.services.servicePackage.entities.ExpertEntity;
-import i5.las2peer.services.servicePackage.entities.GraphEntity;
-import i5.las2peer.services.servicePackage.entities.QueryEntity;
-import i5.las2peer.services.servicePackage.entities.SemanticTagEntity;
-import i5.las2peer.services.servicePackage.entities.UserEntity;
-import i5.las2peer.services.servicePackage.graph.GraphWriter;
-import i5.las2peer.services.servicePackage.graph.JUNGGraphCreator;
-import i5.las2peer.services.servicePackage.indexer.DbSematicsIndexer;
-import i5.las2peer.services.servicePackage.indexer.DbTextIndexer;
+import i5.las2peer.services.servicePackage.database.entities.DataEntity;
+import i5.las2peer.services.servicePackage.database.entities.DataInfoEntity;
+import i5.las2peer.services.servicePackage.database.entities.EvaluationMetricsEntity;
+import i5.las2peer.services.servicePackage.database.entities.ExpertEntity;
+import i5.las2peer.services.servicePackage.database.entities.GraphEntity;
+import i5.las2peer.services.servicePackage.database.entities.QueryEntity;
+import i5.las2peer.services.servicePackage.database.entities.SemanticTagEntity;
+import i5.las2peer.services.servicePackage.database.entities.UserAccEntity;
+import i5.las2peer.services.servicePackage.database.entities.UserClickDetails;
+import i5.las2peer.services.servicePackage.database.entities.UserEntity;
+import i5.las2peer.services.servicePackage.exceptions.ERSException;
+import i5.las2peer.services.servicePackage.lucene.indexer.DbSematicsIndexer;
+import i5.las2peer.services.servicePackage.lucene.indexer.DbTextIndexer;
+import i5.las2peer.services.servicePackage.lucene.indexer.LuceneMysqlIndexer;
+import i5.las2peer.services.servicePackage.lucene.searcher.LuceneSearcher;
 import i5.las2peer.services.servicePackage.metrics.EvaluationMeasure;
-import i5.las2peer.services.servicePackage.ocd.OCD;
-import i5.las2peer.services.servicePackage.parsers.ERSCSVParser;
-import i5.las2peer.services.servicePackage.parsers.ERSXmlParser;
-import i5.las2peer.services.servicePackage.parsers.csvparser.UserCSV;
-import i5.las2peer.services.servicePackage.parsers.xmlparser.CommunityCoverMatrixParser;
+import i5.las2peer.services.servicePackage.parsers.csvparser.EvaluationCSVWriter;
 import i5.las2peer.services.servicePackage.scorer.CommunityAwareHITSStrategy;
 import i5.las2peer.services.servicePackage.scorer.CommunityAwarePageRankStrategy;
 import i5.las2peer.services.servicePackage.scorer.DataModelingStrategy;
@@ -41,36 +44,34 @@ import i5.las2peer.services.servicePackage.scorer.HITSStrategy;
 import i5.las2peer.services.servicePackage.scorer.PageRankStrategy;
 import i5.las2peer.services.servicePackage.scorer.ScoreStrategy;
 import i5.las2peer.services.servicePackage.scorer.ScoringContext;
-import i5.las2peer.services.servicePackage.searcher.LuceneSearcher;
 import i5.las2peer.services.servicePackage.textProcessor.PorterStemmer;
 import i5.las2peer.services.servicePackage.textProcessor.QueryAnalyzer;
 import i5.las2peer.services.servicePackage.textProcessor.StopWordRemover;
+import i5.las2peer.services.servicePackage.utils.AlgorithmType;
 import i5.las2peer.services.servicePackage.utils.Application;
+import i5.las2peer.services.servicePackage.utils.ERSBundle;
 import i5.las2peer.services.servicePackage.utils.LocalFileManager;
 import i5.las2peer.services.servicePackage.utils.UserMapSingleton;
-import i5.las2peer.services.servicePackage.visualization.Visualizer;
+import i5.las2peer.services.servicePackage.utils.semanticTagger.RelatedPostsExtractor;
+import i5.las2peer.services.servicePackage.utils.semanticTagger.TagExtractor;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.TopDocs;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.support.ConnectionSource;
@@ -84,6 +85,8 @@ import com.j256.ormlite.table.TableUtils;
 @Version("0.1")
 @ApiInfo(title = "Expert Recommender Service", description = "A RESTful expert recommender service", termsOfServiceUrl = "sample-tos.io", contact = "sathvik.parekodi@rwth-aachen.de", license = "Apache License 2", licenseUrl = "http://www.apache.org/licenses/LICENSE-2.0")
 public class ExpertRecommenderService extends Service {
+
+    private Log log = LogFactory.getLog(ExpertRecommenderService.class);
 
     public ExpertRecommenderService() {
 	// read and set properties values
@@ -135,26 +138,10 @@ public class ExpertRecommenderService extends Service {
 
     }
 
-    // @GET
-    // @Path("datasets/{datasetId}/stopwords")
-    // public HttpResponse getStopWords() {
-    // // TODO:Get list of stop words used for the particular dataset.
-    // return null;
-    //
-    // }
-
-    // @POST
-    // @Path("datasets/{datasetId}/algorithms/{algorithmName}")
-    // public HttpResponse applyAlgorithm() {
-    // // TODO: Apply algorithm and return ids.
-    // return null;
-    //
-    // }
-
     @GET
     @Path("datasets/{datasetId}/experts/{expertsId}")
     public HttpResponse getExperts(@PathParam("datasetId") String datasetId, @PathParam("expertsId") String expertsId) {
-	System.out.println("expertsId:: " + expertsId);
+	log.info("expertsId:: " + expertsId);
 	String databaseName = getDatabaseName(datasetId);
 	if (databaseName == null) {
 	    // Throw custom exception.
@@ -179,7 +166,7 @@ public class ExpertRecommenderService extends Service {
 	    // Throw custom exception.
 	}
 
-	System.out.println("evaluationId:: " + evaluationId);
+	log.info("evaluationId:: " + evaluationId);
 	DatabaseHandler dbHandler = null;
 	dbHandler = new DatabaseHandler(databaseName, "root", "");
 	String evaluationMeasures = dbHandler.getEvaluationMetrics(Long.parseLong(evaluationId));
@@ -193,7 +180,7 @@ public class ExpertRecommenderService extends Service {
     @Path("datasets/{datasetId}/visualizations/{visualizationId}")
     public HttpResponse getVisulaizationData(@PathParam("visualizationId") String visId) {
 
-	System.out.println("expertsId:: " + visId);
+	log.info("expertsId:: " + visId);
 	DatabaseHandler dbHandler = null;
 	dbHandler = new DatabaseHandler("healthcare", "root", "");
 	String visGraph = dbHandler.getVisGraph(Long.parseLong(visId));
@@ -256,11 +243,15 @@ public class ExpertRecommenderService extends Service {
 
     @GET
     @Path("datasets/{datasetId}/users/{userId}")
-    public HttpResponse getUser(@PathParam("userId") String userId) {
+    public HttpResponse getUser(@PathParam("datasetId") String datasetId, @PathParam("userId") String userId) {
 
-	System.out.println("expertsId:: " + userId);
+	log.info("expertsId:: " + userId);
 	DatabaseHandler dbHandler = null;
-	dbHandler = new DatabaseHandler("healthcare", "root", "");
+	String databaseName = getDatabaseName(datasetId);
+	if (databaseName == null) {
+	    // Throw custom exception.
+	}
+	dbHandler = new DatabaseHandler(databaseName, "root", "");
 	String userDetails = dbHandler.getUser(Long.parseLong(userId));
 
 	HttpResponse res = new HttpResponse(userDetails);
@@ -271,7 +262,20 @@ public class ExpertRecommenderService extends Service {
     @POST
     @Path("datasets/{datasetId}/algorithms/datamodeling")
     public HttpResponse modelExperts(@PathParam("datasetId") String datasetId, @ContentParam String query,
-	    @QueryParam(name = "dateBefore", defaultValue = "2011-01-31") String dateBefore) {
+	    @QueryParam(name = "dateBefore", defaultValue = "2025-12-31") String dateBefore,
+	    @QueryParam(name = "alpha", defaultValue = "0.5") double alpha) {
+
+	Application.algoName1 = "datamodeling";
+	String filepath = "testQueries/query_full.txt";
+
+	String databaseName = getDatabaseName(datasetId);
+	if (databaseName == null) {
+	    // Throw custom exception.
+	}
+
+	DatabaseHandler dbHandler = new DatabaseHandler(databaseName, "root", "");
+
+	dbHandler.truncateEvaluationTable();
 
 	if (query == null) {
 	    // TODO: Throw custom exception.
@@ -288,13 +292,6 @@ public class ExpertRecommenderService extends Service {
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}
-
-	String databaseName = getDatabaseName(datasetId);
-	if (databaseName == null) {
-	    // Throw custom exception.
-	}
-
-	DatabaseHandler dbHandler = new DatabaseHandler(databaseName, "root", "");
 
 	DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
 	Date dateFilter = null;
@@ -327,19 +324,19 @@ public class ExpertRecommenderService extends Service {
 	    TopDocs docs = searcher.performSearch(qAnalyzer.getText(), Integer.MAX_VALUE);
 
 	    dbTextIndexer = new DbTextIndexer(searcher.getTotalNumberOfDocs());
-	    // dbTextIndexer.buildIndex(qAnalyzer.getText(), dateFilter);
 	    dbTextIndexer.buildIndex(docs, qAnalyzer.getText(), dateFilter, databaseName + "_index");
 
 	    dbSemanticsIndexer = new DbSematicsIndexer(dbHandler.getConnectionSource());
-	    dbSemanticsIndexer.buildIndex(qAnalyzer.getText());
+	    TopDocs semanticDocs = searcher.performSemanticSearch();
+	    dbSemanticsIndexer.buildIndex(semanticDocs, qAnalyzer.getText(), databaseName + "_index");
 
-	    ScoringContext scontext = new ScoringContext(new DataModelingStrategy(dbTextIndexer, dbSemanticsIndexer, usermap));
+	    ScoringContext scontext = new ScoringContext(new DataModelingStrategy(dbTextIndexer, dbSemanticsIndexer, usermap, alpha));
 	    scontext.executeStrategy();
 	    expertPosts = scontext.getExperts();
 
 	    expertsId = dbHandler.addExperts(queryId, expertPosts);
 
-	    System.out.println("Evaluating modeling technique");
+	    log.info("Evaluating modeling technique");
 
 	    EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), usermap, "datamodeling");
 
@@ -394,30 +391,74 @@ public class ExpertRecommenderService extends Service {
      */
     @POST
     @Path("datasets/{datasetId}/algorithms/{algorithmName}")
-    public HttpResponse applyPageRank(@PathParam("datasetId") String datasetId, @PathParam("algorithmName") String algorithmName,
+    public HttpResponse applyAlgorithm(@PathParam("datasetId") String datasetId, @PathParam("algorithmName") String algorithmName,
 	    @ContentParam String query, @QueryParam(name = "evaluation", defaultValue = "false") boolean isEvaluation,
-	    @QueryParam(name = "visualization", defaultValue = "false") boolean isVisualization,
-	    @QueryParam(name = "alpha", defaultValue = "0.15d") String alpha,
-	    @QueryParam(name = "dateBefore", defaultValue = "2011-01-31") String dateBefore) {
+	    @QueryParam(name = "visualization", defaultValue = "true") boolean isVisualization,
+	    @QueryParam(name = "alpha", defaultValue = "0.15d") String alpha, @QueryParam(name = "intra", defaultValue = "0.6") String intraWeight) {
 
-	if (query == null) {
-	    // TODO: Throw custom exception.
-	}
+	ERSBundle properties = new ERSBundle.Builder(datasetId, query, algorithmName).alpha(alpha).intraWeight(intraWeight).isEvaluation(false)
+		.isVisualization(true).build();
 
-	if (query != null && query.length() < 0) {
-	    // TODO: Throw custom exception.
-	}
-
-	// TODO:Remove this.
-	Application.dateInfo = dateBefore;
-
-	String expertPosts = "{}";
-	QueryAnalyzer qAnalyzer = null;
+	ScoreStrategy strategy = null;
+	ScoringContext scontext = null;
 	try {
-	    qAnalyzer = new QueryAnalyzer(query);
-	} catch (Exception e) {
-	    e.printStackTrace();
+
+	    // JDK 7 offers switch on strings instead of creating enums.
+	    switch (algorithmName == null ? "" : algorithmName) {
+	    case AlgorithmType.PAGE_RANK:
+		log.info("Applying PageRank strategy...");
+		strategy = new PageRankStrategy(properties);
+		break;
+	    case AlgorithmType.HITS:
+		log.info("Applying HITS strategy...");
+		strategy = new HITSStrategy(properties);
+		break;
+	    case AlgorithmType.CA_PR:
+		log.info("Applying community Aware PageRank strategy...");
+		strategy = new CommunityAwarePageRankStrategy(properties);
+		break;
+	    case AlgorithmType.CA_HITS:
+		log.info("Applying community Aware HITS strategy...");
+		strategy = new CommunityAwareHITSStrategy(properties);
+		break;
+	    default:
+		log.info("Applying default strategy...");
+		strategy = new PageRankStrategy(properties);
+		break;
+	    }
+	} catch (ERSException e) {
+	    HttpResponse res = new HttpResponse(e.getMessage());
+	    res.setStatus(200);
+	    return res;
 	}
+	scontext = new ScoringContext(strategy);
+	scontext.executeStrategy();
+	scontext.saveResults();
+
+	JsonObject jObj = new JsonObject();
+	jObj.addProperty("expertsId", strategy.getExpertsId());
+	jObj.addProperty("evaluationId", strategy.getEvaluationId());
+	jObj.addProperty("visualizationId", -1);
+
+	scontext.close();
+
+	// log.info("Total time " + timer.stop());
+
+	// String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new
+	// Date());
+	//
+	// EvaluationCSVWriter writer = new EvaluationCSVWriter();
+	// writer.extractResultsfromDb(dbHandler.getConnectionSource());
+	// writer.write("evaluationResults/" + timeStamp + "_eval.csv");
+
+	HttpResponse res = new HttpResponse(jObj.toString());
+	res.setStatus(200);
+	return res;
+    }
+
+    @POST
+    @Path("datasets/{datasetId}/save")
+    public void saveResultsToCSV(@PathParam("datasetId") String datasetId) {
 
 	String databaseName = getDatabaseName(datasetId);
 	if (databaseName == null) {
@@ -427,180 +468,50 @@ public class ExpertRecommenderService extends Service {
 	DatabaseHandler dbHandler = null;
 	dbHandler = new DatabaseHandler(databaseName, "root", "");
 
-	ConnectionSource connectionSource = null;
-	connectionSource = dbHandler.getConnectionSource();
-	long queryId = qAnalyzer.getId(connectionSource);
+	String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
 
-	Map<Long, UserEntity> usermap = null;
+	EvaluationCSVWriter writer = new EvaluationCSVWriter();
+	writer.extractResultsfromDb(dbHandler.getConnectionSource());
+	writer.write("evaluationResults/" + timeStamp + "_eval.csv");
+    }
 
-	try {
-	    usermap = UserMapSingleton.getInstance().getUserMap(connectionSource);
-	} catch (SQLException e1) {
-	    e1.printStackTrace();
+    @GET
+    @Path("datasets/{datasetId}/experts/{expertsCollectionId}/expert/{expertId}/tags")
+    public HttpResponse getTags(@PathParam("datasetId") String datasetId, @PathParam("expertsCollectionId") String expertCollectionId,
+	    @PathParam("expertId") String expertId) {
+
+	String databaseName = getDatabaseName(datasetId);
+	if (databaseName == null) {
+	    // Throw custom exception.
 	}
 
-	JUNGGraphCreator jcreator = null;
-	LuceneSearcher searcher = null;
-	GraphWriter graphWriter = null;
+	DatabaseHandler dbHandler = null;
+	dbHandler = new DatabaseHandler(databaseName, "root", "");
 
-	DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
-	Date dateFilter = null;
-	try {
-	    dateFilter = dateFormat.parse(dateBefore);
-	} catch (java.text.ParseException e1) {
-	    e1.printStackTrace();
-	}
+	TagExtractor extractor = new TagExtractor(dbHandler, expertCollectionId, expertId);
 
-	try {
-	    // System.out.println("Performing search...");
-
-	    searcher = new LuceneSearcher(qAnalyzer.getText(), databaseName + "_index");
-	    TopDocs docs = searcher.performSearch(qAnalyzer.getText(), Integer.MAX_VALUE);
-	    searcher.buildQnAMap(docs, dateFilter);
-
-	    jcreator = new JUNGGraphCreator();
-	    jcreator.createGraph(searcher.getQnAMap(), searcher.getPostId2UserIdMap());
-	    // System.out.println("Graph created");
-
-	    graphWriter = new GraphWriter(jcreator);
-	    graphWriter.saveToGraphMl("graph_jung.graphml");
-	    graphWriter.saveToDb(queryId, connectionSource);
-
-	} catch (Exception e) {
-	    e.printStackTrace();
-	    System.out.println(e);
-	    HttpResponse res = new HttpResponse("Exception while searching...");
-	    res.setStatus(200);
-	}
-
-	if (usermap == null) {
-	    // TODO: Throw custom exception.
-	}
-
-	ScoreStrategy strategy = null;
-	switch (algorithmName) {
-	case "pagerank":
-	    // System.out.println("Applying page rank strategy...");
-	    strategy = new PageRankStrategy(jcreator.getGraph(), usermap, Double.parseDouble(alpha));
-	    break;
-	case "hits":
-	    System.out.println("Applying HITS strategy...");
-	    strategy = new HITSStrategy(jcreator.getGraph(), usermap);
-	    break;
-	case "communityAwarePagerank":
-	    System.out.println("Applying community Aware PageRank strategy...");
-	    OCD ocdPageRank = new OCD();
-	    String covers = ocdPageRank.getCovers(graphWriter.getGraphAsString("graph_jung.graphml"));
-	    CommunityCoverMatrixParser CCMP = new CommunityCoverMatrixParser(covers);
-	    CCMP.parse();
-
-	    strategy = new CommunityAwarePageRankStrategy(jcreator.getGraph(), usermap, CCMP.getNodeId2CoversMap());
-	    break;
-	case "communityAwareHITS":
-	    System.out.println("Applying community Aware HITS strategy...");
-	    OCD ocdHITS = new OCD();
-	    String coversHITS = ocdHITS.getCovers(graphWriter.getGraphAsString("graph_jung.graphml"));
-	    CommunityCoverMatrixParser CCMPHits = new CommunityCoverMatrixParser(coversHITS);
-	    CCMPHits.parse();
-
-	    strategy = new CommunityAwareHITSStrategy(jcreator.getGraph(), usermap, CCMPHits.getNodeId2CoversMap());
-
-	    break;
-	default:
-	    break;
-	}
-
-	ScoringContext scontext = new ScoringContext(strategy);
-	scontext.executeStrategy();
-	expertPosts = scontext.getExperts();
-
-	long expertsId = dbHandler.addExperts(queryId, expertPosts);
-
-	// If evaluation is requested.
-	long eMeasureId = -1;
-	if (isEvaluation) {
-	    EvaluationMeasure eMeasure = new EvaluationMeasure(scontext.getExpertMap(), usermap, algorithmName);
-
-	    // Compute Evaluation Measures.
-	    try {
-		eMeasure.computeAll();
-		eMeasure.save(queryId, connectionSource);
-		eMeasureId = eMeasure.getId();
-	    } catch (IOException e) {
-		e.printStackTrace();
-	    } catch (JsonIOException e) {
-		e.printStackTrace();
-	    } catch (JsonSyntaxException e) {
-		e.printStackTrace();
-	    }
-
-	}
-
-	// If visulaization is requested, Visualize the result
-	// TODO: Currently, vis graph is same as actual graph, later on markers
-	// may be added.
-	long visId = -1;
-	if (isVisualization) {
-	    Visualizer visualizer = new Visualizer();
-	    visualizer.saveVisGraph(graphWriter.getId(), connectionSource);
-	    visId = visualizer.getId();
-	}
-
-	JsonObject jObj = new JsonObject();
-	jObj.addProperty("expertsId", expertsId);
-	jObj.addProperty("evaluationId", eMeasureId);
-	jObj.addProperty("visualizationId", visId);
-
-	dbHandler.close();
-
-	// System.out.println("Total time " + timer.stop());
-	HttpResponse res = new HttpResponse(jObj.toString());
+	HttpResponse res = new HttpResponse(extractor.getTags());
 	res.setStatus(200);
 	return res;
     }
 
-    // TODO: Move this to test case.
-    @POST
-    @Path("querysetEvaluator")
-    public HttpResponse evaluateQuerySet() {
-	ConnectionSource connSrc = null;
-	ArrayList<String> queries = new ArrayList<String>();
+    @GET
+    @Path("datasets/{datasetId}/experts/{expertsCollectionId}/expert/{expertId}/posts")
+    public HttpResponse getPosts(@PathParam("datasetId") String datasetId, @PathParam("expertsCollectionId") String expertCollectionId,
+	    @PathParam("expertId") String expertId) {
 
-	try (BufferedReader br = new BufferedReader(new FileReader("fitness_queries_small.txt"))) {
-	    for (String line; (line = br.readLine()) != null;) {
-		queries.add(line);
-	    }
-	} catch (FileNotFoundException e1) {
-	    e1.printStackTrace();
-	} catch (IOException e1) {
-	    e1.printStackTrace();
+	String databaseName = getDatabaseName(datasetId);
+	if (databaseName == null) {
+	    // Throw custom exception.
 	}
 
-	System.out.println("Queries populated:: " + queries.size());
-	// Read the file and populate queries;
-	for (String query : queries) {
-	    System.out.println("Query:: " + query);
-	    StopWordRemover remover = null;
-	    String cleanstr = null;
-	    // Stopwatch timer = null;
-	    try {
-		// timer = Stopwatch.createStarted();
-		// TODO: Semantic analysis of the text.
-		System.out.println("Stop word remover..");
-		remover = new StopWordRemover(query, "en");
-		cleanstr = remover.getPlainText();
+	DatabaseHandler dbHandler = null;
+	dbHandler = new DatabaseHandler(databaseName, "root", "");
 
-		System.out.println("Getting tokens...");
+	log.info("EXTRACTOR STARTED...");
+	RelatedPostsExtractor extractor = new RelatedPostsExtractor(dbHandler, expertCollectionId, expertId);
 
-	    } catch (Exception e) {
-		e.printStackTrace();
-	    }
-
-	    // Execute strategies.
-	    System.out.println("Applying Pagerank...");
-	}
-
-	HttpResponse res = new HttpResponse("All tests finished successfully");
+	HttpResponse res = new HttpResponse(extractor.getPosts());
 	res.setStatus(200);
 	return res;
     }
@@ -617,7 +528,7 @@ public class ExpertRecommenderService extends Service {
 	} catch (UnsupportedEncodingException e) {
 	    e.printStackTrace();
 	}
-	System.out.println(fileContentsString);
+	log.info(fileContentsString);
 
 	HttpResponse res = new HttpResponse(fileContentsString, 200);
 	res.setHeader("content-type", "text/xml");
@@ -625,9 +536,29 @@ public class ExpertRecommenderService extends Service {
 	return res;
     }
 
+    @POST
+    @Path("datasets/{datasetId}/semantics")
+    public HttpResponse addSemantics(@PathParam(value = "datasetId") String datasetId) {
+
+	String dbName = getDatabaseName(datasetId);
+	DatabaseHandler dbHandler = new DatabaseHandler(dbName, "root", "");
+
+	HttpResponse res;
+
+	System.out.print("Executing semantics...");
+
+	dbHandler.addSemanticTags();
+
+	System.out.print("Executing semantics finished");
+
+	res = new HttpResponse("Added Semantics...", 200);
+
+	return res;
+    }
+
     /**
-     * This method is called only once when the new dataset is added.
-     * Currently, it is invoked from the test case.
+     * This method is called only once when the new dataset is added. Currently,
+     * it is invoked from the test case.
      * 
      * @param dataset_name
      *            Name of the dataset, whose data has to be indexed. Dataset is
@@ -654,47 +585,105 @@ public class ExpertRecommenderService extends Service {
 
 	    String dirPath = "datasets/" + dataset_name;
 
-	    if (inputType.equalsIgnoreCase("xml")) {
-		ERSXmlParser xmlparser = new ERSXmlParser(dirPath);
-		dbHandler.addPosts(xmlparser.getPosts());
-		dbHandler.addUsers(xmlparser.getUsers());
-	    } else {
-
-		ERSCSVParser csvparser = new ERSCSVParser(dirPath);
-
-		dbHandler.addPosts(csvparser.getPosts());
-		List<UserCSV> users = csvparser.getUsers();
-		System.out.println("CSV Parser started..." + users.size());
-
-		if (users != null && users.size() > 0) {
-		    dbHandler.addUsers(users);
-		}
-	    }
+	    // if (inputType.equalsIgnoreCase("xml")) {
+	    // ERSXmlParser xmlparser = new ERSXmlParser(dirPath);
+	    // dbHandler.addPosts(xmlparser.getPosts());
+	    // dbHandler.addUsers(xmlparser.getUsers());
+	    // } else {
+	    //
+	    // ERSCSVParser csvparser = new ERSCSVParser(dirPath);
+	    //
+	    // dbHandler.addPosts(csvparser.getPosts());
+	    // List<UserCSV> users = csvparser.getUsers();
+	    // log.info("CSV Parser started..." + users.size());
+	    //
+	    // if (users != null && users.size() > 0) {
+	    // dbHandler.addUsers(users);
+	    // }
+	    // }
 	    //
 	    // // Add semantics tag.
 	    // dbHandler.addSemanticTags();
 	    // dbHandler.markExpertsForEvaluation(connectionSrc);
 
-	    // System.out.println("Database operations completed...");
+	    // log.info("Database operations completed...");
 
-	    // LuceneMysqlIndexer indexer = new
-	    // LuceneMysqlIndexer(dbHandler.getConnectionSource(), dataset_name
-	    // + "_index");
-	    // System.out.println("Building index...");
-	    // indexer.buildIndex();
+	    LuceneMysqlIndexer indexer = new LuceneMysqlIndexer(dbHandler.getConnectionSource(), dataset_name + "_index");
+	    log.info("Building index...");
+	    indexer.buildIndex();
 
 	    res = new HttpResponse("Indexer finished successfully");
 	    res.setStatus(200);
 
 	} catch (SQLException e) {
-	    System.out.println("SQL EXCEPTION......" + e);
+	    log.info("SQL EXCEPTION......" + e);
 	    e.printStackTrace();
 	    res = new HttpResponse("SQL Exception");
 	    res.setStatus(500);
 	} catch (Exception e) {
 	    e.printStackTrace();
-	    System.out.println("IO exception " + e);
+	    log.info("IO exception " + e);
 	}
+
+	return res;
+    }
+
+    @POST
+    @Path("markExperts")
+    public HttpResponse test() {
+
+	DatabaseHandler dbHandler = new DatabaseHandler("cs", "root", "");
+	try {
+	    dbHandler.markExpertsForEvaluation(dbHandler.getConnectionSource());
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+
+	HttpResponse res = new HttpResponse("maked experts");
+	res.setStatus(200);
+
+	return res;
+    }
+
+    @POST
+    @Path("markPostType")
+    public HttpResponse markPostType() {
+
+	DatabaseHandler dbHandler = new DatabaseHandler("nature", "root", "");
+	dbHandler.markPostType();
+
+	HttpResponse res = new HttpResponse("marked post type...");
+	res.setStatus(200);
+
+	return res;
+    }
+
+    @POST
+    @Path("saveReplies")
+    public HttpResponse saveReplies() {
+
+	DatabaseHandler dbHandler = new DatabaseHandler("nature", "root", "");
+	dbHandler.saveNoOfRepliesByUser();
+
+	HttpResponse res = new HttpResponse("Saved replies...");
+	res.setStatus(200);
+
+	return res;
+    }
+
+    @POST
+    @Path("markNatureExperts")
+    public HttpResponse markExperts() {
+
+	DatabaseHandler dbHandler = new DatabaseHandler("nature", "root", "");
+	try {
+	    dbHandler.markExpertsForEvaluationFromReplies(dbHandler.getConnectionSource());
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+
+	HttpResponse res = new HttpResponse("Marked experts...");
+	res.setStatus(200);
 
 	return res;
     }
@@ -759,6 +748,76 @@ public class ExpertRecommenderService extends Service {
 	handler.close();
 
 	return databaseName;
+    }
+
+    /**
+     * Simple function to validate a user login.
+     * Basically it only serves as a "calling point" and does not really
+     * validate a user
+     * (since this is done previously by LAS2peer itself, the user does not
+     * reach this method
+     * if he or she is not authenticated).
+     * 
+     * @return A void.
+     */
+    @POST
+    @Path("validate")
+    @Produces(MediaType.TEXT_XML)
+    @ResourceListApi(description = "User validation")
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @Summary("Simple function to validate a user login.")
+    public void validateLogin(@QueryParam(name = "username", defaultValue = "anon") String username) {
+
+	DatabaseHandler dbHandler = new DatabaseHandler("userAccount", "root", "");
+
+	log.info("USRNAME:: " + username);
+	try {
+	    TableUtils.createTableIfNotExists(dbHandler.getConnectionSource(), UserAccEntity.class);
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+
+	dbHandler.addUser(username);
+	log.info(username);
+
+    }
+
+    @POST
+    @Path("datasets/{datasetId}/position")
+    public void saveClickPositions(@PathParam(value = "datasetId") String datasetId,
+	    @QueryParam(name = "expertsId", defaultValue = "-1") String expertsId, @QueryParam(name = "position", defaultValue = "-1") int position) {
+
+	String databaseName = getDatabaseName(datasetId);
+	if (databaseName == null) {
+	    // Throw custom exception.
+	}
+
+	DatabaseHandler dbHandler = null;
+	dbHandler = new DatabaseHandler(databaseName, "root", "");
+
+	// log.info("USRNAME:: " + username);
+	try {
+	    TableUtils.createTableIfNotExists(dbHandler.getConnectionSource(), UserClickDetails.class);
+	} catch (SQLException e) {
+	    e.printStackTrace();
+	}
+
+	dbHandler.saveClickPositions(expertsId, position);
+    }
+
+    @POST
+    @Path("datasets/{datasetId}/skillDistribution")
+    public HttpResponse createSkillDistribution(@PathParam(value = "datasetId") String datasetId) {
+
+	String dbName = getDatabaseName(datasetId);
+	DatabaseHandler dbHandler = new DatabaseHandler(dbName, "root", "");
+
+	HttpResponse res;
+	dbHandler.createTagDistribution();
+
+	res = new HttpResponse("Workerd fine...", 200);
+
+	return res;
     }
 
     // ////////////////////////////////////////////////////////////////

@@ -7,12 +7,12 @@ import i5.las2peer.p2p.LocalNode;
 import i5.las2peer.security.ServiceAgent;
 import i5.las2peer.security.UserAgent;
 import i5.las2peer.services.servicePackage.database.DatabaseHandler;
-import i5.las2peer.services.servicePackage.indexer.LuceneMysqlIndexer;
+import i5.las2peer.services.servicePackage.lucene.indexer.LuceneMysqlIndexer;
+import i5.las2peer.services.servicePackage.lucene.searcher.LuceneSearcher;
 import i5.las2peer.services.servicePackage.metrics.NormalizedDiscountedCumulativeGain;
 import i5.las2peer.services.servicePackage.ocd.OCD;
 import i5.las2peer.services.servicePackage.parsers.csvparser.EvaluationCSVWriter;
 import i5.las2peer.services.servicePackage.parsers.xmlparser.CommunityCoverMatrixParser;
-import i5.las2peer.services.servicePackage.searcher.LuceneSearcher;
 import i5.las2peer.services.servicePackage.utils.Application;
 import i5.las2peer.services.servicePackage.utils.LocalFileManager;
 import i5.las2peer.testing.MockAgentFactory;
@@ -184,6 +184,7 @@ public class ServiceTest {
 	}
     }
 
+    @Ignore
     @Test
     public void testQuerySet() {
 	MiniClient c = new MiniClient();
@@ -297,7 +298,7 @@ public class ServiceTest {
 
 	try {
 	    c.setLogin(Long.toString(testAgent.getId()), testPass);
-	    ClientResponse result = c.sendRequest("POST", mainPath + "indexer?inputFormat=csv", "eforum");
+	    ClientResponse result = c.sendRequest("POST", mainPath + "indexer?inputFormat=csv", "nature");
 	    assertEquals(200, result.getHttpCode());
 	} catch (Exception e) {
 	    e.printStackTrace();
@@ -306,7 +307,6 @@ public class ServiceTest {
 
     }
 
-    @Ignore
     @Test
     public void testIndexerXML() {
 	MiniClient c = new MiniClient();
@@ -314,7 +314,7 @@ public class ServiceTest {
 
 	try {
 	    c.setLogin(Long.toString(testAgent.getId()), testPass);
-	    ClientResponse result = c.sendRequest("POST", mainPath + "indexer?inputFormat=xml", "fitness");
+	    ClientResponse result = c.sendRequest("POST", mainPath + "indexer?inputFormat=xml", "reqbazaar");
 	    assertEquals(200, result.getHttpCode());
 	} catch (Exception e) {
 	    e.printStackTrace();
@@ -337,6 +337,23 @@ public class ServiceTest {
 															 // pathParam
 	    System.out.println("Result of 'testExampleMethod': " + result.getResponse().trim());
 
+	    assertEquals(200, result.getHttpCode());
+	} catch (Exception e) {
+	    e.printStackTrace();
+	    fail("Exception: " + e);
+	}
+
+    }
+
+    @Ignore
+    @Test
+    public void testSemantics() {
+	MiniClient c = new MiniClient();
+	c.setAddressPort(HTTP_ADDRESS, HTTP_PORT);
+
+	try {
+	    c.setLogin(Long.toString(testAgent.getId()), testPass);
+	    ClientResponse result = c.sendRequest("POST", mainPath + "datasets/5/semantics", "");
 	    assertEquals(200, result.getHttpCode());
 	} catch (Exception e) {
 	    e.printStackTrace();
@@ -407,7 +424,7 @@ public class ServiceTest {
 	OCD ocd = new OCD();
 
 	String graphContent = LocalFileManager.getFile("fitness_graph_jung.graphml").toString();
-	ocd.getCovers(graphContent);
+	// ocd.getCovers(graphContent);
 	// Assert for string
 
     }
@@ -446,6 +463,18 @@ public class ServiceTest {
 	DatabaseHandler dbHandler = new DatabaseHandler("nature", "root", "");
 	dbHandler.saveNoOfRepliesByUser();
 
+    }
+
+    @Ignore
+    @Test
+    public void insertCleanText() {
+	// DatabaseHandler dbHandler = new DatabaseHandler("nature", "root",
+	// "");
+	// try {
+	// // dbHandler.addCleanText();
+	// } catch (SQLException e) {
+	// e.printStackTrace();
+	// }
     }
 
     /**

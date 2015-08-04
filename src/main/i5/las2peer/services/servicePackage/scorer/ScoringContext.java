@@ -51,4 +51,13 @@ public class ScoringContext {
     public LinkedHashMap<String, Double> getExpertMap() {
 	return strategy.getExpertMap();
     }
+
+    public void saveResults() {
+	strategy.saveResults();
+    }
+
+    public void close() {
+	strategy.close();
+    }
+
 }

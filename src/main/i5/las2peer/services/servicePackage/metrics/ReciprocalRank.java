@@ -1,6 +1,6 @@
 package i5.las2peer.services.servicePackage.metrics;
 
-import i5.las2peer.services.servicePackage.entities.UserEntity;
+import i5.las2peer.services.servicePackage.database.entities.UserEntity;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -1,15 +1,18 @@
 package i5.las2peer.services.servicePackage.scorer;
 
-import i5.las2peer.services.servicePackage.entities.UserEntity;
-import i5.las2peer.services.servicePackage.indexer.DbSematicsIndexer;
-import i5.las2peer.services.servicePackage.indexer.DbTextIndexer;
+import i5.las2peer.services.servicePackage.database.entities.UserEntity;
+import i5.las2peer.services.servicePackage.lucene.indexer.DbSematicsIndexer;
+import i5.las2peer.services.servicePackage.lucene.indexer.DbTextIndexer;
 import i5.las2peer.services.servicePackage.utils.Application;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import net.minidev.json.JSONArray;
+
+import com.google.common.collect.HashMultimap;
 
 /**
  * @author sathvik
@@ -23,16 +26,20 @@ public class DataModelingStrategy implements ScoreStrategy {
     private DbTextIndexer mTextIndexer;
     private DbSematicsIndexer mSemanticsIndexer;
     private Map<Long, UserEntity> userId2userObj;
+    private HashMultimap userId2postIds;
 
     /**
      * 
      * @param textIndexer
      * @param semanticsIndexer
      */
-    public DataModelingStrategy(DbTextIndexer textIndexer, DbSematicsIndexer semanticsIndexer, Map<Long, UserEntity> userId2userObj) {
+    public DataModelingStrategy(DbTextIndexer textIndexer, DbSematicsIndexer semanticsIndexer, Map<Long, UserEntity> userId2userObj, double alpha) {
+	this.alpha = alpha;
 	mTextIndexer = textIndexer;
 	mSemanticsIndexer = semanticsIndexer;
 	this.userId2userObj = userId2userObj;
+
+	userId2postIds = HashMultimap.create();
     }
 
     @Override
@@ -70,6 +77,9 @@ public class DataModelingStrategy implements ScoreStrategy {
 		    // Scoring rule.
 		    sum = (alpha) * termFreq_inverseResFreq + (1 - alpha) * entityFreq_inverseResFreq;
 		    userId2score.put(userid, sum);
+		    userId2postIds.put(userid, postid);
+
+		    System.out.println("SUM::" + sum);
 		}
 	    }
 
@@ -80,6 +90,7 @@ public class DataModelingStrategy implements ScoreStrategy {
     }
 
     public String getExperts() {
+	ArrayList<String> relatedPosts = new ArrayList();
 	JSONArray jsonArray = new JSONArray();
 	try {
 	    expert2score = Application.sortByValue(userId2score);
@@ -92,6 +103,8 @@ public class DataModelingStrategy implements ScoreStrategy {
 		if (i < 10) {
 		    UserEntity user = userId2userObj.get(userid);
 		    user.setScore(userId2score.get(userid));
+		    relatedPosts.addAll(userId2postIds.get(userid));
+		    user.setRelatedPosts(relatedPosts);
 		    if (user != null) {
 			jsonArray.add(user);
 		    }
@@ -122,6 +135,67 @@ public class DataModelingStrategy implements ScoreStrategy {
 
 	}
 	return expertMap;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * i5.las2peer.services.servicePackage.scorer.ScoreStrategy#saveResults()
+     */
+    @Override
+    public void saveResults() {
+	// TODO Auto-generated method stub
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * i5.las2peer.services.servicePackage.scorer.ScoreStrategy#getExpertsId()
+     */
+    @Override
+    public long getExpertsId() {
+	// TODO Auto-generated method stub
+	return 0;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * i5.las2peer.services.servicePackage.scorer.ScoreStrategy#getEvaluationId
+     * ()
+     */
+    @Override
+    public long getEvaluationId() {
+	// TODO Auto-generated method stub
+	return 0;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * i5.las2peer.services.servicePackage.scorer.ScoreStrategy#getVisualizationId
+     * ()
+     */
+    @Override
+    public long getVisualizationId() {
+	// TODO Auto-generated method stub
+	return 0;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see i5.las2peer.services.servicePackage.scorer.ScoreStrategy#close()
+     */
+    @Override
+    public void close() {
+	// TODO Auto-generated method stub
+
     }
 
 }

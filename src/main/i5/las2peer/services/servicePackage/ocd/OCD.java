@@ -5,11 +5,13 @@ package i5.las2peer.services.servicePackage.ocd;
 
 import i5.las2peer.services.servicePackage.parsers.xmlparser.SimpleDOMParser;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -34,6 +36,7 @@ public class OCD {
 
     private static final String UPLOAD_URL = BASE_PATH + "graphs?name=%s";
     private static final String IDENTIFY_COVERS_URL = BASE_PATH + "covers/graphs/%s/algorithms?algorithm=%s";
+    private static final String GET_COVERS_URL_META = BASE_PATH + "covers/%s/graphs/%s?outputFormat=META_XML";
     private static final String GET_COVERS_URL = BASE_PATH + "covers/%s/graphs/%s";
 
     // Not exposed to the client.
@@ -41,6 +44,11 @@ public class OCD {
 
     public OCD() {
 
+    }
+
+    public void start(String graphContent) {
+	uploadGraph("relationship_graph", graphContent);
+	identifyCovers();
     }
 
     private String getBasicAuthEncodedString() {
@@ -67,8 +75,7 @@ public class OCD {
 	    HttpPost httppost = new HttpPost(String.format(UPLOAD_URL, filename));
 	    httppost.addHeader("Authorization", "Basic " + getBasicAuthEncodedString());
 
-	    System.out.println("--------------GRAPH CONTENT-----------------------");
-	    // System.out.println(new String(graphContent));
+	    // System.out.println("--------------GRAPH CONTENT-----------------------");
 
 	    ArrayList<NameValuePair> postParameters = new ArrayList<NameValuePair>();
 	    postParameters.add(new BasicNameValuePair("name", "testing_graph_upload"));
@@ -76,12 +83,12 @@ public class OCD {
 
 	    CloseableHttpClient httpclient = HttpClients.createDefault();
 	    CloseableHttpResponse response = httpclient.execute(httppost);
-	    System.out.println("-----------UPLOAD GRAPH-----------------------------");
+	    // System.out.println("-----------UPLOAD GRAPH-----------------------------");
 
 	    HttpEntity entity = response.getEntity();
 	    String responseString = EntityUtils.toString(entity, "UTF-8");
 
-	    System.out.println(responseString);
+	    // System.out.println(responseString);
 
 	    int statusCode = response.getStatusLine().getStatusCode();
 	    EntityUtils.consume(entity);
@@ -154,35 +161,96 @@ public class OCD {
 	return statusCode;
     }
 
+    public int getCoverCreationStatus() {
+	String url = String.format(GET_COVERS_URL_META, coverId, graphId);
+	String status = null;
+	String responseString = getHttpResponseString(url);
+
+	System.out.println(responseString);
+
+	// Parse the XML response to check the status of the graph creation.
+	if (responseString != null && responseString.length() > 0) {
+	    SimpleDOMParser parser = new SimpleDOMParser(responseString);
+	    NodeList list = parser.getNodes("Status");
+
+	    if (list != null) {
+		for (int i = 0; i < list.getLength(); i++) {
+		    status = list.item(i).getTextContent();
+		}
+	    }
+	}
+
+	if (status.equalsIgnoreCase("error")) {
+	    return -1;
+	} else if (status.equalsIgnoreCase("completed")) {
+	    return 1;
+	} else {
+	    return 0;
+	}
+
+    }
+
     /**
      */
-    public String getCovers(String graphContent) {
-	uploadGraph("relationship_graph", graphContent);
-	identifyCovers();
+    // TODO://There is a possibility of infinite loop. Have to exit after
+    // certain attempts or timeout.
+    public String getCovers() {
+	String respStr = null;
+	int isCompleted = getCoverCreationStatus();
 
-	String url = String.format(GET_COVERS_URL, coverId, graphId);
+	if (isCompleted == 1) {
+	    // System.out.println("Cover creation completed..." + coverId + " "
+	    // + graphId);
+	    String url = String.format(GET_COVERS_URL, coverId, graphId);
+	    respStr = getHttpResponseString(url);
+	    // System.out.println("Resp Str " + respStr);
+	} else if (isCompleted == 0) {
+	    // If cover creation is still running, check the status again after
+	    // sometime.
+	    try {
+		// System.out.println("Cover creation not yet completed...");
+		Thread.sleep(2000);
+		getCovers();
+	    } catch (InterruptedException e) {
+		e.printStackTrace();
+	    }
+	} else {
+	    respStr = null;
+	}
+	return respStr;
+    }
+
+    private String getHttpResponseString(String url) {
 	String responseString = null;
 	try {
-
 	    HttpGet httpget = new HttpGet(url);
 	    httpget.setHeader("Authorization", "Basic " + getBasicAuthEncodedString());
 
 	    CloseableHttpClient httpclient = HttpClients.createDefault();
-	    CloseableHttpResponse response = httpclient.execute(httpget);
+	    CloseableHttpResponse response;
+
+	    response = httpclient.execute(httpget);
 
 	    System.out.println("-----------------COVERS--------------------");
 
 	    HttpEntity entity = response.getEntity();
 	    responseString = EntityUtils.toString(entity, "UTF-8");
-	    System.out.println(responseString);
 	    int statusCode = response.getStatusLine().getStatusCode();
+
+	    // if (statusCode != 200) {
+	    // return null;
+	    // }
+
 	    EntityUtils.consume(entity);
 
-	} catch (Exception e) {
+	    System.out.println("Status Code :: " + statusCode);
+	} catch (ClientProtocolException e) {
+	    e.printStackTrace();
+	} catch (IOException e) {
 	    e.printStackTrace();
 	}
-
+	// System.out.println(responseString);
 	return responseString;
-    }
 
+    }
 }

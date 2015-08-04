@@ -48,6 +48,3 @@ What are short, long and medium-term scheduling?
 What is the Translation Lookaside Buffer (TLB)?
 When is a system in safe state?
 What is cycle stealing?
-
-
-

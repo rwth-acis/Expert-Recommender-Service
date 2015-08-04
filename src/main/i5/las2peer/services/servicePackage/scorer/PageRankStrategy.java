@@ -1,50 +1,55 @@
 package i5.las2peer.services.servicePackage.scorer;
 
-import i5.las2peer.services.servicePackage.entities.UserEntity;
-import i5.las2peer.services.servicePackage.graph.RelationshipEdge;
+import i5.las2peer.services.servicePackage.AbstractSearcher;
+import i5.las2peer.services.servicePackage.database.entities.UserEntity;
+import i5.las2peer.services.servicePackage.exceptions.ERSException;
 import i5.las2peer.services.servicePackage.utils.Application;
+import i5.las2peer.services.servicePackage.utils.ERSBundle;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import net.minidev.json.JSONArray;
 import edu.uci.ics.jung.algorithms.scoring.PageRank;
-import edu.uci.ics.jung.graph.Graph;
 
 /**
  * @author sathvik
  */
 
-public class PageRankStrategy implements ScoreStrategy {
+public class PageRankStrategy extends AbstractSearcher implements ScoreStrategy {
 
     private Map<String, Double> node2pagescore = new HashMap<String, Double>();
     private int maxIterations = 30;
     private double tolerance = 0.0000001d;
     private double alpha = 0.15d;
-    private Graph<String, RelationshipEdge> graph;
     private LinkedHashMap<String, Double> expert2score;
-    private Map<Long, UserEntity> userId2userObj;
+    private String experts;
 
     /**
      * 
      * @param graph
      * @param userId2userObj
+     * @throws ERSException
      */
-    public PageRankStrategy(Graph<String, RelationshipEdge> graph, Map<Long, UserEntity> userId2userObj, double alpha) {
-	this.graph = graph;
-	this.userId2userObj = userId2userObj;
-	this.alpha = alpha;
+    public PageRankStrategy(ERSBundle properties) throws ERSException {
+	super(properties);
+	// this.alpha = super.requestParameters.alpha;
     }
 
     @Override
     public void executeAlgorithm() {
-	PageRank ranker = new PageRank(this.graph, this.alpha);
+	if (super.requestParameters.alpha != null && super.requestParameters.alpha.length() > 0) {
+	    this.alpha = Double.parseDouble(super.requestParameters.alpha);
+	}
+	
+	PageRank ranker = new PageRank(super.jcreator.getGraph(), this.alpha);
 	ranker.setTolerance(this.tolerance);
 	ranker.setMaxIterations(this.maxIterations);
 	ranker.evaluate();
 
-	for (String v : graph.getVertices()) {
+	for (String v : super.jcreator.getGraph().getVertices()) {
 	    node2pagescore.put(v, (Double) ranker.getVertexScore(v));
 	}
 
@@ -52,6 +57,10 @@ public class PageRankStrategy implements ScoreStrategy {
 
     @Override
     public String getExperts() {
+	return experts;
+    }
+
+    public void saveResults() {
 	expert2score = Application.sortByValue(node2pagescore);
 
 	int count = 0;
@@ -59,10 +68,14 @@ public class PageRankStrategy implements ScoreStrategy {
 
 	for (String userid : expert2score.keySet()) {
 	    count++;
-	    // Restrict result to 30 items for now.
-	    if (count < 30) {
-		UserEntity user = userId2userObj.get(Long.parseLong(userid));
+	    // Restrict result to 10 items for now.
+	    if (count < 10) {
+		UserEntity user = super.usermap.get(Long.parseLong(userid));
 		user.setScore(node2pagescore.get(userid));
+
+		ArrayList<String> labels = super.jcreator.getConnectedLabels(userid);
+		user.setRelatedPosts(labels);
+
 		if (user != null) {
 		    jsonArray.add(user);
 		}
@@ -71,15 +84,58 @@ public class PageRankStrategy implements ScoreStrategy {
 	    }
 	}
 
-	// MeanReciprocalRank mrr = new MeanReciprocalRank();
-	// System.out.println("RANK FOR THE QUERY..."
-	// + mrr.getReciprocalRank(experts));
-
-	return jsonArray.toJSONString();
+	experts = jsonArray.toJSONString();
+	super.save(expert2score, experts);
     }
 
     public LinkedHashMap<String, Double> getExpertMap() {
 	return expert2score;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * i5.las2peer.services.servicePackage.scorer.ScoreStrategy#getExpertId()
+     */
+    @Override
+    public long getExpertsId() {
+	return super.expertsId;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * i5.las2peer.services.servicePackage.scorer.ScoreStrategy#getEvaluationId
+     * ()
+     */
+    @Override
+    public long getEvaluationId() {
+	return super.eMeasureId;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * i5.las2peer.services.servicePackage.scorer.ScoreStrategy#getVisualizationId
+     * ()
+     */
+    @Override
+    public long getVisualizationId() {
+	return super.visId;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see i5.las2peer.services.servicePackage.scorer.ScoreStrategy#close()
+     */
+    @Override
+    public void close() {
+	super.close();
+
     }
 
 }

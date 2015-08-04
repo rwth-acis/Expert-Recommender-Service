@@ -3,7 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.graph;
 
-import i5.las2peer.services.servicePackage.entities.GraphEntity;
+import i5.las2peer.services.servicePackage.database.entities.GraphEntity;
 import i5.las2peer.services.servicePackage.utils.LocalFileManager;
 
 import java.io.BufferedWriter;
@@ -69,10 +69,25 @@ public class GraphWriter {
 	    }
 	});
 
+	graphWriter.addVertexData("d0", "color", null, new Transformer<String, String>() {
+
+	    @Override
+	    public String transform(String nodeid) {
+		return "red";
+	    }
+	});
+
 	HashMap<String, String> key2val = new HashMap<String, String>();
 	key2val.put("attr.name", "name");
 	key2val.put("attr.type", "string");
-	graphWriter.setKeyAttributes(key2val);
+	graphWriter.addHeader("d3", key2val);
+
+	HashMap<String, String> key2val1 = new HashMap<String, String>();
+	key2val1.put("attr.name", "color");
+	key2val1.put("attr.type", "string");
+	graphWriter.addHeader("d0", key2val1);
+
+	// graphWriter.setKeyAttributes(key2val);
 
 	// TODO:Check if saving is necessary, If we can get string
 	// representation, saving in db should be enough

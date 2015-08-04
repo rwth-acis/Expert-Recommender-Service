@@ -3,7 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.parsers.xmlparser;
 
-import i5.las2peer.services.servicePackage.ocd.NodeCoverManager;
+import i5.las2peer.services.servicePackage.ocd.NodeCoverParser;
 
 import java.util.HashMap;
 import java.util.Scanner;
@@ -17,12 +17,12 @@ import java.util.Scanner;
 public class CommunityCoverMatrixParser implements ICommunityCoverParser {
     // String filename;
     String coverMatrix;
-    HashMap<Long, NodeCoverManager> nodeId2Covers;
+    HashMap<Long, NodeCoverParser> nodeId2Covers;
 
     public CommunityCoverMatrixParser(String covermatrix) {
 	// this.filename = filename;
 	this.coverMatrix = covermatrix;
-	nodeId2Covers = new HashMap<Long, NodeCoverManager>();
+	nodeId2Covers = new HashMap<Long, NodeCoverParser>();
     }
 
     /*
@@ -32,26 +32,28 @@ public class CommunityCoverMatrixParser implements ICommunityCoverParser {
      */
     @Override
     public void parse() {
-	NodeCoverManager ncoverManager;
+	NodeCoverParser ncoverManager;
 	HashMap<Long, Double> coverId2memVal;
-
+//System.out.println(coverMatrix);
 	Scanner scanner = new Scanner(coverMatrix);
 	while (scanner.hasNextLine()) {
 	    String line = scanner.nextLine();
 	    String values[] = line.split("\\s+");
 	    if (values != null && values.length > 0) {
-		long nodeId = Long.parseLong(values[0]);
+	    	
+		long nodeId = Long.parseLong(values[0].replace(",", "."));
 		coverId2memVal = new HashMap<Long, Double>();
 		if (values.length > 1) {
 		    for (int i = 1; i < values.length; i++) {
-			double memValue = Double.parseDouble(values[i]);
+		    //System.out.println("rrr"+values[i]);
+			double memValue = Double.parseDouble(values[i].replace(",", "."));
 			if (memValue != 0) {
 			    coverId2memVal.put((long) (i - 1), memValue);
 			}
 		    }
 		}
-		System.out.print("NODE ID::" + nodeId);
-		ncoverManager = new NodeCoverManager(nodeId, coverId2memVal);
+		//System.out.print("NODE ID::" + nodeId);
+		ncoverManager = new NodeCoverParser(nodeId, coverId2memVal);
 		nodeId2Covers.put(nodeId, ncoverManager);
 	    }
 	}
@@ -94,7 +96,7 @@ public class CommunityCoverMatrixParser implements ICommunityCoverParser {
      * @see ICommunityCoverParser#getNodeId2CoversMap()
      */
     @Override
-    public HashMap<Long, NodeCoverManager> getNodeId2CoversMap() {
+    public HashMap<Long, NodeCoverParser> getNodeId2CoversMap() {
 	return nodeId2Covers;
     }
 

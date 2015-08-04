@@ -43,6 +43,9 @@ public class StopWordRemover {
 	    createPattern();
 	}
 
+	if (text == null) {
+	    return "";
+	}
 	// Remove all html tags.
 	String stripped_text = Jsoup.parse(text).text();
 	// Remove punctuations.

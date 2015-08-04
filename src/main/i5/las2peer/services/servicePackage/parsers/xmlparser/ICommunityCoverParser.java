@@ -3,7 +3,7 @@
  */
 package i5.las2peer.services.servicePackage.parsers.xmlparser;
 
-import i5.las2peer.services.servicePackage.ocd.NodeCoverManager;
+import i5.las2peer.services.servicePackage.ocd.NodeCoverParser;
 
 import java.util.HashMap;
 
@@ -18,6 +18,6 @@ import java.util.HashMap;
 public interface ICommunityCoverParser {
     public void parse();
 
-    public HashMap<Long, NodeCoverManager> getNodeId2CoversMap();
+    public HashMap<Long, NodeCoverParser> getNodeId2CoversMap();
 }
 
