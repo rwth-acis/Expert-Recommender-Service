@@ -99,7 +99,7 @@ public abstract class AbstractSearcher {
 
 	connectionSource = dbHandler.getConnectionSource();
 
-	Application.algoName1 = requestParameters.algorithmName;
+	Application.algoName = requestParameters.algorithmName;
 	// Application.intraWeight = intraWeight;
 	System.out.println("Intra weight:: " + Application.intraWeight);
 	dbHandler.truncateEvaluationTable();

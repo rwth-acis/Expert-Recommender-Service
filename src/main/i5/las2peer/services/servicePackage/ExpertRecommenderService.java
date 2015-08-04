@@ -4,6 +4,7 @@ import i5.las2peer.api.Service;
 import i5.las2peer.restMapper.HttpResponse;
 import i5.las2peer.restMapper.MediaType;
 import i5.las2peer.restMapper.RESTMapper;
+import i5.las2peer.restMapper.annotations.Consumes;
 import i5.las2peer.restMapper.annotations.ContentParam;
 import i5.las2peer.restMapper.annotations.GET;
 import i5.las2peer.restMapper.annotations.POST;
@@ -36,7 +37,6 @@ import i5.las2peer.services.servicePackage.lucene.indexer.DbTextIndexer;
 import i5.las2peer.services.servicePackage.lucene.indexer.LuceneMysqlIndexer;
 import i5.las2peer.services.servicePackage.lucene.searcher.LuceneSearcher;
 import i5.las2peer.services.servicePackage.metrics.EvaluationMeasure;
-import i5.las2peer.services.servicePackage.parsers.csvparser.EvaluationCSVWriter;
 import i5.las2peer.services.servicePackage.scorer.CommunityAwareHITSStrategy;
 import i5.las2peer.services.servicePackage.scorer.CommunityAwarePageRankStrategy;
 import i5.las2peer.services.servicePackage.scorer.DataModelingStrategy;
@@ -50,6 +50,7 @@ import i5.las2peer.services.servicePackage.textProcessor.StopWordRemover;
 import i5.las2peer.services.servicePackage.utils.AlgorithmType;
 import i5.las2peer.services.servicePackage.utils.Application;
 import i5.las2peer.services.servicePackage.utils.ERSBundle;
+import i5.las2peer.services.servicePackage.utils.ExceptionMessages;
 import i5.las2peer.services.servicePackage.utils.LocalFileManager;
 import i5.las2peer.services.servicePackage.utils.UserMapSingleton;
 import i5.las2peer.services.servicePackage.utils.semanticTagger.RelatedPostsExtractor;
@@ -58,9 +59,6 @@ import i5.las2peer.services.servicePackage.utils.semanticTagger.TagExtractor;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -105,6 +103,10 @@ public class ExpertRecommenderService extends Service {
 
     @GET
     @Path("datasets")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @Summary("Returns the available dataset on the server.")
     public HttpResponse getAvailableDatasets() {
 
 	DatabaseHandler handler = new DatabaseHandler("ersdb", "root", "");
@@ -140,11 +142,19 @@ public class ExpertRecommenderService extends Service {
 
     @GET
     @Path("datasets/{datasetId}/experts/{expertsId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @Summary("Returns the collection of experts for the specific id. Id is retrieved after applying recommendetaion algorithm on the dataset")
     public HttpResponse getExperts(@PathParam("datasetId") String datasetId, @PathParam("expertsId") String expertsId) {
 	log.info("expertsId:: " + expertsId);
 	String databaseName = getDatabaseName(datasetId);
 	if (databaseName == null) {
-	    // Throw custom exception.
+	    try {
+		throw new ERSException(ExceptionMessages.DATABASE_NOT_FOUND);
+	    } catch (ERSException e) {
+		e.printStackTrace();
+	    }
 	}
 
 	DatabaseHandler dbHandler = null;
@@ -159,11 +169,19 @@ public class ExpertRecommenderService extends Service {
 
     @GET
     @Path("datasets/{datasetId}/evaluations/{evaluationId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @Summary("Returns the evaluation metrics computed if requested when applying algorithms. Evaluation Id is retrieved after applying algorithm on the dataset.")
     public HttpResponse getEvaluationResults(@PathParam("datasetId") String datasetId, @PathParam("evaluationId") String evaluationId) {
 
 	String databaseName = getDatabaseName(datasetId);
 	if (databaseName == null) {
-	    // Throw custom exception.
+	    try {
+		throw new ERSException(ExceptionMessages.DATABASE_NOT_FOUND);
+	    } catch (ERSException e) {
+		e.printStackTrace();
+	    }
 	}
 
 	log.info("evaluationId:: " + evaluationId);
@@ -178,6 +196,10 @@ public class ExpertRecommenderService extends Service {
 
     @GET
     @Path("datasets/{datasetId}/visualizations/{visualizationId}")
+    @Produces(MediaType.APPLICATION_XML)
+    @Consumes(MediaType.TEXT_PLAIN)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @Summary("Returns the visualization graph to be consumed by the client such as sigmaJS")
     public HttpResponse getVisulaizationData(@PathParam("visualizationId") String visId) {
 
 	log.info("expertsId:: " + visId);
@@ -194,62 +216,23 @@ public class ExpertRecommenderService extends Service {
 	return res;
     }
 
-    /**
-     * Method to remove stop words form the text.
-     * 
-     * @param text
-     *            an input text to remove stop words.
-     * @return res success status and stripped down text with all stopwords
-     *         removed.
-     */
-    @POST
-    @Path("stopword_remover")
-    public HttpResponse removeStopWords(@ContentParam String text) {
-	// TODO: handle any exceptions.
-	StopWordRemover remover = new StopWordRemover(text, "en");
-
-	HttpResponse res = new HttpResponse(remover.getPlainText());
-	res.setStatus(200);
-	return res;
-
-    }
-
-    /**
-     * Method to stem the text
-     * 
-     * @param text
-     *            an input text to remove stop words.
-     * @return res success status and stemmed text.
-     */
-    @POST
-    @Path("stemmer")
-    public HttpResponse stemWords(@ContentParam String text) {
-	// TODO: handle any exceptions.
-	StringBuilder stemmed_sentence = new StringBuilder();
-	if (text != null && text.length() > 0) {
-	    PorterStemmer stemmer = new PorterStemmer();
-	    String[] words = text.split("\\s+");
-	    for (String word : words) {
-		stemmed_sentence.append(stemmer.stem(word));
-		stemmed_sentence.append(" ");
-	    }
-	}
-
-	HttpResponse res = new HttpResponse(stemmed_sentence.toString());
-	res.setStatus(200);
-	return res;
-
-    }
-
     @GET
     @Path("datasets/{datasetId}/users/{userId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @Summary("Returns the details of the experts")
     public HttpResponse getUser(@PathParam("datasetId") String datasetId, @PathParam("userId") String userId) {
 
 	log.info("expertsId:: " + userId);
 	DatabaseHandler dbHandler = null;
 	String databaseName = getDatabaseName(datasetId);
 	if (databaseName == null) {
-	    // Throw custom exception.
+	    try {
+		throw new ERSException(ExceptionMessages.DATABASE_NOT_FOUND);
+	    } catch (ERSException e) {
+		e.printStackTrace();
+	    }
 	}
 	dbHandler = new DatabaseHandler(databaseName, "root", "");
 	String userDetails = dbHandler.getUser(Long.parseLong(userId));
@@ -261,44 +244,46 @@ public class ExpertRecommenderService extends Service {
 
     @POST
     @Path("datasets/{datasetId}/algorithms/datamodeling")
+
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @Summary("Returns the id of the expert collection.")
+
     public HttpResponse modelExperts(@PathParam("datasetId") String datasetId, @ContentParam String query,
 	    @QueryParam(name = "dateBefore", defaultValue = "2025-12-31") String dateBefore,
 	    @QueryParam(name = "alpha", defaultValue = "0.5") double alpha) {
 
-	Application.algoName1 = "datamodeling";
-	String filepath = "testQueries/query_full.txt";
+	Application.algoName = "datamodeling";
+	// String filepath = "testQueries/query_full.txt";
 
 	String databaseName = getDatabaseName(datasetId);
 	if (databaseName == null) {
-	    // Throw custom exception.
+	    try {
+		throw new ERSException(ExceptionMessages.DATABASE_NOT_FOUND);
+	    } catch (ERSException e) {
+		e.printStackTrace();
+	    }
 	}
 
 	DatabaseHandler dbHandler = new DatabaseHandler(databaseName, "root", "");
 
 	dbHandler.truncateEvaluationTable();
 
-	if (query == null) {
-	    // TODO: Throw custom exception.
+	if (query == null || query.length() < 0) {
+	    try {
+		throw new ERSException(ExceptionMessages.QUERY_NOT_VALID);
+	    } catch (ERSException e) {
+		e.printStackTrace();
+	    }
 	}
 
-	if (query != null && query.length() < 0) {
-	    // TODO: Throw custom exception.
-	}
-
-	String expertPosts = "{}";
+	String expertPosts = "";
 	QueryAnalyzer qAnalyzer = null;
 	try {
 	    qAnalyzer = new QueryAnalyzer(query);
 	} catch (Exception e) {
 	    e.printStackTrace();
-	}
-
-	DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
-	Date dateFilter = null;
-	try {
-	    dateFilter = dateFormat.parse(dateBefore);
-	} catch (java.text.ParseException e1) {
-	    e1.printStackTrace();
 	}
 
 	ConnectionSource connectionSource = dbHandler.getConnectionSource();
@@ -324,7 +309,7 @@ public class ExpertRecommenderService extends Service {
 	    TopDocs docs = searcher.performSearch(qAnalyzer.getText(), Integer.MAX_VALUE);
 
 	    dbTextIndexer = new DbTextIndexer(searcher.getTotalNumberOfDocs());
-	    dbTextIndexer.buildIndex(docs, qAnalyzer.getText(), dateFilter, databaseName + "_index");
+	    dbTextIndexer.buildIndex(docs, qAnalyzer.getText(), databaseName + "_index");
 
 	    dbSemanticsIndexer = new DbSematicsIndexer(dbHandler.getConnectionSource());
 	    TopDocs semanticDocs = searcher.performSemanticSearch();
@@ -391,6 +376,12 @@ public class ExpertRecommenderService extends Service {
      */
     @POST
     @Path("datasets/{datasetId}/algorithms/{algorithmName}")
+
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @Summary("Returns the id of the expert collection, id of evaluation metrics and id of the visualization")
+
     public HttpResponse applyAlgorithm(@PathParam("datasetId") String datasetId, @PathParam("algorithmName") String algorithmName,
 	    @ContentParam String query, @QueryParam(name = "evaluation", defaultValue = "false") boolean isEvaluation,
 	    @QueryParam(name = "visualization", defaultValue = "true") boolean isVisualization,
@@ -442,47 +433,27 @@ public class ExpertRecommenderService extends Service {
 
 	scontext.close();
 
-	// log.info("Total time " + timer.stop());
-
-	// String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new
-	// Date());
-	//
-	// EvaluationCSVWriter writer = new EvaluationCSVWriter();
-	// writer.extractResultsfromDb(dbHandler.getConnectionSource());
-	// writer.write("evaluationResults/" + timeStamp + "_eval.csv");
-
 	HttpResponse res = new HttpResponse(jObj.toString());
 	res.setStatus(200);
 	return res;
     }
 
-    @POST
-    @Path("datasets/{datasetId}/save")
-    public void saveResultsToCSV(@PathParam("datasetId") String datasetId) {
-
-	String databaseName = getDatabaseName(datasetId);
-	if (databaseName == null) {
-	    // Throw custom exception.
-	}
-
-	DatabaseHandler dbHandler = null;
-	dbHandler = new DatabaseHandler(databaseName, "root", "");
-
-	String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-
-	EvaluationCSVWriter writer = new EvaluationCSVWriter();
-	writer.extractResultsfromDb(dbHandler.getConnectionSource());
-	writer.write("evaluationResults/" + timeStamp + "_eval.csv");
-    }
-
     @GET
     @Path("datasets/{datasetId}/experts/{expertsCollectionId}/expert/{expertId}/tags")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.TEXT_PLAIN)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @Summary("Returns tags associated with experts for the specific post.")
     public HttpResponse getTags(@PathParam("datasetId") String datasetId, @PathParam("expertsCollectionId") String expertCollectionId,
 	    @PathParam("expertId") String expertId) {
 
 	String databaseName = getDatabaseName(datasetId);
 	if (databaseName == null) {
-	    // Throw custom exception.
+	    try {
+		throw new ERSException(ExceptionMessages.DATABASE_NOT_FOUND);
+	    } catch (ERSException e) {
+		e.printStackTrace();
+	    }
 	}
 
 	DatabaseHandler dbHandler = null;
@@ -497,12 +468,22 @@ public class ExpertRecommenderService extends Service {
 
     @GET
     @Path("datasets/{datasetId}/experts/{expertsCollectionId}/expert/{expertId}/posts")
+
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.TEXT_PLAIN)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @Summary("Returns the related posts of the expert user.")
+
     public HttpResponse getPosts(@PathParam("datasetId") String datasetId, @PathParam("expertsCollectionId") String expertCollectionId,
 	    @PathParam("expertId") String expertId) {
 
 	String databaseName = getDatabaseName(datasetId);
 	if (databaseName == null) {
-	    // Throw custom exception.
+	    try {
+		throw new ERSException(ExceptionMessages.DATABASE_NOT_FOUND);
+	    } catch (ERSException e) {
+		e.printStackTrace();
+	    }
 	}
 
 	DatabaseHandler dbHandler = null;
@@ -538,6 +519,12 @@ public class ExpertRecommenderService extends Service {
 
     @POST
     @Path("datasets/{datasetId}/semantics")
+
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.TEXT_PLAIN)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @Summary("Adds semantic tags to the text.")
+
     public HttpResponse addSemantics(@PathParam(value = "datasetId") String datasetId) {
 
 	String dbName = getDatabaseName(datasetId);
@@ -545,11 +532,11 @@ public class ExpertRecommenderService extends Service {
 
 	HttpResponse res;
 
-	System.out.print("Executing semantics...");
+	log.info("Executing semantics...");
 
 	dbHandler.addSemanticTags();
 
-	System.out.print("Executing semantics finished");
+	log.info("Executing semantics finished");
 
 	res = new HttpResponse("Added Semantics...", 200);
 
@@ -568,6 +555,12 @@ public class ExpertRecommenderService extends Service {
      */
     @POST
     @Path("indexer")
+
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.TEXT_PLAIN)
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Success"), @ApiResponse(code = 401, message = "Unauthorized") })
+    @Summary("Indexes the text retrieved from the database.")
+
     public HttpResponse prepareData(@ContentParam String dataset_name, @QueryParam(name = "inputFormat", defaultValue = "xml") String inputType) {
 	DatabaseHandler dbHandler = new DatabaseHandler(dataset_name, "root", "");
 	ConnectionSource connectionSrc;
@@ -626,6 +619,53 @@ public class ExpertRecommenderService extends Service {
 	}
 
 	return res;
+    }
+
+    /**
+     * Method to remove stop words form the text.
+     * 
+     * @param text
+     *            an input text to remove stop words.
+     * @return res success status and stripped down text with all stopwords
+     *         removed.
+     */
+    @POST
+    @Path("stopword_remover")
+    public HttpResponse removeStopWords(@ContentParam String text) {
+	// TODO: handle any exceptions.
+	StopWordRemover remover = new StopWordRemover(text, "en");
+
+	HttpResponse res = new HttpResponse(remover.getPlainText());
+	res.setStatus(200);
+	return res;
+
+    }
+
+    /**
+     * Method to stem the text
+     * 
+     * @param text
+     *            an input text to remove stop words.
+     * @return res success status and stemmed text.
+     */
+    @POST
+    @Path("stemmer")
+    public HttpResponse stemWords(@ContentParam String text) {
+	// TODO: handle any exceptions.
+	StringBuilder stemmed_sentence = new StringBuilder();
+	if (text != null && text.length() > 0) {
+	    PorterStemmer stemmer = new PorterStemmer();
+	    String[] words = text.split("\\s+");
+	    for (String word : words) {
+		stemmed_sentence.append(stemmer.stem(word));
+		stemmed_sentence.append(" ");
+	    }
+	}
+
+	HttpResponse res = new HttpResponse(stemmed_sentence.toString());
+	res.setStatus(200);
+	return res;
+
     }
 
     @POST
@@ -733,6 +773,14 @@ public class ExpertRecommenderService extends Service {
 	return result;
     }
 
+    /**
+     * 
+     * @param datasetId
+     *            An id identifying the dataset. Ids are stored in a database
+     *            called ersdb.
+     * 
+     * @return Returns the database name associated with a particular dataset.
+     */
     private String getDatabaseName(String datasetId) {
 	DatabaseHandler handler = new DatabaseHandler("ersdb", "root", "");
 	String databaseName = null;
@@ -758,7 +806,6 @@ public class ExpertRecommenderService extends Service {
      * reach this method
      * if he or she is not authenticated).
      * 
-     * @return A void.
      */
     @POST
     @Path("validate")

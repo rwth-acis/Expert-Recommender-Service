@@ -23,19 +23,16 @@ public class HITSStrategy extends AbstractSearcher implements ScoreStrategy {
 
     private int maxIterations = 30;
     private double tolerance = 0.0000001d;
-    // private Graph<String, RelationshipEdge> graph;
     private LinkedHashMap<String, Double> expert2score;
     private String experts;
 
-    // private Map<Long, UserEntity> userId2userObj;
-
     /**
      * 
-     * @param properties
+     * @param parameters
      * @throws ERSException
      */
-    public HITSStrategy(ERSBundle properties) throws ERSException {
-	super(properties);
+    public HITSStrategy(ERSBundle parameters) throws ERSException {
+	super(parameters);
     }
 
     @Override

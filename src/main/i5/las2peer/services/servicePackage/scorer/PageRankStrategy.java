@@ -29,12 +29,11 @@ public class PageRankStrategy extends AbstractSearcher implements ScoreStrategy 
 
     /**
      * 
-     * @param graph
-     * @param userId2userObj
+     * @param parameters
      * @throws ERSException
      */
-    public PageRankStrategy(ERSBundle properties) throws ERSException {
-	super(properties);
+    public PageRankStrategy(ERSBundle parameters) throws ERSException {
+	super(parameters);
 	// this.alpha = super.requestParameters.alpha;
     }
 
@@ -43,7 +42,7 @@ public class PageRankStrategy extends AbstractSearcher implements ScoreStrategy 
 	if (super.requestParameters.alpha != null && super.requestParameters.alpha.length() > 0) {
 	    this.alpha = Double.parseDouble(super.requestParameters.alpha);
 	}
-	
+
 	PageRank ranker = new PageRank(super.jcreator.getGraph(), this.alpha);
 	ranker.setTolerance(this.tolerance);
 	ranker.setMaxIterations(this.maxIterations);

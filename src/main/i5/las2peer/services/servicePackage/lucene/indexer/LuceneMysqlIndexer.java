@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -37,6 +39,8 @@ public class LuceneMysqlIndexer {
     private static String dataIndexBasePath = "luceneIndex/%s/data/";
     private static String semanticsIndexBasePath = "luceneIndex/%s/semantics/";
 
+    private Log log = LogFactory.getLog(LuceneMysqlIndexer.class);
+
     /**
      * 
      * @param connectionSrc
@@ -58,7 +62,7 @@ public class LuceneMysqlIndexer {
      */
     public void buildIndex() throws SQLException, IOException {
 
-	System.out.println("Building index...");
+	log.info("Building index...");
 
 	Directory dataIndexDir = FSDirectory.open(new File(String.format(dataIndexBasePath, indexDirectoryPath)).toPath());
 	IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
@@ -92,7 +96,7 @@ public class LuceneMysqlIndexer {
 
 		StopWordRemover stopWordRemover = new StopWordRemover(entity.getBody());
 		body = stopWordRemover.getPlainText();
-		System.out.println("Clean text " + body);
+		log.info("Clean text " + body);
 	    } else {
 		body = entity.getCleanText();
 	    }
@@ -115,7 +119,7 @@ public class LuceneMysqlIndexer {
 		fullSearchableText.append(" ");
 	    }
 
-	    // System.out.println("Searchable text ::" +
+	    // log.info("Searchable text ::" +
 	    // fullSearchableText.toString());
 
 	    if (fullSearchableText != null && creationDate != null) {
@@ -140,7 +144,7 @@ public class LuceneMysqlIndexer {
 	}
 
 	updateSemanticsIndex();
-	System.out.println("Building index completed...");
+	log.info("Building index completed...");
 
     }
 
@@ -180,11 +184,11 @@ public class LuceneMysqlIndexer {
 	    StringBuffer fullSearchableText = new StringBuffer();
 
 	    if (semanticEntity != null) {
-		// System.out.println("SEMANTIC TAGS :: " +
+		// log.info("SEMANTIC TAGS :: " +
 		// semanticEntity.getTags());
 		fullSearchableText.append(semanticEntity.getTags().replaceAll(",", " "));
 
-		System.out.println("Semantic searchable texxt:: " + fullSearchableText);
+		log.info("Semantic searchable texxt:: " + fullSearchableText);
 
 		semanticDataDoc.add(new StringField("postid", String.valueOf(postId), Field.Store.YES));
 		semanticDataDoc.add(new StringField("parentid", String.valueOf(parentId), Field.Store.YES));

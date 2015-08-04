@@ -23,7 +23,6 @@ public class Application {
 
 	public static String dateInfo = "";
 	public static String algoName = "";
-	public static String algoName1 = "";
 	public static String intraWeight = "";
 
 	public static <K, V extends Comparable<? super V>> LinkedHashMap<K, V> sortByValue(
@@ -63,7 +62,7 @@ public class Application {
 			
 
 			try (PrintWriter out = new PrintWriter(new BufferedWriter(
-					new FileWriter("evaluationResults/" + algoName1 + ".csv",
+					new FileWriter("evaluationResults/" + algoName + ".csv",
 							true)))) {
 				DecimalFormat df = new DecimalFormat("#");
 				for(int i = 0; i < values.size() ; i++) {					 

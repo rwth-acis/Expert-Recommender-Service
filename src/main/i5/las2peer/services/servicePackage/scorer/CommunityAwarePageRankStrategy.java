@@ -29,14 +29,13 @@ public class CommunityAwarePageRankStrategy extends AbstractSearcher implements 
 
     /**
      * 
-     * @param graph
-     * @param userId2userObj
-     * @param nodeId2Covers
+     * @param params
+     *            Collection of parameters.
      * @throws ERSException
+     *             Throws custom exception, see {@link AbstractSearcher}
      */
-
-    public CommunityAwarePageRankStrategy(ERSBundle properties) throws ERSException {
-	super(properties);
+    public CommunityAwarePageRankStrategy(ERSBundle params) throws ERSException {
+	super(params);
     }
 
     /**

@@ -9,7 +9,6 @@ import i5.las2peer.services.servicePackage.utils.Application;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -81,15 +80,15 @@ public class DbTextIndexer {
 	return postid2Tokens;
     }
 
-    public void buildIndex(TopDocs docs, String queryString, Date date, String filepath) throws IOException, ParseException, SQLException {
+    public void buildIndex(TopDocs docs, String queryString, String filepath) throws IOException, ParseException, SQLException {
 
 	queryTerms = HashMultiset.create(Splitter.on(CharMatcher.WHITESPACE).omitEmptyStrings().split(queryString));
 
-	addTokenFreqMap(docs, date, filepath);
+	addTokenFreqMap(docs, filepath);
 	createInverseResFreqMap();
     }
 
-    private void addTokenFreqMap(TopDocs docs, Date date, String filepath) throws IOException {
+    private void addTokenFreqMap(TopDocs docs, String filepath) throws IOException {
 
 	IndexSearcher dataSearcher = new IndexSearcher(DirectoryReader.open(FSDirectory.open(new File(String.format(dataIndexBasePath,
 		filepath)).toPath())));

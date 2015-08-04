@@ -29,13 +29,13 @@ public class CommunityAwareHITSStrategy extends AbstractSearcher implements Scor
 
     /**
      * 
-     * @param graph
-     * @param userId2userObj
-     * @param nodeId2Covers
+     * @param params
+     *            Collection of parameters.
      * @throws ERSException
+     *             Throws custom exception, see {@link AbstractSearcher}
      */
-    public CommunityAwareHITSStrategy(ERSBundle properties) throws ERSException {
-	super(properties);
+    public CommunityAwareHITSStrategy(ERSBundle params) throws ERSException {
+	super(params);
     }
 
     /**

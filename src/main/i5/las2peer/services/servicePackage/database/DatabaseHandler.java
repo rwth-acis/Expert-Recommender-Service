@@ -211,10 +211,6 @@ public class DatabaseHandler extends MySqlOpenHelper {
      * 
      * @see SemanticTagger#getSemanticData()
      * 
-     * @throws SQLException
-     *             If database is not open to insert semantic tags or does not
-     *             comply to table constraints.
-     * 
      * */
 
     public void addSemanticTags() {

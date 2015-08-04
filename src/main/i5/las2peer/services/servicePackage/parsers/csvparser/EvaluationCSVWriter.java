@@ -102,7 +102,7 @@ public class EvaluationCSVWriter {
 
 			out.write(Application.dateInfo + ", alpha(intra weight) = "
 					+ Application.intraWeight + ", OCD Algo = "
-					+ OCD.ALGORITHM_LABEL + " Algo= " + Application.algoName1
+					+ OCD.ALGORITHM_LABEL + " Algo= " + Application.algoName
 					+ "\n");
 
 			if (csvWriter != null && evaluationResults != null) {
