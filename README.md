@@ -11,7 +11,7 @@ and
 
 https://github.com/rwth-acis/LAS2peer
 
-![](https://github.com/github/123.png)
+
 
 
 Requirements:
