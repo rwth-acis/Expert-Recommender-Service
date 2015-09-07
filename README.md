@@ -15,10 +15,13 @@ Follow the steps below to successfully use ERS to recommend experts.
 ### Preperations
 * Make sure that MySql is installed and run the sql script provided in the framework. This will install the db called ersdb. This db holds the configuration information such as dataset directory, indexing directory and dataset name. Update these information accordingly.
 * Make sure that all the libraries are installed. Check the build instructions for it.
+
 ### Supported types
 * XML
 * JSON
 * CSV
+
+
 ### Supported Algorithms
 * Pagerank
 * HITS
