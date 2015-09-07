@@ -42,6 +42,7 @@ Above configuration should be enough to start using the features of the framewor
 ## Data format.
 There are two important files that framework looks for to parse and save the data into database. This should follow the format mentioned below.
 * Data format
+
 	```xml
 		<?xml version="1.0" encoding="utf-8"?>
 			<posts>
@@ -50,12 +51,14 @@ There are two important files that framework looks for to parse and save the dat
 		    </posts>
 	```
 * User data format
+
 	```xml
 		<?xml version="1.0" encoding="utf-8"?>
 		<users>
 		  <row Id="123" Reputation="1" CreationDate="2011-03-01T01:15:13.14" DisplayName="Alex" LastAccessDate="2011-03-01T01:15:13.147" WebsiteUrl="http://xyz.com" Location="Aachen" AboutMe="Details about the user" AccountId="-1" />
           </users>
 		```
+
 
 ## RESTful endpoint.
 Check the swagger documentation for all the available end points.
