@@ -1,49 +1,49 @@
 <project name="LAS2peer-Template-Project" default="all" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
-    
+
     <property file="etc/ant_configuration/user.properties"/>
-    
+
     <property name="startup" location="etc/startup" />
-    
+
     <property name="service.version" value="0.1" />
     <property name="service.name" value="i5.las2peer.services.servicePackage" />
     <property name="service.path" value="i5/las2peer/services/servicePackage" />
-    
+
     <property name="user_agent1.path" value="${startup}/agent-user-${las2peer_user1.name}.xml" />
     <property name="user_agent2.path" value="${startup}/agent-user-${las2peer_user2.name}.xml" />
     <property name="user_agent3.path" value="${startup}/agent-user-${las2peer_user3.name}.xml" />
     <property name="passphrases.path" value="${startup}/passphrases.txt" />
-    
+
     <presetdef name="javac">
         <javac includeantruntime="false" />
     </presetdef>
-	
+
     <property name="src.main" location="src/main" />
     <property name="src.junit" location="src/test" />
-	
+
     <property name="tmp" location="tmp" />
     <property name="log" location="log" />
     <property name="service" location="service" />
-	
+
     <property name="tmp.classes" location="${tmp}/classes" />
     <property name="tmp.junit" location="${tmp}/test" />
-	
+
     <property name="export" location="export" />
     <property name="export.doc" location="${export}/doc" />
     <property name="export.jars" location="${export}/jars" />
     <property name="junit.report" location="${export}/test_reports" />
 
     <property name="lib" location="lib" />
-	
+
     <path id="libraries">
         <fileset dir="${lib}">
             <include name="**/*.jar"/>
             <exclude name="junit-*.jar"/>
         </fileset>
     </path>
-	
+
     <property name="lib.junit" location="${lib}/junit-4.11.jar" />
-	
-	
+
+
     <!-- Ivy Installation (Tool to fetch Libraries) -->
     <property name="ivy.install.version" value="2.3.0" />
     <property name="ivy.jar.dir" value="${basedir}/etc/ivy" />
@@ -64,7 +64,7 @@
         </path>
         <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
     </target>
-    
+
   <target name="get_ers_deps" unless="skip.download">
         <echo message="installing jung..."/>
         <get src="http://repo1.maven.org/maven2/net/sf/jung/jung-algorithms/2.0.1/jung-algorithms-2.0.1.jar" dest="${basedir}/lib"/>
@@ -73,7 +73,10 @@
         <get src="http://repo1.maven.org/maven2/net/sf/jung/jung-io/2.0.1/jung-io-2.0.1.jar" dest="${basedir}/lib"/>
 
         <echo message="installing jsoup..."/>
-        <get src="    http://repo1.maven.org/maven2/org/jsoup/jsoup/1.8.2/" dest="${basedir}/lib"/>
+        <get src="http://repo1.maven.org/maven2/org/jsoup/jsoup/1.8.2/jsoup-1.8.2.jar" dest="${basedir}/lib"/>
+
+        <echo message="installing guava..."/>
+        <get src="http://repo1.maven.org/maven2/com/google/guava/guava/18.0/guava-18.0.jar" dest="${basedir}/lib"/>
 
         <echo message="installing Gson..."/>
         <get src="http://repo1.maven.org/maven2/com/google/code/gson/gson/2.3.1/gson-2.3.1.jar" dest="${basedir}/lib"/>
@@ -104,7 +107,7 @@
         <get src="http://repo1.maven.org/maven2/com/googlecode/jcsv/jcsv/1.4.0/jcsv-1.4.0.jar" dest="${basedir}/lib" usetimestamp="true" skipexisting="true"/>
 
     </target>
-    
+
     <!-- Get Dependencies from our Maven Repository via Ivy -->
     <target name="get_deps" depends="install-ivy" description="--> resolve dependencies">
         <ivy:settings>
@@ -112,8 +115,8 @@
         </ivy:settings>
         <ivy:retrieve type="jar" />
     </target>
-	
-	
+
+
 	<!-- Initialization (Folder Creation)-->
     <target name="init_general">
         <tstamp/>
@@ -122,21 +125,21 @@
         <mkdir dir="${startup}" />
         <mkdir dir="${log}" />
     </target>
-	
+
     <target name="init_compile" depends="init_general, get_deps, get_ers_deps">
         <mkdir dir="${tmp.classes}" />
         <mkdir dir="${tmp.junit}" />
     </target>
-	
+
     <target name="init_jars" depends="init_general">
         <mkdir dir="${export.jars}" />
     </target>
-	
+
     <target name="init_doc" depends="init_general">
         <mkdir dir="${export.doc}" />
     </target>
-	
-	
+
+
     <!-- Compilation -->
     <target name="compile_main" depends="init_compile">
         <javac srcdir="${src.main}"
@@ -153,7 +156,7 @@
             </fileset>
         </copy>
     </target>
-	
+
     <target name="compile_junit" depends="init_compile">
         <javac srcdir="${src.junit}"
             destdir="${tmp.junit}"
@@ -170,10 +173,10 @@
             </fileset>
         </copy>
     </target>
-	
+
     <target name="compile_all" depends="compile_main, compile_junit" />
-	
-	
+
+
 	<!-- Generate Jars -->
     <target name="jar" depends="compile_main">
         <jar jarfile="${export.jars}/${service.name}-${service.version}.jar">
@@ -192,8 +195,8 @@
             </manifest>
         </jar>
     </target>
-	
-	
+
+
 	<!-- Generate Documentation -->
     <target name="java_doc" depends="init_doc">
         <javadoc destdir="${export.doc}"
@@ -212,19 +215,19 @@
             </packageset>
         </javadoc>
     </target>
-	
-	
+
+
     <!-- JUnit Testing -->
     <target name="junit" depends="junit_tests, junit_clean" description="--> execute all junit tests"/>
-	
+
     <target name="init_junit" depends="init_general">
         <mkdir dir="${junit.report}" />
     </target>
-	
+
     <target name="junit_clean">
         <delete dir="${tmp.junit}" />
     </target>
-	
+
     <target name="junit_tests" depends="init_junit, compile_all">
         <junit fork="yes" haltonerror="yes" haltonfailure="yes" printsummary="yes">
             <classpath>
@@ -241,13 +244,13 @@
             </batchtest>
         </junit>
     </target>
-	
-	
+
+
     <!-- XML Agent Generation (Builds Jar first so that Generator is available)-->
 	<available file="${user_agent1.path}" property="user_agent_exists1"/>
 	<available file="${user_agent2.path}" property="user_agent_exists2"/>
 	<available file="${user_agent3.path}" property="user_agent_exists3"/>
-	
+
     <target name="generate_user_agent1" depends="jar" unless="user_agent_exists1">
         <echo message="Writing User Agent xml to ${user_agent1.path}"/>
         <java classname="i5.las2peer.tools.UserAgentGenerator" classpathref="libraries"
@@ -269,34 +272,34 @@
             <arg line="'${las2peer_user3.password}' '${las2peer_user3.name}' '${las2peer_user3.email}'"/>
         </java>
     </target>
-	
+
     <target name="generate_configs" depends="generate_user_agent1, generate_user_agent2, generate_user_agent3">
 		<echo file="${passphrases.path}" append="false">agent-user-${las2peer_user1.name}.xml;${las2peer_user1.password}
 agent-user-${las2peer_user2.name}.xml;${las2peer_user2.password}
 agent-user-${las2peer_user3.name}.xml;${las2peer_user3.password}
 </echo>
     </target>
-	
-	
+
+
     <!-- General Cleanup -->
 	<target name="clean_before_build">
         <delete dir="${export}"/>
 		<delete file="${service}/${service.name}-${service.version}.jar"/>
 	</target>
-	
+
     <target name="clean_after_build">
         <delete dir="${tmp}"/>
 		<delete dir=".las2peer"/>
     </target>
-	
+
     <target name="clean_deps">
         <delete dir="${lib}"/>
     </target>
-	
+
     <target name="clean_all" depends="clean_after_build, clean_before_build, clean_deps">
 		<delete dir="${log}"/>
     </target>
-	
+
     <target name="all" depends="clean_before_build, generate_configs, junit, java_doc, clean_after_build" />
-	
+
 </project>

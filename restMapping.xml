@@ -6,9 +6,6 @@
         <parameter annotation="path" index="0" name="datasetId" type="java.lang.String"/>
       </parameters>
     </method>
-    <method httpMethod="post" name="test" path="markExperts" type="i5.las2peer.restMapper.HttpResponse">
-      <parameters/>
-    </method>
     <method httpMethod="post" name="parse" path="datasets/{datasetId}/parse" type="i5.las2peer.restMapper.HttpResponse">
       <parameters>
         <parameter annotation="path" index="0" name="datasetId" type="java.lang.String"/>
@@ -16,9 +13,6 @@
       </parameters>
     </method>
     <method httpMethod="get" name="getAvailableDatasets" path="datasets" produces="application/json" type="i5.las2peer.restMapper.HttpResponse">
-      <parameters/>
-    </method>
-    <method httpMethod="post" name="uploadDataset" path="datasets" type="i5.las2peer.restMapper.HttpResponse">
       <parameters/>
     </method>
     <method httpMethod="get" name="getExperts" path="datasets/{datasetId}/experts/{expertsId}" produces="application/json" type="i5.las2peer.restMapper.HttpResponse">
@@ -36,12 +30,6 @@
     <method httpMethod="get" name="getVisulaizationData" path="datasets/{datasetId}/visualizations/{visualizationId}" produces="application/xml" type="i5.las2peer.restMapper.HttpResponse">
       <parameters>
         <parameter annotation="path" index="0" name="visualizationId" type="java.lang.String"/>
-      </parameters>
-    </method>
-    <method httpMethod="get" name="getUser" path="datasets/{datasetId}/users/{userId}" produces="application/json" type="i5.las2peer.restMapper.HttpResponse">
-      <parameters>
-        <parameter annotation="path" index="0" name="datasetId" type="java.lang.String"/>
-        <parameter annotation="path" index="1" name="userId" type="java.lang.String"/>
       </parameters>
     </method>
     <method consumes="text/plain" httpMethod="post" name="modelExperts" path="datasets/{datasetId}/algorithms/datamodeling" produces="application/json" type="i5.las2peer.restMapper.HttpResponse">
@@ -77,11 +65,6 @@
         <parameter annotation="path" index="2" name="expertId" type="java.lang.String"/>
       </parameters>
     </method>
-    <method httpMethod="get" name="getGraph" path="download/{filename}" type="i5.las2peer.restMapper.HttpResponse">
-      <parameters>
-        <parameter annotation="path" index="0" name="filename" type="java.lang.String"/>
-      </parameters>
-    </method>
     <method consumes="text/plain" httpMethod="post" name="addSemantics" path="datasets/{datasetId}/semantics" produces="text/plain" type="i5.las2peer.restMapper.HttpResponse">
       <parameters>
         <parameter annotation="path" index="0" name="datasetId" type="java.lang.String"/>
@@ -93,28 +76,9 @@
         <parameter annotation="content" index="1" name="" type="java.lang.String"/>
       </parameters>
     </method>
-    <method httpMethod="post" name="removeStopWords" path="stopword_remover" type="i5.las2peer.restMapper.HttpResponse">
+    <method httpMethod="get" name="getGraph" path="download/{filename}" type="i5.las2peer.restMapper.HttpResponse">
       <parameters>
-        <parameter annotation="content" index="0" name="" type="java.lang.String"/>
-      </parameters>
-    </method>
-    <method httpMethod="post" name="stemWords" path="stemmer" type="i5.las2peer.restMapper.HttpResponse">
-      <parameters>
-        <parameter annotation="content" index="0" name="" type="java.lang.String"/>
-      </parameters>
-    </method>
-    <method httpMethod="post" name="markExperts" path="markNatureExperts" type="i5.las2peer.restMapper.HttpResponse">
-      <parameters/>
-    </method>
-    <method httpMethod="post" name="markPostType" path="markPostType" type="i5.las2peer.restMapper.HttpResponse">
-      <parameters/>
-    </method>
-    <method httpMethod="post" name="saveReplies" path="saveReplies" type="i5.las2peer.restMapper.HttpResponse">
-      <parameters/>
-    </method>
-    <method httpMethod="post" name="validateLogin" path="validate" produces="text/xml" type="void">
-      <parameters>
-        <parameter annotation="query" default="anon" index="0" name="username" type="java.lang.String"/>
+        <parameter annotation="path" index="0" name="filename" type="java.lang.String"/>
       </parameters>
     </method>
     <method httpMethod="post" name="saveClickPositions" path="datasets/{datasetId}/position" type="void">
@@ -128,6 +92,9 @@
       <parameters>
         <parameter annotation="path" index="0" name="datasetId" type="java.lang.String"/>
       </parameters>
+    </method>
+    <method httpMethod="post" name="uploadDataset" path="datasets" type="i5.las2peer.restMapper.HttpResponse">
+      <parameters/>
     </method>
     <method httpMethod="get" name="getSwaggerResourceListing" path="api-docs" produces="application/json" type="i5.las2peer.restMapper.HttpResponse">
       <parameters/>
