@@ -32,7 +32,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
-import com.google.gson.Gson;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.stmt.PreparedQuery;
@@ -48,6 +50,7 @@ import com.j256.ormlite.support.ConnectionSource;
  *
  */
 public class DatabaseHandler extends MySqlOpenHelper {
+    private Log log = LogFactory.getLog(DatabaseHandler.class);
 
     /**
      * @param dbName
@@ -86,14 +89,10 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	for (IPost res : posts) {
 
 	    data = new DataEntity();
-	    // boolean idExists = false;
-
-	    // System.out.println(res.getPostId());
 	    if (res.getPostId() != null) {
 		Long postid = Long.parseLong(res.getPostId());
+
 		data.setPostId(postid);
-		// idExists = DataDao.idExists(postid);
-		// System.out.println(postid + " " + idExists);
 	    }
 
 	    if (res.getCreationDate() != null) {
@@ -101,7 +100,15 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	    }
 
 	    if (res.getOwnerUserId() != null) {
-		data.setOwnerUserId(Long.parseLong(res.getOwnerUserId()));
+		long id = 0;
+		try {
+		    id = Long.parseLong(res.getOwnerUserId());
+		} catch(NumberFormatException e) {
+		    // This can be improved. Generate unique number from string.
+		    id = res.getOwnerUserId().hashCode();
+		}
+		
+		data.setOwnerUserId(id);
 	    }
 
 	    if (res.getParentId() != null) {
@@ -136,10 +143,6 @@ public class DatabaseHandler extends MySqlOpenHelper {
 		data.setScore(Long.parseLong(res.getScore()));
 	    }
 
-	    if (res.getTags() != null) {
-		data.setTags(res.getTags());
-	    }
-
 	    if (res.getTitle() != null) {
 		data.setTitle(res.getTitle());
 	    }
@@ -150,7 +153,9 @@ public class DatabaseHandler extends MySqlOpenHelper {
 		data.setBody(res.getBody());
 		data.setCleanText(remover.getPlainText());
 	    }
+
 	    DataDao.createIfNotExists(data);
+	    log.info("Created Data entity.");
 
 	}
     }
@@ -333,27 +338,6 @@ public class DatabaseHandler extends MySqlOpenHelper {
 	    GraphEntity entity = visulaizationDao.queryForId(queryId);
 
 	    return entity.getGraph();
-	} catch (SQLException e) {
-	    e.printStackTrace();
-	}
-
-	return null;
-    }
-
-    /**
-     * 
-     * @param userId
-     * @return
-     */
-    public String getUser(long userId) {
-	Dao<UserEntity, Long> userDao = null;
-	try {
-	    userDao = DaoManager.createDao(super.getConnectionSource(), UserEntity.class);
-	    UserEntity entity = userDao.queryForId(userId);
-
-	    Gson gson = new Gson();
-
-	    return gson.toJson(entity);
 	} catch (SQLException e) {
 	    e.printStackTrace();
 	}

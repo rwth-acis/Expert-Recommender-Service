@@ -64,59 +64,10 @@ public class PostCSV implements IPost {
     /*
      * (non-Javadoc)
      * 
-     * @see i5.las2peer.services.servicePackage.parsers.IPost#getAccAnsId()
-     */
-    @Override
-    public String getAccAnsId() {
-	// TODO Auto-generated method stub
-	return null;
-    }
-
-
-    /*
-     * (non-Javadoc)
-     * 
      * @see i5.las2peer.services.servicePackage.parsers.IPost#getScore()
      */
     @Override
     public String getScore() {
-	// TODO Auto-generated method stub
-	return null;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see i5.las2peer.services.servicePackage.parsers.IPost#getViewCount()
-     */
-    @Override
-    public String getViewCount() {
-	// TODO Auto-generated method stub
-	return null;
-    }
-
-
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * i5.las2peer.services.servicePackage.parsers.IPost#getLastEditorUserId()
-     */
-    @Override
-    public String getLastEditorUserId() {
-	// TODO Auto-generated method stub
-	return null;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * i5.las2peer.services.servicePackage.parsers.IPost#getLastActivityDate()
-     */
-    @Override
-    public String getLastActivityDate() {
 	// TODO Auto-generated method stub
 	return null;
     }
@@ -129,61 +80,6 @@ public class PostCSV implements IPost {
     @Override
     public String getTitle() {
 	return title;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see i5.las2peer.services.servicePackage.parsers.IPost#getTags()
-     */
-    @Override
-    public String getTags() {
-	// TODO Auto-generated method stub
-	return null;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see i5.las2peer.services.servicePackage.parsers.IPost#getAnswerCount()
-     */
-    @Override
-    public String getAnswerCount() {
-	// TODO Auto-generated method stub
-	return null;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see i5.las2peer.services.servicePackage.parsers.IPost#getCommentCount()
-     */
-    @Override
-    public String getCommentCount() {
-	// TODO Auto-generated method stub
-	return null;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see i5.las2peer.services.servicePackage.parsers.IPost#getFavoriteCount()
-     */
-    @Override
-    public String getFavoriteCount() {
-	// TODO Auto-generated method stub
-	return null;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see i5.las2peer.services.servicePackage.parsers.IPost#getLastEditDate()
-     */
-    @Override
-    public String getLastEditDate() {
-	// TODO Auto-generated method stub
-	return null;
     }
 
     /*
@@ -206,7 +102,5 @@ public class PostCSV implements IPost {
     public String getParentId() {
 	return parentId;
     }
-
-
 
 }

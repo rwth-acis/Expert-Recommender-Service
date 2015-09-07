@@ -22,17 +22,11 @@ public class Post implements IPost {
     @XmlAttribute(name = "PostTypeId")
     String post_type_id;
 
-    @XmlAttribute(name = "AcceptedAnswerId")
-    String accept_ans_id;
-
     @XmlAttribute(name = "CreationDate")
     String creation_date;
 
     @XmlAttribute(name = "Score")
     String score;
-
-    @XmlAttribute(name = "ViewCount")
-    String view_count;
 
     @XmlAttribute(name = "Body")
     String body;
@@ -40,29 +34,11 @@ public class Post implements IPost {
     @XmlAttribute(name = "OwnerUserId")
     String owner_user_id;
 
-    @XmlAttribute(name = "LastEditorUserId")
-    String last_editor_user_id;
-
-    @XmlAttribute(name = "LastEditDate")
-    String last_edit_date;
-
-    @XmlAttribute(name = "LastActivityDate")
-    String last_activity_date;
-
     @XmlAttribute(name = "Title")
     String title;
 
     @XmlAttribute(name = "Tags")
     String tags;
-
-    @XmlAttribute(name = "AnswerCount")
-    String answer_count;
-
-    @XmlAttribute(name = "CommentCount")
-    String comment_count;
-
-    @XmlAttribute(name = "FavoriteCount")
-    String favorite_count;
 
     @XmlAttribute(name = "ParentId")
     String parent_id;
@@ -75,20 +51,12 @@ public class Post implements IPost {
 	return this.postid;
     }
 
-    public String getAccAnsId() {
-	return this.accept_ans_id;
-    }
-
     public String getCreationDate() {
 	return this.creation_date;
     }
 
     public String getScore() {
 	return this.score;
-    }
-
-    public String getViewCount() {
-	return this.view_count;
     }
 
     public String getBody() {
@@ -99,36 +67,12 @@ public class Post implements IPost {
 	return this.owner_user_id;
     }
 
-    public String getLastEditorUserId() {
-	return this.last_editor_user_id;
-    }
-
-    public String getLastActivityDate() {
-	return this.last_activity_date;
-    }
-
     public String getTitle() {
 	return this.title;
     }
 
     public String getTags() {
 	return this.tags;
-    }
-
-    public String getAnswerCount() {
-	return this.answer_count;
-    }
-
-    public String getCommentCount() {
-	return this.comment_count;
-    }
-
-    public String getFavoriteCount() {
-	return this.favorite_count;
-    }
-
-    public String getLastEditDate() {
-	return this.last_edit_date;
     }
 
     public String getPostTypeId() {

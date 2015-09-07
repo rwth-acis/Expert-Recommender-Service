@@ -1,6 +1,3 @@
-/**
- * 
- */
 package i5.las2peer.services.servicePackage.lucene.searcher;
 
 import i5.las2peer.services.servicePackage.models.SemanticToken;

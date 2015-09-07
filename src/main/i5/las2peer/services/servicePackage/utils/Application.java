@@ -21,13 +21,12 @@ import java.util.Map;
 
 public class Application {
 
-	public static String dateInfo = "";
-	public static String algoName = "";
-	public static String intraWeight = "";
+    public static String dateInfo = "";
+    public static String algoName = "";
+    public static String intraWeight = "";
 
-	public static <K, V extends Comparable<? super V>> LinkedHashMap<K, V> sortByValue(
-			Map<K, V> map) {
-		List<Map.Entry<K, V>> list = new LinkedList<>(map.entrySet());
+    public static <K, V extends Comparable<? super V>> LinkedHashMap<K, V> sortByValue(Map<K, V> map) {
+	List<Map.Entry<K, V>> list = new LinkedList<>(map.entrySet());
 	Collections.sort(list, new Comparator<Map.Entry<K, V>>() {
 	    @Override
 	    public int compare(Map.Entry<K, V> o1, Map.Entry<K, V> o2) {
@@ -35,53 +34,50 @@ public class Application {
 	    }
 	});
 
-		LinkedHashMap<K, V> result = new LinkedHashMap<>();
-		for (Map.Entry<K, V> entry : list) {
-			result.put(entry.getKey(), entry.getValue());
-		}
-		return result;
+	LinkedHashMap<K, V> result = new LinkedHashMap<>();
+	for (Map.Entry<K, V> entry : list) {
+	    result.put(entry.getKey(), entry.getValue());
 	}
+	return result;
+    }
 
-	public static double round(double value, int places) {
-		if (places < 0)
-			throw new IllegalArgumentException();
+    public static double round(double value, int places) {
+	if (places < 0)
+	    throw new IllegalArgumentException();
 
-		BigDecimal bd = new BigDecimal(value);
-		bd = bd.setScale(places, RoundingMode.HALF_UP);
-		return bd.doubleValue();
-	}
-	
-	public static double roundDouble(double value) {
-		double rounded = (double) Math.round(value * 100000) / 100000;
-		return rounded;
-	}
+	BigDecimal bd = new BigDecimal(value);
+	bd = bd.setScale(places, RoundingMode.HALF_UP);
+	return bd.doubleValue();
+    }
 
-	public static void writeListToFile(List<Double> values) {
-		
-		try {
-			
+    public static double roundDouble(double value) {
+	double rounded = (double) Math.round(value * 100000) / 100000;
+	return rounded;
+    }
 
-			try (PrintWriter out = new PrintWriter(new BufferedWriter(
-					new FileWriter("evaluationResults/" + algoName + ".csv",
-							true)))) {
-				DecimalFormat df = new DecimalFormat("#");
-				for(int i = 0; i < values.size() ; i++) {					 
-				    df.setMaximumFractionDigits(12);
-					String result = df.format(values.get(i).doubleValue());
-					System.out.println("double val is "+result);
-					out.print(result);
-					if(i < (values.size() -1)) {
-						out.print(";");
-					}
-				}
-				
-				out.print("\n");
-			}
-		} catch (IOException e) {
-			// exception handling left as an exercise for the reader
+    public static void writeListToFile(List<Double> values) {
+
+	try {
+
+	    try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("evaluationResults/" + algoName + ".csv", true)))) {
+		DecimalFormat df = new DecimalFormat("#");
+		for (int i = 0; i < values.size(); i++) {
+		    df.setMaximumFractionDigits(12);
+		    String result = df.format(values.get(i).doubleValue());
+		    System.out.println("double val is " + result);
+		    out.print(result);
+		    if (i < (values.size() - 1)) {
+			out.print(";");
+		    }
 		}
 
+		out.print("\n");
+	    }
+	} catch (IOException e) {
+	    // exception handling left as an exercise for the reader
 	}
+
+    }
 
     public static ArrayList<String> getFilterWords() {
 
@@ -97,5 +93,6 @@ public class Application {
 	return words;
 
     }
+
 
 }
